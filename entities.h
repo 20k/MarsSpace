@@ -22,6 +22,8 @@ struct player : entity
 
     player(const std::string& fname);
 
+    void set_active_player(state& s);
+
     virtual void tick(state& s, float dt) override;
 };
 
@@ -42,5 +44,15 @@ struct building : entity
 
     virtual void tick(state& s, float dt) override;
 };
+
+/*
+///we really want a door component first actually
+struct airlock : entity
+{
+    ///its a kind of building. Maybe structure is a better term
+    building build;
+
+
+};*/
 
 #endif // ENTITIES_H_INCLUDED

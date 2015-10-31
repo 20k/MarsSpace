@@ -49,7 +49,8 @@ void renderable_texture::tick(state& s, vec2f pos)
 void renderable_circle::tick(state& s, vec2f pos, float rad)
 {
     sf::CircleShape circle;
-    circle.setOrigin(rad/2.f, rad/2.f);
+    circle.setOrigin(rad, rad);
+    circle.setRadius(rad);
 
     circle.setPosition(pos.v[0], pos.v[1]);
 
@@ -90,11 +91,16 @@ vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
 
     for(auto& i : s.blockers)
     {
+        ///degenerate
+        if(i->start == i->finish)
+            continue;
+
         bool s1 = is_left_side(i->start, i->finish, position);
         bool s2 = is_left_side(i->start, i->finish, new_pos);
 
         vec2f avg = (i->start + i->finish) / 2.f;
 
+        ///padme?
         float rad = (i->finish - i->start).length() / 2.f;
 
         float dist_to_line_centre = (position - avg).length();
@@ -113,6 +119,22 @@ vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
             ///from me to the wall
             ///and my movement vector dir
             ///and then cancel out the to the wall component
+
+            ///degenerate case where we exactly intersect the wall line
+            ///and we're right at the endge too
+            ///if we end up teleporting through walls, this is prolly why
+            if(to_wall.v[0] == 0 && to_wall.v[1] == 0)
+            {
+                to_wall = (position - avg).norm();
+
+                ///this is really very degenerate to the point where I'm not sure its possible
+                ///for the moment just move the player diagonally
+                if(to_wall.v[0] == 0 && to_wall.v[1] == 0)
+                {
+                    to_wall.v[0] = 1;
+                    to_wall.v[1] = 1;
+                }
+            }
 
             vec2f perp = to_wall.rot(M_PI/2.f);
 
@@ -160,29 +182,32 @@ float speed_handler::get_speed()
     return speed;
 }
 
-movement_blocker::movement_blocker(state& _s, vec2f _start, vec2f _finish)
+///we need to fix the movement blockers memory ownership
+movement_blocker::movement_blocker(vec2f _start, vec2f _finish)
 {
     start = _start;
     finish = _finish;
 
     id = gid++;
 
-    s = &_s;
-
-    remote = std::make_shared<movement_blocker>(*this);
-
-    s->blockers.push_back(remote);
-
     printf(":)\n");
+
+    remote = nullptr;
 }
 
-///you know, i'm not sure this actually works
-movement_blocker::~movement_blocker()
+void movement_blocker::push_remote(state& s)
 {
-    if(s == nullptr)
-        return;
+    remote = std::make_shared<movement_blocker>(*this);
 
-    for(int i=0; i<(int)s->blockers.size(); i++)
+    s.blockers.push_back(remote);
+}
+
+///@TODO: This is stupid, FIXME
+void movement_blocker::destroy_remote(state& s)
+{
+    remote = nullptr;
+
+    for(int i=0; i<(int)s.blockers.size(); i++)
     {
         ///I'm the last
         ///wait, if its a shared pointer it owns itself as wlel
@@ -190,16 +215,36 @@ movement_blocker::~movement_blocker()
         ///but that means if im deconstructed and then reconstructed
         ///then broken
         ///so, rip in peace for the moment
-        if(s->blockers[i].use_count() == 1)
+        if(s.blockers[i].use_count() == 2)
         {
             printf(":(\n");
 
-            s->blockers.erase(s->blockers.begin() + i);
+            s.blockers.erase(s.blockers.begin() + i);
         }
     }
 }
 
-wall_segment::wall_segment(state& s, vec2f _start, vec2f _finish) : block(s, _start, _finish)
+void movement_blocker::tick(state& s)
+{
+    if(remote == nullptr)
+    {
+        push_remote(s);
+    }
+}
+
+void movement_blocker::modify_bounds(vec2f _start, vec2f _finish)
+{
+    start = _start;
+    finish = _finish;
+
+    if(remote)
+    {
+        remote->start = _start;
+        remote->finish = _finish;
+    }
+}
+
+wall_segment::wall_segment(vec2f _start, vec2f _finish) : block(_start, _finish)
 {
     start = _start;
     finish = _finish;
@@ -208,9 +253,11 @@ wall_segment::wall_segment(state& s, vec2f _start, vec2f _finish) : block(s, _st
 void wall_segment::tick(state& s)
 {
     rect.tick(s, start, finish, 1.f);
+
+    block.tick(s);
 }
 
-vec2f mouse_fetcher::get(state& s)
+vec2f mouse_fetcher::get_world(state& s)
 {
     sf::Mouse mouse;
 
@@ -222,11 +269,21 @@ vec2f mouse_fetcher::get(state& s)
     return {mouse_pos.x, mouse_pos.y};
 }
 
+vec2f mouse_fetcher::get_screen(state& s)
+{
+    sf::Mouse mouse;
+
+    float x = mouse.getPosition(*s.win).x;
+    float y = mouse.getPosition(*s.win).y;
+
+    return {x, y};
+}
+
 area_interacter::area_interacter(vec2f _pos, float _radius)
 {
     pos = _pos;
     radius = _radius;
-    just_interactd = false;
+    just_interacted = false;
 }
 
 void area_interacter::tick(state& s)
@@ -245,7 +302,7 @@ bool area_interacter::player_inside(state& s)
 
     float dist = rel.length();
 
-    if(dist < rad)
+    if(dist < radius)
     {
         return true;
     }
@@ -258,6 +315,7 @@ bool area_interacter::player_has_interacted(state& s)
     if(!player_inside(s))
         return false;
 
+    ///need to pull this logic out into a separate component
     sf::Keyboard key;
 
     if(key.isKeyPressed(sf::Keyboard::E))
@@ -272,4 +330,96 @@ bool area_interacter::player_has_interacted(state& s)
     {
         just_interacted = false;
     }
+
+    return false;
+}
+
+
+opener::opener(float _time)
+{
+    time_duration = _time;
+    open_frac = 0.f;
+    direction = 0;
+}
+
+void opener::open()
+{
+    ///if we're anything other than open
+    ///start opening
+    if(open_frac < 1.f)
+        direction = 1;
+    else
+        direction = 0;
+}
+
+void opener::close()
+{
+    if(open_frac > 0.f)
+        direction = -1;
+    else
+        direction = 0;
+}
+
+void opener::toggle()
+{
+    if(direction != 0)
+        direction = -direction;
+
+    if(direction == 0)
+    {
+        if(open_frac >= 1.f)
+            close();
+        if(open_frac <= 0.f)
+            open();
+    }
+}
+
+float opener::get_open_fraction()
+{
+    return open_frac;
+}
+
+void opener::tick(float dt)
+{
+    open_frac += dt * direction / time_duration;
+
+    if(open_frac >= 1.f || open_frac <= 0)
+        direction = 0;
+
+    open_frac = clamp(open_frac, 0.f, 1.f);
+}
+
+vec2f squasher::get_squashed_end(vec2f start, vec2f finish, float squash_fraction)
+{
+    return mix(start, finish, squash_fraction);
+}
+
+door::door(vec2f _start, vec2f _finish, float time_to_open) :
+    open(time_to_open),
+    interact((_finish - _start).rot(M_PI/2.f) + (_start + _finish)/2.f, 2.f), ///temp
+    block(_start, _finish)
+{
+    fixed_start = _start;
+    fixed_finish = _finish;
+}
+
+void door::tick(state& s, float dt)
+{
+    if(interact.player_has_interacted(s))
+    {
+        open.toggle();
+    }
+
+    block.tick(s);
+    open.tick(dt);
+    interact.tick(s);
+
+    ///solve the door partial open problem later, in the opener class
+    float close_frac = 1.f - open.get_open_fraction();
+
+    ///at full open we want the rendering to be maximally long, so 1.f - open frac
+    vec2f new_end = squash.get_squashed_end(fixed_start, fixed_finish, close_frac);
+    block.modify_bounds(fixed_start, new_end);
+
+    rect.tick(s, fixed_start, new_end, 0.5f);
 }

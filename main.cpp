@@ -36,7 +36,12 @@ int main()
     stuff.push_back(play);
     stuff.push_back(build);
 
-    play->position = (vec2f){width/2.f, height/2.f};
+    play->position = (vec2f){width/2.f - 5, height/2.f};
+    play->set_active_player(st);
+
+    //opener open(2000.f);
+    //area_interacter area({width/2.f, height/2.f}, 1.f);
+    door mydoor({width/2.f, height/2.f}, {width/2.f + 5, height/2.f}, 2000.f);
 
 
     sf::Event Event;
@@ -75,7 +80,14 @@ int main()
         if(key.isKeyPressed(sf::Keyboard::Escape))
             win.close();
 
-        vec2f mouse_pos = m_fetch.get(st);
+        /*if(key.isKeyPressed(sf::Keyboard::K))
+            open.open();
+        if(key.isKeyPressed(sf::Keyboard::L))
+            open.close();
+
+        printf("%f\n", open.get_open_fraction());*/
+
+        vec2f mouse_pos = m_fetch.get_world(st);
 
         if(once<sf::Mouse::Left>())
         {
@@ -97,6 +109,10 @@ int main()
 
         for(auto& i : stuff)
             i->tick(st, dt);
+
+        mydoor.tick(st, dt);
+
+        //open.tick(dt);
 
         //win.draw(spr);
         win.display();

@@ -13,6 +13,11 @@ player::player(const std::string& fname) : entity()
     speed.set_speed(0.014f);
 }
 
+void player::set_active_player(state& s)
+{
+    s.current_player = this;
+}
+
 void player::tick(state& s, float dt)
 {
     file.tick(s, position);
@@ -36,11 +41,11 @@ void planet::tick(state& s, float dt)
 
 void building::add_wall(state& s, vec2f start, vec2f finish)
 {
-    //wall_segment w(s, start, finish);
+    wall_segment w(start, finish);
 
-    //walls.push_back(w);
+    walls.push_back(w);
 
-    walls.emplace_back(s, start, finish);
+    //walls.emplace_back(s, start, finish);
 }
 
 void building::tick(state& s, float dt)

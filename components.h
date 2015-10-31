@@ -79,13 +79,17 @@ struct movement_blocker
     vec2f start;
     vec2f finish;
 
-    movement_blocker(state& _s, vec2f _start, vec2f _finish);
-    ~movement_blocker();
+    movement_blocker(vec2f _start, vec2f _finish);
+
+    void push_remote(state& s);
+    void destroy_remote(state& s);
+
+    void tick(state& s);
+    void modify_bounds(vec2f _start, vec2f _finish);
 
     uint32_t id;
     static uint32_t gid;
 
-    state* s = nullptr;
     std::shared_ptr<movement_blocker> remote;
 };
 
@@ -96,13 +100,14 @@ struct wall_segment
 
     vec2f start, finish;
 
-    wall_segment(state& s, vec2f _start, vec2f _finish);
+    wall_segment(vec2f _start, vec2f _finish);
     void tick(state& s);
 };
 
 struct mouse_fetcher
 {
-    vec2f get(state& s);
+    vec2f get_world(state& s);
+    vec2f get_screen(state& s);
 };
 
 struct area_interacter
@@ -122,6 +127,50 @@ struct area_interacter
 
 private:
     bool just_interacted;
+};
+
+///literally just goes from 0 -> 1, or 1 -> 0 with a time delay
+struct opener
+{
+    float time_duration;
+
+    ///time in ms
+    opener(float _time);
+
+    void open();
+    void close();
+    void toggle();
+
+    float get_open_fraction();
+    void tick(float dt);
+
+private:
+    float open_frac;
+    float direction; ///1 for opening, -1 for closing, 0 for stable
+};
+
+struct squasher
+{
+    vec2f get_squashed_end(vec2f start, vec2f finish, float squash_fraction);
+};
+
+struct door
+{
+    squasher squash;
+    opener open;
+    renderable_rectangle rect;
+    area_interacter interact;
+    movement_blocker block;
+    ///we need a blocker too
+
+    vec2f fixed_start;
+    vec2f fixed_finish;
+
+    door(vec2f _start, vec2f _finish, float time_to_open);
+
+    void tick(state& s, float dt);
+    //void open();
+    //void close();
 };
 
 #endif // COMPONENTS_H_INCLUDED
