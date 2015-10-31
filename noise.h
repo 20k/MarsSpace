@@ -5,13 +5,22 @@
 
 inline float noise_2d(int x, int y)
 {
-    int n=x*271 + y*1999;
+    int n=x + y*57;
 
     n=(n<<13)^n;
 
     int nn=(n*(n*n*41333 +53307781)+1376312589)&0x7fffffff;
 
     return ((1.0-((float)nn/1073741824.0)));// + noise1(x) + noise1(y) + noise1(z) + noise1(w))/5.0;
+}
+
+inline float noise_smooth2d(float x, float y)
+{
+    float corners = ( noise_2d(x-1, y-1)+noise_2d(x+1, y-1)+noise_2d(x-1, y+1)+noise_2d(x+1, y+1) ) / 16;
+    float sides   = ( noise_2d(x-1, y)  +noise_2d(x+1, y)  +noise_2d(x, y-1)  +noise_2d(x, y+1) ) /  8;
+    float center  =  noise_2d(x, y) / 4;
+
+    return corners + sides + center;
 }
 
 inline float cosine_interpolate(float a, float b, float x)
@@ -39,13 +48,13 @@ inline float smoothnoise_2d(float fx, float fy)
     int x, y;
     x = fx, y = fy;
 
-    float V1=noise_2d(x, y);
+    float V1=noise_smooth2d(x, y);
 
-    float V2=noise_2d(x+1,y);
+    float V2=noise_smooth2d(x+1,y);
 
-    float V3=noise_2d(x, y+1);
+    float V3=noise_smooth2d(x, y+1);
 
-    float V4=noise_2d(x+1,y+1);
+    float V4=noise_smooth2d(x+1,y+1);
 
 
     float I1=interpolate(V1, V2, fx-int(fx));
@@ -63,12 +72,32 @@ float noisemod_2d(float x, float y, float ocf, float amp)
     return smoothnoise_2d(x*ocf, y*ocf)*amp;
 }
 
+float sum(float x, float y, float imin, float imax, float& power)
+{
+    float accum = 0;
+
+    float persistence = 2.f;
+
+
+    for(int i=imin; i<imax; i++)
+    {
+        float frequency = 1.f / pow(2.f, i);
+        float amplitude = pow(persistence, i);
+
+        accum += noisemod_2d(x, y, frequency, amplitude);
+
+        power += amplitude;
+    }
+
+    return accum;
+}
+
 float noisemult_2d(int x, int y)
 {
     float mx, my, mz;
 
-    float mwx = noisemod_2d(x, y, 0.25, 2);
-    float mwy = noisemod_2d(mwx*30, y, 0.25, 2); ///
+    float mwx = noisemod_2d(x, y, 0.1, 20);
+    float mwy = noisemod_2d(x + 1000, y + 1000, 0.1, 20); ///
 
     mx = x + mwx*2;
     my = y + mwy*2;
@@ -76,15 +105,9 @@ float noisemult_2d(int x, int y)
     float accum = 0;
     float power = 0.f;
 
-    for(int i=0; i<5; i++)
-    {
-        float frequency = 1.f / pow(2.f, i);
 
-        accum += noisemod_2d(mx, my, frequency, 1.f / frequency);
-
-        power += 1.f / frequency;
-    }
-
+    accum += sum(mx, my, 6, 7, power);
+    accum += sum(x, y, -5, 3, power);
 
     return accum / power;
 
@@ -231,7 +254,16 @@ float* noise_buf(int width, int height)
     for(int y=0; y<height; y++)
         for(int x=0; x<width; x++)
     {
-        ret[IX(x, y, 0)] = (ret[IX(x, y, 0)] - min_val) / (max_val - min_val);
+        float val = ret[IX(x, y, 0)];
+
+        val = (val - min_val) / (max_val - min_val);
+
+        float scale = 0.1f;
+
+        val += scale;
+        val /= (1 + scale);
+
+        ret[IX(x, y, 0)] = val;
     }
 
     delete [] tw1;
@@ -267,7 +299,16 @@ float* pnoise_buf(int width, int height)
     for(int y=0; y<height; y++)
         for(int x=0; x<width; x++)
     {
-        ret[IX(x, y, 0)] = (ret[IX(x, y, 0)] - min_val) / (max_val - min_val);
+        float val = ret[IX(x, y, 0)];
+
+        val = (val - min_val) / (max_val - min_val);
+
+        float scale = 0.3f;
+
+        val += scale;
+        val /= (1 + scale);
+
+        ret[IX(x, y, 0)] = val;
     }
 
     return ret;
