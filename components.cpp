@@ -1,10 +1,13 @@
 #include "components.h"
+#include "entities.h"
 
 uint32_t movement_blocker::gid = 0;
 
 state::state(sf::RenderWindow* _win)
 {
     win = _win;
+
+    current_player = nullptr;
 }
 
 void renderable_file::load(const std::string& name)
@@ -43,6 +46,20 @@ void renderable_texture::tick(state& s, vec2f pos)
     s.win->draw(spr);
 }
 
+void renderable_circle::tick(state& s, vec2f pos, float rad)
+{
+    sf::CircleShape circle;
+    circle.setOrigin(rad/2.f, rad/2.f);
+
+    circle.setPosition(pos.v[0], pos.v[1]);
+
+    circle.setFillColor(sf::Color(220, 220, 220));
+    circle.setOutlineThickness(0.5f);
+    circle.setOutlineColor(sf::Color(220, 220, 220, 128));
+
+    s.win->draw(circle);
+}
+
 void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width)
 {
     vec2f diff = finish - start;
@@ -65,6 +82,8 @@ void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width
     s.win->draw(rect);
 }
 
+///maybe we want a collider that will return a collision and an optional movement vector
+///then we can use this for cars as well
 vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
 {
     vec2f new_pos = position + dir.norm() * dist;
@@ -88,7 +107,7 @@ vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
         const float when_to_start_perp = 0.9f;
         const float pad = 1.f;
 
-        if(s1 != s2 && dist_to_line_centre <= rad || dist_to_wall < when_to_start_perp && dist_to_line_centre <= rad)
+        if((s1 != s2 && dist_to_line_centre <= rad) || (dist_to_wall < when_to_start_perp && dist_to_line_centre <= rad))
         {
             ///so, we want to get the current vector
             ///from me to the wall
@@ -201,4 +220,56 @@ vec2f mouse_fetcher::get(state& s)
     auto mouse_pos = s.win->mapPixelToCoords({x, y});
 
     return {mouse_pos.x, mouse_pos.y};
+}
+
+area_interacter::area_interacter(vec2f _pos, float _radius)
+{
+    pos = _pos;
+    radius = _radius;
+    just_interactd = false;
+}
+
+void area_interacter::tick(state& s)
+{
+    circle.tick(s, pos, radius);
+}
+
+bool area_interacter::player_inside(state& s)
+{
+    if(s.current_player == nullptr)
+        return false;
+
+    vec2f player_pos = s.current_player->position;
+
+    vec2f rel = player_pos - pos;
+
+    float dist = rel.length();
+
+    if(dist < rad)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool area_interacter::player_has_interacted(state& s)
+{
+    if(!player_inside(s))
+        return false;
+
+    sf::Keyboard key;
+
+    if(key.isKeyPressed(sf::Keyboard::E))
+    {
+        if(!just_interacted)
+        {
+            just_interacted = true;
+            return true;
+        }
+    }
+    else
+    {
+        just_interacted = false;
+    }
 }

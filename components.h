@@ -11,6 +11,7 @@
 ///to see how that plays out
 ///this is very divergent from how i normally code
 
+struct entity;
 struct movement_blocker;
 
 struct state
@@ -18,6 +19,10 @@ struct state
     sf::RenderWindow* win;
     ///also need movement blockers in here
     std::vector<std::shared_ptr<movement_blocker>> blockers;
+
+    ///or maybe I should make this a std vector for genericness?
+    ///use for activating stuff
+    entity* current_player;
 
     state(sf::RenderWindow* _win);
 };
@@ -41,7 +46,7 @@ struct renderable_texture
 
 struct renderable_circle
 {
-    void tick(state& s, vec2f pos);
+    void tick(state& s, vec2f pos, float rad);
 };
 
 struct renderable_rectangle
@@ -98,6 +103,25 @@ struct wall_segment
 struct mouse_fetcher
 {
     vec2f get(state& s);
+};
+
+struct area_interacter
+{
+    renderable_circle circle;
+    vec2f pos;
+    float radius;
+
+    ///maybe remove _pos and radius from the constructor, as we might want to
+    ///interact with moving entities (eg get in a sliding rover)
+    area_interacter(vec2f _pos, float _radius);
+
+    void tick(state& s);
+
+    bool player_inside(state& s);
+    bool player_has_interacted(state& s); ///will only fire once per button hold
+
+private:
+    bool just_interacted;
 };
 
 #endif // COMPONENTS_H_INCLUDED
