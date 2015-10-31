@@ -78,10 +78,35 @@ vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
 
         float rad = (i->finish - i->start).length() / 2.f;
 
-        float dist = (position - avg).length();
+        float dist_to_line_centre = (position - avg).length();
 
-        if(s1 != s2 && dist <= rad)
-            return position;
+
+        vec2f to_wall = point2line_shortest(i->start, (i->finish - i->start), position);
+
+        float dist_to_wall = to_wall.length();
+
+        const float when_to_start_perp = 0.9f;
+        const float pad = 1.f;
+
+        if(s1 != s2 && dist_to_line_centre <= rad || dist_to_wall < when_to_start_perp && dist_to_line_centre <= rad)
+        {
+            ///so, we want to get the current vector
+            ///from me to the wall
+            ///and my movement vector dir
+            ///and then cancel out the to the wall component
+
+            vec2f perp = to_wall.rot(M_PI/2.f);
+
+            perp = perp.norm();
+            vec2f ndir = dir.norm();
+
+            if(dot(perp, ndir) < 0)
+                perp = -perp;
+
+            float extra = std::max(pad - dist_to_wall, 0.f);
+
+            return position + perp * dist - to_wall.norm() * extra;
+        }
     }
 
     return new_pos;
