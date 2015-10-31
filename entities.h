@@ -34,4 +34,13 @@ struct planet : entity
     virtual void tick(state& s, float dt) override;
 };
 
+struct building : entity
+{
+    std::vector<wall_segment> walls;
+
+    void add_wall(state& s, vec2f start, vec2f finish);
+
+    virtual void tick(state& s, float dt) override;
+};
+
 #endif // ENTITIES_H_INCLUDED

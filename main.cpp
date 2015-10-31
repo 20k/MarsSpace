@@ -4,7 +4,10 @@
 #include <SFML/Graphics.hpp>
 #include "entities.h"
 
+#include "misc.h"
+
 using namespace std;
+
 
 int main()
 {
@@ -25,9 +28,13 @@ int main()
 
     player* play = new player("res/character.png");
 
+    building* build = new building;
+    //build->add_wall({0.f, 0.f}, {255.f, 255.f});
+
     std::vector<entity*> stuff;
     stuff.push_back(new planet(tex));
     stuff.push_back(play);
+    stuff.push_back(build);
 
     play->position = (vec2f){width/2.f, height/2.f};
 
@@ -37,7 +44,11 @@ int main()
 
     float zoom_level = 0.25;
 
+    history<vec2f> mouse_clicks;
+
     sf::Clock clk;
+
+    mouse_fetcher m_fetch;
 
     while(win.isOpen())
     {
@@ -54,8 +65,6 @@ int main()
             }
         }
 
-        printf("%f\n", zoom_level);
-
         zoom_level = clamp(zoom_level, 0.01f, 2.f);
 
         view.reset(sf::FloatRect(0, 0, width, height));
@@ -65,6 +74,23 @@ int main()
 
         if(key.isKeyPressed(sf::Keyboard::Escape))
             win.close();
+
+        vec2f mouse_pos = m_fetch.get(st);
+
+        if(once<sf::Mouse::Left>())
+        {
+            mouse_clicks.push_back(mouse_pos);
+        }
+
+        if(mouse_clicks.size() == 2)
+        {
+            vec2f m1 = mouse_clicks.get(0);
+            vec2f m2 = mouse_clicks.get(1);
+
+            mouse_clicks.clear();
+
+            build->add_wall(st, m2, m1);
+        }
 
         float dt = clk.getElapsedTime().asMicroseconds() / 1000.f;
         clk.restart();

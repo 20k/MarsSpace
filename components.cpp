@@ -1,5 +1,7 @@
 #include "components.h"
 
+uint32_t movement_blocker::gid = 0;
+
 state::state(sf::RenderWindow* _win)
 {
     win = _win;
@@ -41,9 +43,48 @@ void renderable_texture::tick(state& s, vec2f pos)
     s.win->draw(spr);
 }
 
-vec2f moveable::tick(vec2f position, vec2f dir, float dist)
+void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width)
 {
-    return position + dir.norm() * dist;
+    vec2f diff = finish - start;
+
+    float angle = diff.angle();
+    float len = diff.length();
+
+    sf::RectangleShape rect;
+    rect.setSize(sf::Vector2f(len, width));
+
+    rect.setPosition({start.v[0], start.v[1]});
+    rect.setOrigin(0.f, width/2.f);
+
+    rect.setRotation(angle*360/(2*M_PIf));
+    rect.setFillColor(sf::Color(190, 190, 190));
+
+    rect.setOutlineThickness(0.5);
+    rect.setOutlineColor(sf::Color(130,130,130, 200));
+
+    s.win->draw(rect);
+}
+
+vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
+{
+    vec2f new_pos = position + dir.norm() * dist;
+
+    for(auto& i : s.blockers)
+    {
+        bool s1 = is_left_side(i->start, i->finish, position);
+        bool s2 = is_left_side(i->start, i->finish, new_pos);
+
+        vec2f avg = (i->start + i->finish) / 2.f;
+
+        float rad = (i->finish - i->start).length() / 2.f;
+
+        float dist = (position - avg).length();
+
+        if(s1 != s2 && dist <= rad)
+            return position;
+    }
+
+    return new_pos;
 }
 
 vec2f keyboard_controller::tick(float dt)
@@ -73,4 +114,66 @@ void speed_handler::set_speed(float _speed)
 float speed_handler::get_speed()
 {
     return speed;
+}
+
+movement_blocker::movement_blocker(state& _s, vec2f _start, vec2f _finish)
+{
+    start = _start;
+    finish = _finish;
+
+    id = gid++;
+
+    s = &_s;
+
+    remote = std::make_shared<movement_blocker>(*this);
+
+    s->blockers.push_back(remote);
+
+    printf(":)\n");
+}
+
+///you know, i'm not sure this actually works
+movement_blocker::~movement_blocker()
+{
+    if(s == nullptr)
+        return;
+
+    for(int i=0; i<(int)s->blockers.size(); i++)
+    {
+        ///I'm the last
+        ///wait, if its a shared pointer it owns itself as wlel
+        ///so this is 2
+        ///but that means if im deconstructed and then reconstructed
+        ///then broken
+        ///so, rip in peace for the moment
+        if(s->blockers[i].use_count() == 1)
+        {
+            printf(":(\n");
+
+            s->blockers.erase(s->blockers.begin() + i);
+        }
+    }
+}
+
+wall_segment::wall_segment(state& s, vec2f _start, vec2f _finish) : block(s, _start, _finish)
+{
+    start = _start;
+    finish = _finish;
+}
+
+void wall_segment::tick(state& s)
+{
+    rect.tick(s, start, finish, 1.f);
+}
+
+vec2f mouse_fetcher::get(state& s)
+{
+    sf::Mouse mouse;
+
+    int x = mouse.getPosition(*s.win).x;
+    int y = mouse.getPosition(*s.win).y;
+
+    auto mouse_pos = s.win->mapPixelToCoords({x, y});
+
+    return {mouse_pos.x, mouse_pos.y};
 }

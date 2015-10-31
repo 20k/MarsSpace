@@ -21,7 +21,7 @@ void player::tick(state& s, float dt)
 
     float cur_speed = speed.get_speed();
 
-    position = mover.tick(position, key_dir, cur_speed);
+    position = mover.tick(s, position, key_dir, cur_speed);
 }
 
 planet::planet(sf::Texture& tex)
@@ -32,4 +32,19 @@ planet::planet(sf::Texture& tex)
 void planet::tick(state& s, float dt)
 {
     file.tick(s, (vec2f){0.f, 0.f});
+}
+
+void building::add_wall(state& s, vec2f start, vec2f finish)
+{
+    //wall_segment w(s, start, finish);
+
+    //walls.push_back(w);
+
+    walls.emplace_back(s, start, finish);
+}
+
+void building::tick(state& s, float dt)
+{
+    for(auto& i : walls)
+        i.tick(s);
 }

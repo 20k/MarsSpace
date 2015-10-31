@@ -94,7 +94,7 @@ float sum(float x, float y, float imin, float imax, float& power)
 
 float noisemult_2d(int x, int y)
 {
-    float mx, my, mz;
+    float mx, my;
 
     float mwx = noisemod_2d(x, y, 0.1, 20);
     float mwy = noisemod_2d(x + 1000, y + 1000, 0.1, 20); ///
@@ -188,7 +188,7 @@ vec3f y_of(int x, int y, int z, int width, int height, int depth, float* w1, flo
 
     for(int i=imin; i<imax; i++)
     {
-        vec3f new_pos = (vec3f){x, y, z};
+        vec3f new_pos = (vec3f){(float)x, (float)y, (float)z};
 
         new_pos = new_pos * powf(2.f, (float)i);//mult(new_pos, powf(2.0f, (float)i));
 
@@ -216,7 +216,7 @@ float* noise_buf(int width, int height)
 
     ret = new float[width*height];
 
-    for(unsigned int i = 0; i<width*height*depth; i++)
+    for(int i = 0; i<width*height*depth; i++)
     {
         tw1[i] = randf_s(0.f, 1.f);
         tw2[i] = randf_s(0.f, 1.f);
