@@ -1,65 +1,87 @@
 #include <iostream>
 
-#include "noise.h"
-
+#include "planet_gen.h"
 #include <SFML/Graphics.hpp>
+#include "entities.h"
 
 using namespace std;
 
 int main()
 {
-    int width = 500, height = 500;
+    int width = 1500, height = 800;
 
-    float* noise = pnoise_buf(width, height);
+    sf::RenderWindow win(sf::VideoMode(width, height), "hi");
 
-    sf::RenderWindow win(sf::VideoMode(800, 600), "hi");
+    sf::View view;
+    view.reset(sf::FloatRect(0, 0, width, height));
 
-    sf::Image img;
-    img.create(width, height);
-
-    for(int y=0; y<height; y++)
-    {
-        for(int x=0; x<width; x++)
-        {
-            float val = noise[y*width + x];
-
-            val = clamp(val, 0.f, 1.f);
-
-            ///131 79 42 is mars
-
-            vec3f mars = (vec3f){131, 79, 42};
-
-            vec3f res = mars * val;
-
-            img.setPixel(x, y, sf::Color(res.v[0], res.v[1], res.v[2]));
-        }
-    }
-
-    sf::Texture tex;
-    tex.loadFromImage(img);
+    planet_gen gen;
+    auto tex = gen.get_tex(width, height);
 
     sf::Sprite spr;
     spr.setTexture(tex);
 
+    state st(&win);
+
+    player* play = new player("res/character.png");
+
+    std::vector<entity*> stuff;
+    stuff.push_back(new planet(tex));
+    stuff.push_back(play);
+
+    play->position = (vec2f){width/2.f, height/2.f};
+
+
     sf::Event Event;
     sf::Keyboard key;
 
+    float zoom_level = 0.25;
+
+    sf::Clock clk;
+
     while(win.isOpen())
     {
-        sf::Clock c;
-
         while(win.pollEvent(Event))
         {
             if(Event.type == sf::Event::Closed)
                 win.close();
+
+            if(Event.type == sf::Event::MouseWheelScrolled)
+            {
+                float delta = Event.mouseWheelScroll.delta;
+
+                zoom_level -= zoom_level * delta / 10.f;
+            }
         }
+
+        printf("%f\n", zoom_level);
+
+        zoom_level = clamp(zoom_level, 0.01f, 2.f);
+
+        view.reset(sf::FloatRect(0, 0, width, height));
+        view.zoom(zoom_level);
+
+        win.setView(view);
 
         if(key.isKeyPressed(sf::Keyboard::Escape))
             win.close();
 
-        win.draw(spr);
+        float dt = clk.getElapsedTime().asMicroseconds() / 1000.f;
+        clk.restart();
+
+        for(auto& i : stuff)
+            i->tick(st, dt);
+
+        //win.draw(spr);
         win.display();
+        win.clear();
+
+        /*sf::Sprite spr2;
+        spr2.setTexture(wtex.getTexture());
+
+        win.draw(spr2);
+        win.display();*/
     }
-    cout << "Hello world!" << endl;
+
     return 0;
 }

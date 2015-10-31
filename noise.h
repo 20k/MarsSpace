@@ -76,7 +76,7 @@ float sum(float x, float y, float imin, float imax, float& power)
 {
     float accum = 0;
 
-    float persistence = 2.f;
+    float persistence = 1.5f;
 
 
     for(int i=imin; i<imax; i++)
