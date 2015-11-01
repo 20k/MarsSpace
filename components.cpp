@@ -1,11 +1,14 @@
 #include "components.h"
 #include "entities.h"
+#include <fstream>
+#include <ostream>
 
 uint32_t movement_blocker::gid = 0;
 
-state::state(sf::RenderWindow* _win)
+state::state(sf::RenderWindow* _win, sf::Texture& tex)
 {
     win = _win;
+    planet_tex = tex;
 
     current_player = nullptr;
 }
@@ -396,3 +399,78 @@ vec2f squasher::get_squashed_end(vec2f start, vec2f finish, float squash_fractio
     return mix(start, finish, squash_fraction);
 }
 
+void saver::save_to_file(const std::string& fname, const std::vector<entity*> stuff)
+{
+    FILE* pFile = fopen(fname.c_str(), "wb");
+
+    for(auto& i : stuff)
+    {
+        save s = i->make_save();
+
+        ///keeping type separate from the rest of it because its information for the saver
+        ///not information for saved class
+        //fprintf(pFile, "%i", s.type);
+
+        fwrite(&s.type, sizeof(s.type), 1, pFile);
+
+        auto vec = s.vec;
+        auto ptr = vec.data();
+
+        if(ptr.size() > 0)
+            fwrite(&ptr[0], ptr.size(), 1, pFile);
+    }
+}
+
+std::vector<entity*> saver::load_from_file(const std::string& fname, state& s)
+{
+    s.blockers.clear();
+    s.current_player = nullptr;
+
+    std::string contents;
+
+    std::ifstream in(fname, std::ios::in | std::ios::binary);
+    if (in)
+    {
+        in.seekg(0, std::ios::end);
+        contents.resize(in.tellg());
+        in.seekg(0, std::ios::beg);
+        in.read(&contents[0], contents.size());
+        in.close();
+    }
+
+    if(contents.size() == 0)
+        return std::vector<entity*>();
+
+    byte_fetch fetch;
+    fetch.push_back(contents);
+
+    std::vector<entity*> entities;
+
+    while(fetch.valid())
+    {
+        entity_t type = fetch.get<entity_t>();
+
+        entity* ent;
+
+        if(type == entity_type::PLAYER)
+        {
+            ent = new player(fetch, s);
+        }
+        else if(type == entity_type::PLANET)
+        {
+            ent = new planet(fetch, s);
+        }
+        else if(type == entity_type::BUILDING)
+        {
+            ent = new building(fetch, s);
+        }
+        else if(type == entity_type::DOOR)
+        {
+            ent = new door(fetch);
+        }
+
+        entities.push_back(ent);
+    }
+
+    return entities;
+}

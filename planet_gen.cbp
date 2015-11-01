@@ -29,10 +29,43 @@
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-Wshadow" />
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
+			<Add option="-std=gnu++11" />
+			<Add option="-Wall" />
+			<Add option="-Wextra" />
+			<Add option="-DGLEW_STATIC" />
+			<Add option="-DNDEBUG" />
 		</Compiler>
+		<Linker>
+			<Add option="-lmingw32" />
+			<Add option="-lsfml-graphics" />
+			<Add option="-lsfml-audio" />
+			<Add option="-lsfml-network" />
+			<Add option="-lsfml-window" />
+			<Add option="-lsfml-system" />
+			<Add option="-lfreetype" />
+			<Add option="-ljpeg" />
+			<Add option="-lopengl32" />
+			<Add option="-lopencl" />
+			<Add option="-lglew64.dll" />
+			<Add option="-lws2_32" />
+			<Add option="-lwinmm" />
+			<Add option="-lgdi32" />
+			<Add option="-lflac" />
+			<Add option="-lopenal32" />
+			<Add option="-logg" />
+		</Linker>
+		<Unit filename="byte_struct.h" />
+		<Unit filename="components.cpp" />
+		<Unit filename="components.h" />
+		<Unit filename="entities.cpp" />
+		<Unit filename="entities.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="misc.h" />
+		<Unit filename="noise.h" />
+		<Unit filename="planet_gen.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

@@ -24,7 +24,7 @@ int main()
     sf::Sprite spr;
     spr.setTexture(tex);
 
-    state st(&win);
+    state st(&win, tex);
 
     player* play = new player("res/character.png");
 
@@ -33,7 +33,6 @@ int main()
 
     std::vector<entity*> stuff;
     stuff.push_back(new planet(tex));
-    //stuff.push_back(play);
     stuff.push_back(build);
 
     play->position = (vec2f){width/2.f - 5, height/2.f};
@@ -56,6 +55,8 @@ int main()
 
     history<vec2f> mouse_clicks;
     history<vec2f> mouse_rclicks;
+
+    saver save;
 
     sf::Clock clk;
 
@@ -86,13 +87,6 @@ int main()
         if(key.isKeyPressed(sf::Keyboard::Escape))
             win.close();
 
-        /*if(key.isKeyPressed(sf::Keyboard::K))
-            open.open();
-        if(key.isKeyPressed(sf::Keyboard::L))
-            open.close();
-
-        printf("%f\n", open.get_open_fraction());*/
-
         vec2f mouse_pos = m_fetch.get_world(st);
 
         if(once<sf::Mouse::Left>())
@@ -105,6 +99,20 @@ int main()
         {
             mouse_rclicks.push_back(mouse_pos);
             mouse_clicks.clear();
+        }
+
+        if(once<sf::Keyboard::B>())
+        {
+            auto vec = stuff;
+            vec.push_back(play);
+
+            save.save_to_file("save.txt", vec);
+        }
+
+        if(once<sf::Keyboard::N>())
+        {
+            stuff = save.load_from_file("save.txt", st);
+            stuff.push_back(build);
         }
 
         if(mouse_clicks.size() == 2)
@@ -137,7 +145,9 @@ int main()
         clk.restart();
 
         for(auto& i : stuff)
+        {
             i->tick(st, dt);
+        }
 
         vec2f rounded_mouse_pos = round_to_multiple(mouse_pos, 5);
 

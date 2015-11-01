@@ -3,6 +3,26 @@
 
 #include <vec/vec.hpp>
 #include "components.h"
+#include "byte_struct.h"
+
+namespace entity_type
+{
+    enum entity_type : int32_t
+    {
+        PLAYER = 0,
+        PLANET,
+        BUILDING,
+        DOOR
+    };
+}
+
+typedef entity_type::entity_type entity_t;
+
+struct save
+{
+    entity_t type;
+    byte_vector vec;
+};
 
 struct entity
 {
@@ -11,7 +31,10 @@ struct entity
     entity();
 
     virtual void tick(state& s, float dt){};
+
+    virtual save make_save() = 0;
 };
+
 
 struct player : entity
 {
@@ -21,10 +44,13 @@ struct player : entity
     speed_handler speed;
 
     player(const std::string& fname);
+    player(byte_fetch& fetch, state& s);
 
     void set_active_player(state& s);
 
     virtual void tick(state& s, float dt) override;
+
+    save make_save() override;
 };
 
 struct planet : entity
@@ -32,8 +58,11 @@ struct planet : entity
     renderable_texture file;
 
     planet(sf::Texture& tex);
+    planet(byte_fetch& fetch, state& s);
 
     virtual void tick(state& s, float dt) override;
+
+    save make_save() override;
 };
 
 struct building : entity
@@ -42,7 +71,19 @@ struct building : entity
 
     void add_wall(state& s, vec2f start, vec2f finish);
 
+    building() = default;
+    building(byte_fetch& fetch, state& s);
+
     virtual void tick(state& s, float dt) override;
+
+    save make_save() override;
+};
+
+struct door_fudger
+{
+    vec2f start;
+    vec2f finish;
+    float tto;
 };
 
 struct door : entity
@@ -58,10 +99,12 @@ struct door : entity
     vec2f fixed_finish;
 
     door(vec2f _start, vec2f _finish, float time_to_open);
+    door(door_fudger fudge);
+    door(byte_fetch& fetch);
 
-    void tick(state& s, float dt);
-    //void open();
-    //void close();
+    virtual void tick(state& s, float dt);
+
+    save make_save() override;
 };
 
 

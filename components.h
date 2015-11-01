@@ -24,7 +24,9 @@ struct state
     ///use for activating stuff
     entity* current_player;
 
-    state(sf::RenderWindow* _win);
+    sf::Texture planet_tex;
+
+    state(sf::RenderWindow* _win, sf::Texture&);
 };
 
 struct renderable_file
@@ -152,6 +154,12 @@ private:
 struct squasher
 {
     vec2f get_squashed_end(vec2f start, vec2f finish, float squash_fraction);
+};
+
+struct saver
+{
+    void save_to_file(const std::string& fname, const std::vector<entity*> stuff);
+    std::vector<entity*> load_from_file(const std::string& fname, state& s);
 };
 
 #endif // COMPONENTS_H_INCLUDED
