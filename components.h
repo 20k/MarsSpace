@@ -154,23 +154,4 @@ struct squasher
     vec2f get_squashed_end(vec2f start, vec2f finish, float squash_fraction);
 };
 
-struct door
-{
-    squasher squash;
-    opener open;
-    renderable_rectangle rect;
-    area_interacter interact;
-    movement_blocker block;
-    ///we need a blocker too
-
-    vec2f fixed_start;
-    vec2f fixed_finish;
-
-    door(vec2f _start, vec2f _finish, float time_to_open);
-
-    void tick(state& s, float dt);
-    //void open();
-    //void close();
-};
-
 #endif // COMPONENTS_H_INCLUDED

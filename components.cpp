@@ -25,10 +25,12 @@ void renderable_file::tick(state& s, vec2f pos)
     int width = tex.getSize().x;
     int height = tex.getSize().y;
 
-    float xp = pos.v[0] - width/2.f;
-    float yp = pos.v[1] - height/2.f;
+    float xp = pos.v[0];
+    float yp = pos.v[1];
 
+    spr.setOrigin(width/2.f, height/2.f);
     spr.setPosition(xp, yp);
+    spr.setScale(0.1f, 0.1f);
 
     s.win->draw(spr);
 }
@@ -54,9 +56,9 @@ void renderable_circle::tick(state& s, vec2f pos, float rad)
 
     circle.setPosition(pos.v[0], pos.v[1]);
 
-    circle.setFillColor(sf::Color(220, 220, 220));
+    circle.setFillColor(sf::Color(220, 220, 220, 100));
     circle.setOutlineThickness(0.5f);
-    circle.setOutlineColor(sf::Color(220, 220, 220, 128));
+    circle.setOutlineColor(sf::Color(220, 220, 220, 50));
 
     s.win->draw(circle);
 }
@@ -394,32 +396,3 @@ vec2f squasher::get_squashed_end(vec2f start, vec2f finish, float squash_fractio
     return mix(start, finish, squash_fraction);
 }
 
-door::door(vec2f _start, vec2f _finish, float time_to_open) :
-    open(time_to_open),
-    interact((_finish - _start).rot(M_PI/2.f) + (_start + _finish)/2.f, 2.f), ///temp
-    block(_start, _finish)
-{
-    fixed_start = _start;
-    fixed_finish = _finish;
-}
-
-void door::tick(state& s, float dt)
-{
-    if(interact.player_has_interacted(s))
-    {
-        open.toggle();
-    }
-
-    block.tick(s);
-    open.tick(dt);
-    interact.tick(s);
-
-    ///solve the door partial open problem later, in the opener class
-    float close_frac = 1.f - open.get_open_fraction();
-
-    ///at full open we want the rendering to be maximally long, so 1.f - open frac
-    vec2f new_end = squash.get_squashed_end(fixed_start, fixed_finish, close_frac);
-    block.modify_bounds(fixed_start, new_end);
-
-    rect.tick(s, fixed_start, new_end, 0.5f);
-}

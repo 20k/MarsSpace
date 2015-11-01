@@ -53,3 +53,33 @@ void building::tick(state& s, float dt)
     for(auto& i : walls)
         i.tick(s);
 }
+
+door::door(vec2f _start, vec2f _finish, float time_to_open) :
+    open(time_to_open),
+    interact((_finish - _start).rot(M_PI/2.f).norm() * 5.f + (_start + _finish)/2.f, 2.f), ///temp
+    block(_start, _finish)
+{
+    fixed_start = _start;
+    fixed_finish = _finish;
+}
+
+void door::tick(state& s, float dt)
+{
+    if(interact.player_has_interacted(s))
+    {
+        open.toggle();
+    }
+
+    block.tick(s);
+    open.tick(dt);
+    interact.tick(s);
+
+    ///solve the door partial open problem later, in the opener class
+    float close_frac = 1.f - open.get_open_fraction();
+
+    ///at full open we want the rendering to be maximally long, so 1.f - open frac
+    vec2f new_end = squash.get_squashed_end(fixed_start, fixed_finish, close_frac);
+    block.modify_bounds(fixed_start, new_end);
+
+    rect.tick(s, fixed_start, new_end, 0.5f);
+}

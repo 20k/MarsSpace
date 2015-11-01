@@ -45,6 +45,26 @@ struct building : entity
     virtual void tick(state& s, float dt) override;
 };
 
+struct door : entity
+{
+    squasher squash;
+    opener open;
+    renderable_rectangle rect;
+    area_interacter interact;
+    movement_blocker block;
+    ///we need a blocker too
+
+    vec2f fixed_start;
+    vec2f fixed_finish;
+
+    door(vec2f _start, vec2f _finish, float time_to_open);
+
+    void tick(state& s, float dt);
+    //void open();
+    //void close();
+};
+
+
 /*
 ///we really want a door component first actually
 struct airlock : entity

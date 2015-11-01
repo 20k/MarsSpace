@@ -33,7 +33,7 @@ int main()
 
     std::vector<entity*> stuff;
     stuff.push_back(new planet(tex));
-    stuff.push_back(play);
+    //stuff.push_back(play);
     stuff.push_back(build);
 
     play->position = (vec2f){width/2.f - 5, height/2.f};
@@ -41,8 +41,13 @@ int main()
 
     //opener open(2000.f);
     //area_interacter area({width/2.f, height/2.f}, 1.f);
-    door mydoor({width/2.f, height/2.f}, {width/2.f + 5, height/2.f}, 2000.f);
+    //door mydoor({width/2.f, height/2.f}, {width/2.f + 5, height/2.f}, 2000.f);
 
+
+    sf::CircleShape shape;
+    shape.setFillColor(sf::Color(100, 255, 100, 128));
+    shape.setRadius(1.f);
+    shape.setOrigin(1.f, 1.f);
 
     sf::Event Event;
     sf::Keyboard key;
@@ -50,6 +55,7 @@ int main()
     float zoom_level = 0.25;
 
     history<vec2f> mouse_clicks;
+    history<vec2f> mouse_rclicks;
 
     sf::Clock clk;
 
@@ -92,6 +98,13 @@ int main()
         if(once<sf::Mouse::Left>())
         {
             mouse_clicks.push_back(mouse_pos);
+            mouse_rclicks.clear();
+        }
+
+        if(once<sf::Mouse::Right>())
+        {
+            mouse_rclicks.push_back(mouse_pos);
+            mouse_clicks.clear();
         }
 
         if(mouse_clicks.size() == 2)
@@ -99,9 +112,25 @@ int main()
             vec2f m1 = mouse_clicks.get(0);
             vec2f m2 = mouse_clicks.get(1);
 
+            m1 = round_to_multiple(m1, 5);
+            m2 = round_to_multiple(m2, 5);
+
             mouse_clicks.clear();
 
             build->add_wall(st, m2, m1);
+        }
+
+        if(mouse_rclicks.size() == 2)
+        {
+            vec2f m1 = mouse_rclicks.get(0);
+            vec2f m2 = mouse_rclicks.get(1);
+
+            m1 = round_to_multiple(m1, 5);
+            m2 = round_to_multiple(m2, 5);
+
+            mouse_rclicks.clear();
+
+            stuff.push_back(new door(m1, m2, 2000.f));
         }
 
         float dt = clk.getElapsedTime().asMicroseconds() / 1000.f;
@@ -110,7 +139,14 @@ int main()
         for(auto& i : stuff)
             i->tick(st, dt);
 
-        mydoor.tick(st, dt);
+        vec2f rounded_mouse_pos = round_to_multiple(mouse_pos, 5);
+
+        shape.setPosition(rounded_mouse_pos.v[0], rounded_mouse_pos.v[1]);
+        win.draw(shape);
+
+        play->tick(st, dt);
+
+        //mydoor.tick(st, dt);
 
         //open.tick(dt);
 
