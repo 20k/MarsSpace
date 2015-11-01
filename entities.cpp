@@ -27,6 +27,8 @@ void player::tick(state& s, float dt)
     float cur_speed = speed.get_speed() * dt * 2; ///temporary hack until i get my shit together
 
     position = mover.tick(s, position, key_dir, cur_speed);
+
+    //display.tick(s, position, position + (vec2f){10.f, -10.f});
 }
 
 ///we need to set_active the player when loading

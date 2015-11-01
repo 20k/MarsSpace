@@ -5,6 +5,7 @@
 #include <vec/vec.hpp>
 #include <vector>
 #include <memory>
+#include "air.hpp"
 
 ///this project is an experiment in completely modularising all functionality
 ///into very tiny components, then embedding them into entities
@@ -26,7 +27,9 @@ struct state
 
     sf::Texture planet_tex;
 
-    state(sf::RenderWindow* _win, sf::Texture&);
+    air_processor* air_process = nullptr;
+
+    state(sf::RenderWindow* _win, sf::Texture&, air_processor&);
 };
 
 struct renderable_file
@@ -160,6 +163,30 @@ struct saver
 {
     void save_to_file(const std::string& fname, const std::vector<entity*> stuff);
     std::vector<entity*> load_from_file(const std::string& fname, state& s);
+};
+
+struct text
+{
+    std::string str;
+    vec2f tl;
+
+    ///need to load then render really
+    void render(state& s, const std::string& _str, vec2f _tl, int size = 16);
+};
+
+struct air_monitor
+{
+    vec<air::COUNT, float> get_air_fractions(state& s, vec2f pos);
+
+    float get_air_pressure(state& s, vec2f pos);
+};
+
+struct air_displayer
+{
+    text txt;
+    air_monitor air_quality;
+
+    void tick(state& s, vec2f pos, vec2f display_pos);
 };
 
 #endif // COMPONENTS_H_INCLUDED

@@ -5,12 +5,14 @@
 
 uint32_t movement_blocker::gid = 0;
 
-state::state(sf::RenderWindow* _win, sf::Texture& tex)
+state::state(sf::RenderWindow* _win, sf::Texture& tex, air_processor& _air)
 {
     win = _win;
     planet_tex = tex;
 
     current_player = nullptr;
+
+    air_process = &_air;
 }
 
 void renderable_file::load(const std::string& name)
@@ -473,4 +475,58 @@ std::vector<entity*> saver::load_from_file(const std::string& fname, state& s)
     }
 
     return entities;
+}
+
+void text::render(state& s, const std::string& _str, vec2f _tl, int size)
+{
+    str = _str;
+    tl = _tl;
+
+    static bool loaded = false;
+
+    static sf::Font font;
+    static sf::Text txt;
+
+    if(!loaded)
+    {
+        font.loadFromFile("./VeraMono.ttf");
+        txt.setFont(font);
+        loaded = true;
+    }
+
+    //sf::Text txt(str, font, size);
+    txt.setString(str);
+    txt.setPosition(tl.v[0], tl.v[1]);
+    txt.setScale(0.1f, 0.1f);
+
+    s.win->draw(txt);
+}
+
+vec<air::COUNT, float> air_monitor::get_air_fractions(state& s, vec2f pos)
+{
+    auto vec = s.air_process->get(pos.v[0], pos.v[1]);
+
+    return vec.norm();
+}
+
+float air_monitor::get_air_pressure(state& s, vec2f pos)
+{
+    return s.air_process->get(pos.v[0], pos.v[1]).length();
+}
+
+void air_displayer::tick(state& s, vec2f pos, vec2f display_pos)
+{
+    auto air_fracs = air_quality.get_air_fractions(s, pos);
+    float air_pressure = air_quality.get_air_pressure(s, pos);
+
+    std::string display;
+
+    for(int i=0; i<air::COUNT; i++)
+    {
+        display = display + air::names[i] + ": " + std::to_string(air_fracs.v[i]) + "%" + "\n";
+    }
+
+    display = display + "PRESSURE: " + std::to_string(air_pressure);
+
+    txt.render(s, display, display_pos, 16);
 }

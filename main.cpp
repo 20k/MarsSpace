@@ -27,13 +27,13 @@ int main()
     planet_gen gen;
     auto tex = gen.get_tex(gen_width, gen_height);
 
-    air_processor air_process;
-    air_process.load(gen_width, gen_height);
-
     sf::Sprite spr;
     spr.setTexture(tex);
 
-    state st(&win, tex);
+    air_processor air_process;
+    air_process.load(gen_width, gen_height);
+
+    state st(&win, tex, air_process);
 
     player* play = new player("res/character.png");
 

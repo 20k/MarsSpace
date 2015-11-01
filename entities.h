@@ -42,6 +42,7 @@ struct player : entity
     moveable mover;
     keyboard_controller key;
     speed_handler speed;
+    air_displayer display;
 
     player(const std::string& fname);
     player(byte_fetch& fetch, state& s);
