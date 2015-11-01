@@ -35,10 +35,10 @@ struct air_processor
 
         ///this seems idiotic, but it runs 2ms faster
         ///I'm not going to argue with that
-        /*for(int i=0; i<width*height; i++)
+        for(int i=0; i<width*height; i++)
         {
-            //buf[i] = 0.0001f;
-        }*/
+            buf[i] = 0.00001f;
+        }
     }
 
     void add(int x, int y, float amount)
@@ -49,8 +49,38 @@ struct air_processor
         buf[y*width + x] += amount;
     }
 
-    void tick(float dt)
+    ///it is wildly inefficient to do this per frame
+    void draw_lines(state& s)
     {
+        for(auto& b : s.blockers)
+        {
+            vec2f start = b->start;
+            vec2f finish = b->finish;
+
+            vec2f dir = (finish - start);
+            float dist = dir.largest_elem();
+
+            dir = dir / dist;
+
+            int num = dist;
+            int n = 0;
+
+            for(vec2f pos = start; n <= num; pos = pos + dir, n++)
+            {
+                if(pos.v[0] < 0 || pos.v[0] >= width || pos.v[1] < 0 || pos.v[1] >= height)
+                    continue;
+
+                vec2f r_pos = round(pos);
+
+                buf[(int)r_pos.v[1] * width + (int)r_pos.v[0]] = -1.f;
+            }
+        }
+    }
+
+    void tick(state& s, float dt)
+    {
+        draw_lines(s);
+
         for(int y=0; y<height; y++)
         {
             for(int x=0; x<width; x++)
@@ -63,17 +93,45 @@ struct air_processor
                     continue;
                 }
 
-                float v1, v2, v3, v4;
-                v1 = buf[y*width + x + 1];
-                v2 = buf[y*width + x - 1];
-                v3 = buf[(y+1)*width + x];
-                v4 = buf[(y-1)*width + x];
+                float my_val = buf[y*width + x];
 
-                float total = v1 + v2 + v3 + v4;
+                ///using this as a blocked flag
+                if(my_val < 0)
+                    continue;
 
-                float diffusion_constant = 5.f;
+                vec<4, float> vals = {
+                    buf[y*width + x + 1],
+                    buf[y*width + x - 1],
+                    buf[(y+1)*width + x],
+                    buf[(y-1)*width + x]
+                };
 
-                float fin = (diffusion_constant * buf[y*width + x] + total) / (4.f + diffusion_constant);
+                ///I'm the last person to ever touch this pixel
+                ///and therefore it is safe for me to reset it if its set to blocked
+                if(buf[(y-1)*width + x] < 0)
+                {
+                    buf[(y-1)*width + x] = 0;
+                }
+
+                //vals = max(vals, 0.f);
+
+                //float total = vals.sum();
+
+                float total = 0;
+                int num = 0;
+
+                for(int i=0; i<4; i++)
+                {
+                    if(vals.v[i] >= 0)
+                    {
+                        total += vals.v[i];
+                        ++num;
+                    }
+                }
+
+                float diffusion_constant = 1.f;
+
+                float fin = (diffusion_constant * my_val + total) / (num + diffusion_constant);
 
                 buf[y*width + x] = fin;
             }
@@ -104,6 +162,7 @@ struct air_processor
         tex.loadFromImage(img);
 
         sf::Sprite spr;
+        spr.setPosition(-0.5, -0.5);
         spr.setTexture(tex);
 
         s.win->draw(spr, rs);

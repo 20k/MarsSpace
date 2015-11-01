@@ -43,6 +43,7 @@ int main()
     std::vector<entity*> stuff;
     stuff.push_back(new planet(tex));
     stuff.push_back(build);
+    stuff.push_back(play);
 
     play->position = (vec2f){gen_width/2.f - 5, gen_height/2.f};
     play->set_active_player(st);
@@ -125,6 +126,8 @@ int main()
         {
             stuff = save.load_from_file("save.txt", st);
             stuff.push_back(build);
+
+            play = dynamic_cast<player*>(st.current_player);
         }
 
         if(mouse.isButtonPressed(sf::Mouse::Middle))
@@ -157,14 +160,14 @@ int main()
 
             mouse_rclicks.clear();
 
-            stuff.push_back(new door(m1, m2, 2000.f));
+            stuff.push_back(new door(m2, m1, 2000.f));
         }
 
 
         float dt = clk.getElapsedTime().asMicroseconds() / 1000.f;
         clk.restart();
 
-        air_process.tick(dt);
+        air_process.tick(st, dt);
 
         for(auto& i : stuff)
         {
@@ -176,7 +179,7 @@ int main()
         shape.setPosition(rounded_mouse_pos.v[0], rounded_mouse_pos.v[1]);
         win.draw(shape);
 
-        play->tick(st, dt);
+        //play->tick(st, dt);
 
         air_process.draw(st);
 

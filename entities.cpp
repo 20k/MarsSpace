@@ -22,9 +22,9 @@ void player::tick(state& s, float dt)
 {
     file.tick(s, position);
 
-    vec2f key_dir = key.tick(dt).norm();
+    vec2f key_dir = key.tick(1.f).norm();
 
-    float cur_speed = speed.get_speed();
+    float cur_speed = speed.get_speed() * dt;
 
     position = mover.tick(s, position, key_dir, cur_speed);
 }
