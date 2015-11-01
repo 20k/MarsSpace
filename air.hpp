@@ -62,6 +62,9 @@ struct air_processor
     void draw(state& s);
 
     vec<N, float> get(float x, float y);
+
+    void save_to_file(const std::string& fname);
+    void load_from_file(const std::string& fname);
 };
 
 #endif // AIR_HPP_INCLUDED

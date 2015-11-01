@@ -422,6 +422,8 @@ void saver::save_to_file(const std::string& fname, const std::vector<entity*> st
         if(ptr.size() > 0)
             fwrite(&ptr[0], ptr.size(), 1, pFile);
     }
+
+    fclose(pFile);
 }
 
 std::vector<entity*> saver::load_from_file(const std::string& fname, state& s)

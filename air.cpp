@@ -1,5 +1,6 @@
 #include "air.hpp"
 #include "components.h"
+#include <fstream>
 
 ///I'm going to do this the inefficient way :[
 ///intially assume the surface of mars is a vacuum
@@ -237,4 +238,28 @@ vec<air_processor::N, float> air_processor::get(float x, float y)
     }
 
     return buf[(int)y*width + (int)x];
+}
+
+void air_processor::save_to_file(const std::string& fname)
+{
+    FILE* pFile = fopen(fname.c_str(), "wb");
+
+    fwrite(buf, sizeof(vec<air::COUNT, float>) * width * height, 1, pFile);
+
+    fclose(pFile);
+}
+
+void air_processor::load_from_file(const std::string& fname)
+{
+    char* ptr = (char*)buf;
+
+    std::ifstream in(fname, std::ios::in | std::ios::binary);
+    if (in)
+    {
+        in.seekg(0, std::ios::end);
+        int size = in.tellg();
+        in.seekg(0, std::ios::beg);
+        in.read(ptr, size);
+        in.close();
+    }
 }

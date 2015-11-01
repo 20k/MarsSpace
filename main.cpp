@@ -119,6 +119,8 @@ int main()
             auto vec = stuff;
 
             save.save_to_file("save.txt", vec);
+
+            st.air_process->save_to_file("atmo.txt");
         }
 
         if(once<sf::Keyboard::N>())
@@ -126,6 +128,8 @@ int main()
             stuff = save.load_from_file("save.txt", st);
             build->walls.clear();
             stuff.push_back(build);
+
+            st.air_process->load_from_file("atmo.txt");
 
             play = dynamic_cast<player*>(st.current_player);
         }
