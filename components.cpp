@@ -576,12 +576,12 @@ void air_displayer::tick(state& s, vec2f display_pos, const vec<air::COUNT, floa
         txt.render(s, display, display_pos, 16, absolute); ///bad
 }
 
-void environmental_gas_emitter::emit(state& s, vec2f pos, float amount, air::air type)
+void environmental_gas_emitter::emit(state& s, vec2f pos, float amount, air_t type)
 {
     s.air_process->add(pos.v[0], pos.v[1], amount, type);
 }
 
-float environmental_gas_absorber::absorb(state& s, vec2f pos, float amount, air::air type)
+float environmental_gas_absorber::absorb(state& s, vec2f pos, float amount, air_t type)
 {
     return s.air_process->take(pos.v[0], pos.v[1], amount, type);
 }
@@ -636,7 +636,7 @@ void air_environment::emit_all(state& s, vec2f pos, float amount)
     local_environment = local_environment - to_emit;
 }
 
-void air_environment::convert_percentage(float amount, float fraction, air::air input, air::air output)
+void air_environment::convert_percentage(float amount, float fraction, air_t input, air_t output)
 {
     float in = local_environment.v[input];
 
@@ -651,7 +651,7 @@ void air_environment::convert_percentage(float amount, float fraction, air::air 
     local_environment.v[input] -= converted;
 }
 
-/*bool air_environment::convert_absolute(float amount, float convert_amount, air::air input, air::air output)
+/*bool air_environment::convert_absolute(float amount, float convert_amount, air_t input, air_t output)
 {
     float in = local_environment.v[input];
 
@@ -664,7 +664,7 @@ void air_environment::convert_percentage(float amount, float fraction, air::air 
     local_environment.v[input] -= convert_amount;
 }*/
 
-/*air_environment::absorb(state& s, vec2f pos, float amount, float maximum, air::air type)
+/*air_environment::absorb(state& s, vec2f pos, float amount, float maximum, air_t type)
 {
     float cur = local_environment.v[type];
 
@@ -678,7 +678,7 @@ void air_environment::convert_percentage(float amount, float fraction, air::air 
     local_environment.v[type] = std::min(local_environment.v[type], maximum);
 }
 
-void air_environment::emit(state& s, vec2f pos, float amount, air::air type)
+void air_environment::emit(state& s, vec2f pos, float amount, air_t type)
 {
     float old = local_environment.v[type];
 
@@ -718,4 +718,104 @@ void breather::tick(state& s, vec2f position, float dt)
     display.tick(s, (vec2f){20.f, 200.f}, lungs.local_environment, true);
 
     lungs.emit_all(s, position, 2.f);
+}
+
+resource_converter::resource_converter()
+{
+    for(int i=0; i<resource::RES_COUNT; i++)
+    {
+        local_storage.v[i] = 0;
+        max_storage.v[i] = 0;
+
+        conversion_usage_ratio.v[i] = 0;
+        conversion_output_ratio.v[i] = 0;
+    }
+}
+
+void resource_converter::set_max_storage(const std::vector<std::pair<resource_t, float>>& lv)
+{
+    for(auto& i : lv)
+    {
+        max_storage.v[i.first] = i.second;
+    }
+}
+
+void resource_converter::set_usage_ratio(const std::vector<std::pair<resource_t, float>>& lv)
+{
+    for(auto& i : lv)
+    {
+        conversion_usage_ratio.v[i.first] = i.second;
+    }
+
+    conversion_usage_ratio = conversion_usage_ratio / conversion_usage_ratio.sum();
+}
+
+void resource_converter::set_output_ratio(const std::vector<std::pair<resource_t, float>>& lv)
+{
+    for(auto& i : lv)
+    {
+        conversion_output_ratio.v[i.first] = i.second;
+    }
+
+    conversion_output_ratio = conversion_output_ratio / conversion_output_ratio.sum();
+}
+
+void resource_converter::add(const std::vector<std::pair<resource_t, float>>& lv)
+{
+    for(auto& i : lv)
+    {
+        local_storage.v[i.first] += i.second;
+    }
+
+    vec<resource::RES_COUNT, float> minimum;
+    minimum = 0.f;
+
+    local_storage = clamp(local_storage, minimum, max_storage);
+}
+
+vec<resource::RES_COUNT, float> resource_converter::take(const std::vector<std::pair<resource_t, float>>& lv)
+{
+    auto old = local_storage;
+
+    for(auto& i : lv)
+    {
+        local_storage.v[i.first] -= i.second;
+    }
+
+    vec<resource::RES_COUNT, float> minimum;
+    minimum = 0.f;
+
+    local_storage = clamp(local_storage, minimum, max_storage);
+
+    return old - local_storage;
+}
+
+void resource_converter::convert(float amount, float dt, float efficiency)
+{
+    auto max_available = local_storage;
+
+    auto to_convert = conversion_usage_ratio * amount * dt;
+
+    vec<resource::RES_COUNT, float> minimum;
+    minimum = 0.f;
+
+    auto after_remove = max_available - to_convert;
+
+    after_remove = clamp(after_remove, minimum, max_storage);
+
+    to_convert = max_available - after_remove;
+
+    ///how much we actually converted
+    float frac_converted = to_convert.sum() / amount;
+
+    ///no inputs, must be a free generator
+    if(conversion_usage_ratio.sum() == 0)
+        frac_converted = dt * efficiency;
+
+    auto amount_produced = frac_converted * amount * efficiency * conversion_output_ratio;
+
+    local_storage = local_storage - to_convert;
+    local_storage = local_storage + amount_produced;
+
+    local_storage = clamp(local_storage, minimum, max_storage);
 }

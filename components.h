@@ -194,7 +194,7 @@ struct air_displayer
 
 struct environmental_gas_emitter
 {
-    void emit(state& s, vec2f pos, float amount, air::air type);
+    void emit(state& s, vec2f pos, float amount, air_t type);
 };
 
 ///we want to change this later so that the absorption rate is dependent on the amount left
@@ -206,7 +206,7 @@ struct environmental_gas_emitter
 ///then ignore t
 struct environmental_gas_absorber
 {
-    float absorb(state& s, vec2f pos, float amount, air::air type);
+    float absorb(state& s, vec2f pos, float amount, air_t type);
 };
 
 ///we want a maximum of all gas?
@@ -226,11 +226,11 @@ struct air_environment
 
     ///assumes a perfect conversion
     ///can obvs make this lossy later
-    void convert_percentage(float amount, float fraction, air::air input, air::air output);
-    bool convert_amount(float amount, float fraction, air::air input, air::air output);
+    void convert_percentage(float amount, float fraction, air_t input, air_t output);
+    bool convert_amount(float amount, float fraction, air_t input, air_t output);
 
-    //void absorb(state& s, vec2f pos, float amount, float maximum, air::air type);
-    //void emit(state& s, vec2f pos, float amount, air::air type);
+    //void absorb(state& s, vec2f pos, float amount, float maximum, air_t type);
+    //void emit(state& s, vec2f pos, float amount, air_t type);
 
     air_environment();
 };
@@ -243,5 +243,53 @@ struct breather
 
     void tick(state& s, vec2f pos, float dt);
 };
+
+/*namespace resource
+{
+    enum resource : uint32_t
+    {
+
+    };
+}
+
+struct rs
+{
+
+};*/
+
+
+
+struct resource_network
+{
+
+};
+
+///for one resource or?
+struct resource_converter
+{
+    std::vector<resource_network*> connectors;
+
+    vec<resource::RES_COUNT, float> local_storage;
+    vec<resource::RES_COUNT, float> max_storage;
+
+    ///eg oxygen:1, c02:1
+    vec<resource::RES_COUNT, float> conversion_usage_ratio;
+    ///eg oxygen:2
+    vec<resource::RES_COUNT, float> conversion_output_ratio;
+
+    ///the above two examples combined would convert 1 o2 + 1c02 -> 202 (rubbish but)
+
+    void set_max_storage(const std::vector<std::pair<resource_t, float>>& vec);
+    void set_usage_ratio(const std::vector<std::pair<resource_t, float>>& vec);
+    void set_output_ratio(const std::vector<std::pair<resource_t, float>>& vec);
+
+    void                            add(const std::vector<std::pair<resource_t, float>>& vec);
+    vec<resource::RES_COUNT, float> take(const std::vector<std::pair<resource_t, float>>& vec);
+
+    void convert(float amount, float dt, float efficiency);
+
+    resource_converter();
+};
+
 
 #endif // COMPONENTS_H_INCLUDED

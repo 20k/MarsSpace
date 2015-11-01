@@ -6,6 +6,8 @@
 ///intially assume the surface of mars is a vacuum
 ///but later we'll want to model the actual crap
 
+vec<air::COUNT, float> air_processor::martian_atmosphere = get_martian_atmosphere();
+
 void air_processor::load(int _width, int _height)
 {
     width = _width;
@@ -17,13 +19,11 @@ void air_processor::load(int _width, int _height)
     ///I'm not going to argue with that
     for(int i=0; i<width*height; i++)
     {
-        for(auto& k : buf[i].v)
-            k = 0.00001f;
-        //buf[i] = 0.00001f;
+        buf[i] = martian_atmosphere;
     }
 }
 
-void air_processor::add(int x, int y, float amount, air::air type)
+void air_processor::add(int x, int y, float amount, air_t type)
 {
     if(x < 0 || y < 0 || x >= width || y >= width)
         return;
@@ -32,7 +32,7 @@ void air_processor::add(int x, int y, float amount, air::air type)
     buf[y*width + x].v[type] = std::max(buf[y*width + x].v[type], 0.f);
 }
 
-float air_processor::take(int x, int y, float amount, air::air type)
+float air_processor::take(int x, int y, float amount, air_t type)
 {
     if(x < 0 || y < 0 || x >= width || y >= width)
         return 0.f;
@@ -81,6 +81,7 @@ void air_processor::add_volume(int x, int y, const vec<air_processor::N, float>&
 }
 
 ///it is wildly inefficient to do this per frame
+///doors closing will currently destroy atmosphere
 void air_processor::draw_lines(state& s)
 {
     for(auto& b : s.blockers)
@@ -124,7 +125,7 @@ void air_processor::tick(state& s, float dt)
             ///its just a vacuum
             if(x == 0 || x == width-1 || y == 0 || y == height-1)
             {
-                buf[y*width + x] = 0;
+                buf[y*width + x] = martian_atmosphere;
                 continue;
             }
 

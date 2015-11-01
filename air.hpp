@@ -6,7 +6,9 @@
 namespace air
 {
     ///we could include argon, but its basically the same as nitrogen
-    enum air : uint8_t
+    ///we're going to have to model temperature sooner or later
+    ///modelling it as a gas would probably work just fine
+    enum resource : uint8_t
     {
         HYDROGEN = 0,
         NITROGEN,
@@ -14,8 +16,13 @@ namespace air
         C02,
         WATER,
         TOXIC,
-        COUNT
+        POWER
     };
+
+    ///this is how many air types there are, ie we go from hydrogen to toxic
+    ///but they're all resources
+    static constexpr uint8_t COUNT = TOXIC + 1;
+    static constexpr uint8_t RES_COUNT = POWER + 1;
 
     static std::vector<std::string> names
     {
@@ -25,8 +32,32 @@ namespace air
         "CARBON DIOXIDE",
         "WATER",
         "TOXIC",
-        "ERROR"
+        "POWER"
     };
+}
+
+typedef air::resource air_t;
+typedef air::resource resource_t;
+
+typedef vec<air::RES_COUNT, float> vecrf;
+
+namespace resource = air;
+
+inline
+vec<air::COUNT, float> get_martian_atmosphere()
+{
+    vec<air::COUNT, float> ret = (vec<air::COUNT, float>){
+        0,
+        2.7 + 1.6, ///might as well model argon as nitrogen
+        0.13,
+        95.32,
+        0.01,
+        0
+    };
+
+    ret = ret * 1.f / (100.f * 100);
+
+    return ret;
 }
 
 struct state;
@@ -38,6 +69,11 @@ struct air_processor
 {
     static constexpr int N = air::COUNT;
 
+    static vec<N, float> martian_atmosphere;// = martian_atmosphere();
+
+
+    ///from percentage to 1, then 1 atmosphere -> 0.01
+
     vec<N, float>* buf;
     int width, height;
 
@@ -46,8 +82,8 @@ struct air_processor
     ///do a float version of the below that does backwards bilinear interpolation
     ///on the value
     ///so that its smooth as something very smooth
-    void add(int x, int y, float amount, air::air type);
-    float take(int x, int y, float amount, air::air type);
+    void add(int x, int y, float amount, air_t type);
+    float take(int x, int y, float amount, air_t type);
 
     vec<N, float> take_volume(int x, int y, float amount);
     void add_volume(int x, int y, const vec<N, float>& amount);

@@ -74,6 +74,16 @@ int main()
 
     mouse_fetcher m_fetch;
 
+    ///convert 1 hydrogen to 1 power
+    ///with the way I've done this, i'm an idiot
+    ///obvs we want to convert 1 hydrogen to more than 1 power....!!
+    resource_converter convert;
+    convert.set_max_storage({{resource::POWER, 100.f}, {resource::HYDROGEN, 199.f}});
+    convert.set_usage_ratio({{resource::HYDROGEN, 1.f}});
+    convert.set_output_ratio({{resource::POWER, 1.f}});
+
+    convert.add({{resource::HYDROGEN, 10.f}});
+
     while(win.isOpen())
     {
         while(win.pollEvent(Event))
@@ -134,18 +144,25 @@ int main()
             play = dynamic_cast<player*>(st.current_player);
         }
 
-        if(mouse.isButtonPressed(sf::Mouse::Middle))
+        if(key.isKeyPressed(sf::Keyboard::Num1))
+        {
+            vec2f local_pos = m_fetch.get_world(st);
+
+            air_process.add(local_pos.v[0], local_pos.v[1], 1.f, air::NITROGEN);
+        }
+
+        if(key.isKeyPressed(sf::Keyboard::Num2))
         {
             vec2f local_pos = m_fetch.get_world(st);
 
             air_process.add(local_pos.v[0], local_pos.v[1], 1.f, air::OXYGEN);
         }
 
-        if(key.isKeyPressed(sf::Keyboard::Num1))
+        if(key.isKeyPressed(sf::Keyboard::Num3))
         {
             vec2f local_pos = m_fetch.get_world(st);
 
-            air_process.add(local_pos.v[0], local_pos.v[1], 1.f, air::NITROGEN);
+            air_process.add(local_pos.v[0], local_pos.v[1], 1.f, air::C02);
         }
 
         if(mouse_clicks.size() == 2)
@@ -184,6 +201,10 @@ int main()
         {
             i->tick(st, dt);
         }
+
+        //convert.convert(1.f, dt / 1000.f, 2.f);
+
+        //printf("%f %f\n", convert.local_storage.v[resource::HYDROGEN], convert.local_storage.v[resource::POWER]);
 
         vec2f rounded_mouse_pos = round_to_multiple(mouse_pos, 5);
 
