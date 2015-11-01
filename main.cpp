@@ -125,6 +125,7 @@ int main()
         if(once<sf::Keyboard::N>())
         {
             stuff = save.load_from_file("save.txt", st);
+            build->walls.clear();
             stuff.push_back(build);
 
             play = dynamic_cast<player*>(st.current_player);
@@ -191,7 +192,7 @@ int main()
         win.display();
         win.clear();
 
-        printf("%f\n", dt);
+        //printf("%f\n", dt);
 
         /*sf::Sprite spr2;
         spr2.setTexture(wtex.getTexture());

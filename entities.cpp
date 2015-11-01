@@ -118,7 +118,8 @@ save building::make_save()
 
 door::door(vec2f _start, vec2f _finish, float time_to_open) :
     open(time_to_open),
-    interact((_finish - _start).rot(M_PI/2.f).norm() * 5.f + (_start + _finish)/2.f, 2.f), ///temp
+    i1((_finish - _start).rot(M_PI/2.f).norm() * 5.f + (_start + _finish)/2.f, 2.f), ///temp
+    i2((_finish - _start).rot(-M_PI/2.f).norm() * 5.f + (_start + _finish)/2.f, 2.f), ///temp
     block(_start, _finish)
 {
     fixed_start = _start;
@@ -133,14 +134,15 @@ door::door(door_fudger fudge) : door(fudge.start, fudge.finish, fudge.tto)
 
 void door::tick(state& s, float dt)
 {
-    if(interact.player_has_interacted(s))
+    if(i1.player_has_interacted(s) || i2.player_has_interacted(s))
     {
         open.toggle();
     }
 
     block.tick(s);
     open.tick(dt);
-    interact.tick(s);
+    i1.tick(s);
+    i2.tick(s);
 
     ///solve the door partial open problem later, in the opener class
     float close_frac = 1.f - open.get_open_fraction();

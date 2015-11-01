@@ -83,7 +83,7 @@ void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width
     rect.setFillColor(sf::Color(190, 190, 190));
 
     rect.setOutlineThickness(0.5);
-    rect.setOutlineColor(sf::Color(130,130,130, 200));
+    rect.setOutlineColor(sf::Color(110,110,110, 255));
 
     s.win->draw(rect);
 }

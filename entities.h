@@ -91,7 +91,7 @@ struct door : entity
     squasher squash;
     opener open;
     renderable_rectangle rect;
-    area_interacter interact;
+    area_interacter i1, i2;
     movement_blocker block;
     ///we need a blocker too
 

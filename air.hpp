@@ -129,7 +129,7 @@ struct air_processor
                     }
                 }
 
-                float diffusion_constant = 1.f;
+                float diffusion_constant = 0.1f;
 
                 float fin = (diffusion_constant * my_val + total) / (num + diffusion_constant);
 
