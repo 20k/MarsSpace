@@ -49,6 +49,9 @@ struct air_processor
     void add(int x, int y, float amount, air::air type);
     float take(int x, int y, float amount, air::air type);
 
+    vec<N, float> take_volume(int x, int y, float amount);
+    void add_volume(int x, int y, const vec<N, float>& amount);
+
     ///it is wildly inefficient to do this per frame
     ///or not, we have hardly any actual lines
     void draw_lines(state& s);

@@ -478,7 +478,7 @@ std::vector<entity*> saver::load_from_file(const std::string& fname, state& s)
     return entities;
 }
 
-void text::render(state& s, const std::string& _str, vec2f _tl, int size)
+void text::render(state& s, const std::string& _str, vec2f _tl, int size, bool absolute)
 {
     str = _str;
     tl = _tl;
@@ -495,12 +495,28 @@ void text::render(state& s, const std::string& _str, vec2f _tl, int size)
         loaded = true;
     }
 
+    txt.setCharacterSize(size);
+
     //sf::Text txt(str, font, size);
     txt.setString(str);
     txt.setPosition(tl.v[0], tl.v[1]);
-    txt.setScale(0.1f, 0.1f);
 
-    s.win->draw(txt);
+    ///bad
+    if(!absolute)
+        txt.setScale(0.1f, 0.1f);
+    else
+        txt.setScale(1.f, 1.f);
+
+    if(!absolute)
+        s.win->draw(txt);
+    else
+    {
+        sf::View cur = s.win->getView();
+        sf::View def = s.win->getDefaultView();
+        s.win->setView(def);
+        s.win->draw(txt);
+        s.win->setView(cur);
+    }
 }
 
 vec<air::COUNT, float> air_monitor::get_air_fractions(state& s, vec2f pos)
@@ -522,10 +538,23 @@ float air_monitor::get_air_pressure(state& s, vec2f pos)
     return s.air_process->get(pos.v[0], pos.v[1]).sum();
 }
 
-void air_displayer::tick(state& s, vec2f pos, vec2f display_pos)
+void air_displayer::tick(state& s, vec2f display_pos, const vec<air::COUNT, float>& air_parts, bool absolute)
 {
-    auto air_fracs = air_quality.get_air_fractions(s, pos);
-    float air_pressure = air_quality.get_air_pressure(s, pos);
+    //auto air_fracs = air_quality.get_air_fractions(s, pos);
+    //float air_pressure = air_quality.get_air_pressure(s, pos);
+
+    auto air_fracs = air_parts / air_parts.sum();
+    float air_pressure = air_parts.sum();
+
+    if(air_pressure < 0.00001f || std::isnan(air_pressure))
+    {
+        air_pressure = 0.f;
+
+        for(int i=0; i<air::COUNT; i++)
+        {
+            air_fracs.v[i] = 0.f;
+        }
+    }
 
     std::string display;
 
@@ -534,9 +563,15 @@ void air_displayer::tick(state& s, vec2f pos, vec2f display_pos)
         display = display + air::names[i] + ": " + std::to_string(air_fracs.v[i] * 100.f) + "%" + "\n";
     }
 
-    display = display + "PRESSURE: " + std::to_string(air_pressure);
+    if(air_pressure > 0.f)
+        display = display + "PRESSURE: " + std::to_string(air_pressure);
+    else
+        display = display + "PRESSURE: TOTAL VACUUM";
 
-    txt.render(s, display, display_pos, 16);
+    if(!absolute)
+        txt.render(s, display, display_pos, 16, absolute);
+    else
+        txt.render(s, display, display_pos, 16, absolute); ///bad
 }
 
 void environmental_gas_emitter::emit(state& s, vec2f pos, float amount, air::air type)
@@ -555,21 +590,77 @@ air_environment::air_environment()
         local_environment.v[i] = 0;
 }
 
+///air environment will be the class that can be enclosed
+///so later we'll replace with either pull from the environment, or my parent
+///works out quite well
 void air_environment::absorb_all(state& s, vec2f pos, float amount, float max_total)
 {
-    auto air_parts = monitor.get_air_parts(s, pos);
+    /*auto air_parts = monitor.get_air_parts(s, pos);
     float total_available_air = monitor.get_air_pressure(s, pos);
 
     if(amount < total_available_air)
-        amount = total_available_air;
+        amount = total_available_air;*/
 
     float current_amount = local_environment.sum();
 
-    for(int i=0; i<air::COUNT; i++)
+    if(current_amount + amount > max_total)
     {
-
+        amount = max_total - current_amount;
     }
+
+    if(amount < 0)
+        amount = 0;
+
+    ///so amount is the volume of air to take in
+    ///we simply request volume air from the thing
+
+    local_environment = local_environment + s.air_process->take_volume(pos.v[0], pos.v[1], amount);
 }
+
+///above also applies to this obvs
+void air_environment::emit_all(state& s, vec2f pos, float amount)
+{
+    float my_air = local_environment.sum();
+
+    if(amount >= my_air)
+        amount = my_air;
+
+    auto frac = local_environment / local_environment.sum();
+
+    auto to_emit = frac * amount;
+
+    s.air_process->add_volume(pos.v[0], pos.v[1], to_emit);
+
+    local_environment = local_environment - to_emit;
+}
+
+void air_environment::convert_percentage(float amount, float fraction, air::air input, air::air output)
+{
+    float in = local_environment.v[input];
+
+    float converted = amount * fraction;
+
+    if(converted > in)
+    {
+        converted = in;
+    }
+
+    local_environment.v[output] += converted;
+    local_environment.v[input] -= converted;
+}
+
+/*bool air_environment::convert_absolute(float amount, float convert_amount, air::air input, air::air output)
+{
+    float in = local_environment.v[input];
+
+    if(convert_amount > in)
+    {
+        return false;
+    }
+
+    local_environment.v[output] += convert_amount;
+    local_environment.v[input] -= convert_amount;
+}*/
 
 /*air_environment::absorb(state& s, vec2f pos, float amount, float maximum, air::air type)
 {
@@ -595,3 +686,34 @@ void air_environment::emit(state& s, vec2f pos, float amount, air::air type)
 
     emitter.emit(s, pos, diff, type);
 }*/
+
+///i think this assumes 1x1 square tiles
+void breather::tick(state& s, vec2f position, float dt)
+{
+    ///lets put this into a breathing manager afterwards
+    float breaths_per_minute = 14;
+
+    float breaths_per_second = breaths_per_minute / 60.f;
+
+    float breaths_per_ms = breaths_per_second / 1000.f;
+
+    float ldt = dt * breaths_per_ms;
+
+    ///use this for some sort of hardcore realism mode where it takes 2 real days time.
+    ///or maybe we can just accelerate time?
+    const float volume_per_breath_m3 = 0.0031;
+
+    ///assume 1 is atmospheric pressure
+    ///then model lung volume breathing n stuff
+    lungs.absorb_all(s, position, 1.f * ldt, 1.f);
+    display.tick(s, (vec2f){20.f, 20.f}, lungs.local_environment, true);
+
+    ///0.2f because we've inhaled an ideal 1 atm of air
+    ///0.2% idealls is o2
+    ///0.05 / 0.2 of which is converted to c02 in the ideal case
+    lungs.convert_percentage(0.2f * ldt, 0.05f / 0.20f, air::OXYGEN, air::C02);
+
+    display.tick(s, (vec2f){20.f, 200.f}, lungs.local_environment, true);
+
+    lungs.emit_all(s, position, 2.f);
+}

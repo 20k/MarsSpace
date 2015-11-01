@@ -171,25 +171,25 @@ struct text
     vec2f tl;
 
     ///need to load then render really
-    void render(state& s, const std::string& _str, vec2f _tl, int size = 16);
+    void render(state& s, const std::string& _str, vec2f _tl, int size = 16, bool absolute = false);
 };
 
+///should probably rename this to air_environment_monitor or something
+///it is NOT for local environments
 struct air_monitor
 {
     vec<air::COUNT, float> get_air_fractions(state& s, vec2f pos);
     vec<air::COUNT, float> get_air_parts(state& s, vec2f pos);
 
     float get_air_pressure(state& s, vec2f pos);
-
-
 };
 
 struct air_displayer
 {
     text txt;
-    air_monitor air_quality;
+    //air_monitor air_quality;
 
-    void tick(state& s, vec2f pos, vec2f display_pos);
+    void tick(state& s, vec2f display_pos, const vec<air::COUNT, float>& air_parts, bool absolute = false);
 };
 
 struct environmental_gas_emitter
@@ -214,7 +214,6 @@ struct air_environment
 {
     environmental_gas_absorber absorber;
     environmental_gas_emitter emitter;
-    air_monitor monitor;
 
     vec<air::COUNT, float> local_environment;
 
@@ -223,11 +222,26 @@ struct air_environment
     ///ie breathing to a player
     ///or air -> rover
     void absorb_all(state& s, vec2f pos, float amount, float max_total);
+    void emit_all(state& s, vec2f pos, float amount);
+
+    ///assumes a perfect conversion
+    ///can obvs make this lossy later
+    void convert_percentage(float amount, float fraction, air::air input, air::air output);
+    bool convert_amount(float amount, float fraction, air::air input, air::air output);
 
     //void absorb(state& s, vec2f pos, float amount, float maximum, air::air type);
     //void emit(state& s, vec2f pos, float amount, air::air type);
 
     air_environment();
+};
+
+struct breather
+{
+    air_environment lungs;
+    air_displayer display;
+    air_monitor monitor;
+
+    void tick(state& s, vec2f pos, float dt);
 };
 
 #endif // COMPONENTS_H_INCLUDED

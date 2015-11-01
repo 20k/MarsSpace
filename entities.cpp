@@ -28,7 +28,11 @@ void player::tick(state& s, float dt)
 
     position = mover.tick(s, position, key_dir, cur_speed);
 
-    display.tick(s, position, position + (vec2f){10.f, -10.f});
+    auto air_parts = monitor.get_air_parts(s, position);
+
+    display.tick(s, position + (vec2f){10.f, -10.f}, air_parts);
+
+    breath.tick(s, position, dt);
 }
 
 ///we need to set_active the player when loading

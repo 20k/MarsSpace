@@ -117,7 +117,6 @@ int main()
         if(once<sf::Keyboard::B>())
         {
             auto vec = stuff;
-            vec.push_back(play);
 
             save.save_to_file("save.txt", vec);
         }
@@ -136,6 +135,13 @@ int main()
             vec2f local_pos = m_fetch.get_world(st);
 
             air_process.add(local_pos.v[0], local_pos.v[1], 1.f, air::OXYGEN);
+        }
+
+        if(key.isKeyPressed(sf::Keyboard::Num1))
+        {
+            vec2f local_pos = m_fetch.get_world(st);
+
+            air_process.add(local_pos.v[0], local_pos.v[1], 1.f, air::NITROGEN);
         }
 
         if(mouse_clicks.size() == 2)

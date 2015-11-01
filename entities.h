@@ -42,7 +42,9 @@ struct player : entity
     moveable mover;
     keyboard_controller key;
     speed_handler speed;
-    air_displayer display;
+    air_displayer display; ///generic air unit displayer
+    air_monitor monitor; ///environmental monitor
+    breather breath;
 
     player(const std::string& fname);
     player(byte_fetch& fetch, state& s);

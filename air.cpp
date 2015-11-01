@@ -44,6 +44,41 @@ float air_processor::take(int x, int y, float amount, air::air type)
     return old_amount - buf[y*width + x].v[type];
 }
 
+vec<air_processor::N, float> air_processor::take_volume(int x, int y, float amount)
+{
+    if(x < 0 || y < 0 || x >= width || y >= width || amount <= 0)
+    {
+        vec<N, float> ret;
+        ret = 0.f;
+        return ret;
+    }
+
+    float cur_amount = buf[y*width + x].sum();
+
+    if(amount > cur_amount)
+        amount = cur_amount;
+
+    auto fracs = buf[y*width + x] / cur_amount;
+
+    buf[y*width + x] = buf[y*width + x] - fracs * amount;
+
+    buf[y*width + x] = max(buf[y*width + x], 0.f);
+
+    return fracs * amount;
+}
+
+void air_processor::add_volume(int x, int y, const vec<air_processor::N, float>& amount)
+{
+    if(x < 0 || y < 0 || x >= width || y >= width)
+        return;
+
+    auto vec = amount;
+
+    vec = max(vec, 0.f);
+
+    buf[y*width + x] = buf[y*width + x] + amount;
+}
+
 ///it is wildly inefficient to do this per frame
 void air_processor::draw_lines(state& s)
 {
