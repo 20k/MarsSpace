@@ -790,7 +790,8 @@ vec<resource::RES_COUNT, float> resource_converter::take(const std::vector<std::
     return old - local_storage;
 }
 
-void resource_converter::convert(float amount, float dt, float efficiency)
+///currently if i've run out of one input resource, itll still work
+void resource_converter::convert(float dt)
 {
     auto max_available = local_storage;
 
@@ -818,4 +819,92 @@ void resource_converter::convert(float amount, float dt, float efficiency)
     local_storage = local_storage + amount_produced;
 
     local_storage = clamp(local_storage, minimum, max_storage);
+}
+
+void resource_converter::set_amount(float _amount)
+{
+    amount = _amount;
+}
+
+void resource_converter::set_efficiency(float _efficiency)
+{
+    efficiency = _efficiency;
+}
+
+void resource_network::add(resource_converter* conv)
+{
+    converters.push_back(conv);
+}
+
+///no processing done here
+///only resource distribution
+///distribute equally? or proportionally?
+///in the long term we'll want to set up container priorities
+///we also need to be able to extract from the network
+///proportional is easiest
+void resource_network::tick()
+{
+    if(converters.size() == 0)
+        return;
+
+    //vecrf minimum;
+    //minimum = 0.f;
+
+    vecrf resource_accum;
+    resource_accum = 0.f;
+
+    vecrf total_storage;
+    total_storage = 0.f;
+
+    for(auto& i : converters)
+    {
+        resource_accum = resource_accum + i->local_storage;
+        total_storage = total_storage + i->max_storage;
+    }
+
+    float num = converters.size();
+
+    vecrf avg_per_container = resource_accum / num;
+    vecrf running_missed;
+    running_missed = 0;
+
+    for(auto& c : converters)
+    {
+        auto storage = c->max_storage;
+
+        #ifdef PROP
+
+        vecrf frac_to_store;
+
+        for(int i=0; i<resource::RES_COUNT; i++)
+        {
+            if(storage.v[i] == 0)
+                frac_to_store.v[i] = 0;
+            else
+            {
+                ///give me storage relative to the overall storage
+                frac_to_store.v[i] = storage.v[i] / total_storage.v[i];
+            }
+        }
+
+        auto local_frac = resource_accum * frac_to_store;
+
+        c->local_storage = local_frac;
+
+        #endif
+
+        auto local = c->local_storage;
+
+        auto fill_amount = avg_per_container + running_missed;
+
+        auto new_local = min(fill_amount, storage);
+
+        auto change = new_local - local;
+
+        auto extra = avg_per_container - change;
+
+        //running_missed = running_missed + extra;
+
+        c->local_storage = new_local;
+    }
 }

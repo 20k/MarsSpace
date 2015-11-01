@@ -244,31 +244,9 @@ struct breather
     void tick(state& s, vec2f pos, float dt);
 };
 
-/*namespace resource
-{
-    enum resource : uint32_t
-    {
-
-    };
-}
-
-struct rs
-{
-
-};*/
-
-
-
-struct resource_network
-{
-
-};
-
 ///for one resource or?
 struct resource_converter
 {
-    std::vector<resource_network*> connectors;
-
     vec<resource::RES_COUNT, float> local_storage;
     vec<resource::RES_COUNT, float> max_storage;
 
@@ -277,18 +255,35 @@ struct resource_converter
     ///eg oxygen:2
     vec<resource::RES_COUNT, float> conversion_output_ratio;
 
+    float amount = 0;
+    float efficiency = 0;
+
     ///the above two examples combined would convert 1 o2 + 1c02 -> 202 (rubbish but)
 
     void set_max_storage(const std::vector<std::pair<resource_t, float>>& vec);
     void set_usage_ratio(const std::vector<std::pair<resource_t, float>>& vec);
     void set_output_ratio(const std::vector<std::pair<resource_t, float>>& vec);
 
+    ///maybe constructor me
+    void set_amount(float amount);
+    void set_efficiency(float efficiency);
+
     void                            add(const std::vector<std::pair<resource_t, float>>& vec);
     vec<resource::RES_COUNT, float> take(const std::vector<std::pair<resource_t, float>>& vec);
 
-    void convert(float amount, float dt, float efficiency);
+    void convert(float dt);
 
     resource_converter();
+};
+
+///maybe allow resource networks to connect to other resource networks, and then can recurse
+struct resource_network
+{
+    std::vector<resource_converter*> converters;
+
+    void add(resource_converter* conv);
+
+    void tick();
 };
 
 
