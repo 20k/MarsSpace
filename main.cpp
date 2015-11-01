@@ -40,6 +40,8 @@ int main()
     building* build = new building;
     //build->add_wall({0.f, 0.f}, {255.f, 255.f});
 
+    resource_network default_network;
+
     std::vector<entity*> stuff;
     stuff.push_back(new planet(tex));
     stuff.push_back(build);
@@ -77,7 +79,7 @@ int main()
     ///convert 1 hydrogen to 1 power
     ///with the way I've done this, i'm an idiot
     ///obvs we want to convert 1 hydrogen to more than 1 power....!!
-    resource_converter convert;
+    /*resource_converter convert;
     convert.set_max_storage({{resource::POWER, 100.f}, {resource::HYDROGEN, 1.f}});
     convert.set_usage_ratio({{resource::HYDROGEN, 1.f}});
     convert.set_output_ratio({{resource::POWER, 1.f}});
@@ -95,7 +97,7 @@ int main()
 
     resource_network net;
     net.add(&convert);
-    net.add(&c2);
+    net.add(&c2);*/
 
     while(win.isOpen())
     {
@@ -201,11 +203,11 @@ int main()
 
             mouse_rclicks.clear();
 
-            stuff.push_back(new door(m2, m1, 2000.f));
+            stuff.push_back(new door(m2, m1, 2.f));
         }
 
 
-        float dt = clk.getElapsedTime().asMicroseconds() / 1000.f;
+        float dt = (clk.getElapsedTime().asMicroseconds() / 1000.f) / 1000.f;
         clk.restart();
 
         air_process.tick(st, dt);
@@ -217,9 +219,9 @@ int main()
 
         //convert.convert(dt / 1000.f);
         //c2.convert(dt / 1000.f);
-        printf("1 %f %f\n", convert.local_storage.v[resource::HYDROGEN], convert.local_storage.v[resource::POWER]);
+        /*printf("1 %f %f\n", convert.local_storage.v[resource::HYDROGEN], convert.local_storage.v[resource::POWER]);
         printf("2 %f %f\n\n", c2.local_storage.v[resource::HYDROGEN], c2.local_storage.v[resource::POWER]);
-        net.tick(dt / 1000.f);
+        net.tick(dt / 1000.f);*/
 
         vec2f rounded_mouse_pos = round_to_multiple(mouse_pos, 5);
 

@@ -14,6 +14,7 @@
 
 struct entity;
 struct movement_blocker;
+struct resource_network;
 
 struct state
 {
@@ -255,8 +256,8 @@ struct resource_converter
     ///eg oxygen:2
     vec<resource::RES_COUNT, float> conversion_output_ratio;
 
-    float amount = 0;
-    float efficiency = 0;
+    float amount;
+    float efficiency;
 
     ///the above two examples combined would convert 1 o2 + 1c02 -> 202 (rubbish but)
 

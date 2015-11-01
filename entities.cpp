@@ -10,7 +10,7 @@ player::player(const std::string& fname) : entity()
     file.load(fname);
 
     ///should I define units right off the bat
-    speed.set_speed(0.014f);
+    speed.set_speed(14.f);
 }
 
 void player::set_active_player(state& s)
@@ -192,3 +192,43 @@ save door::make_save()
 
     return {entity_type::DOOR, vec};
 }
+
+resource_entity::resource_entity(resource_network& net)
+{
+    net.add(&conv);
+}
+
+solar_panel::solar_panel(resource_network& net) : resource_entity(net)
+{
+    conv.set_max_storage({{resource::POWER, 0.1f}});
+    conv.set_output_ratio({{resource::POWER, 1.f}});
+    conv.set_amount(900); ///watts
+}
+
+hydrogen_battery::hydrogen_battery(resource_network& net) : resource_entity(net)
+{
+    conv.set_max_storage({{resource::POWER, 9 * 1000 * 1000.f}});
+    //conv.set_input_ratio({{resource::POWER, 1.f});
+    //conv.set_output_ratio({{resource::POWER, 1.f}});
+    //conv.set_amount(1); ///9mw
+}
+
+gas_storage::gas_storage(resource_network& net, air_t type) : resource_entity(net)
+{
+    conv.set_max_storage({{type, 50.f}}); ///litres
+}
+
+
+oxygen_reclaimer::oxygen_reclaimer(resource_network& net) : resource_entity(net)
+{
+    float litres_per_hour = 0.5f;
+    float litres_per_minute = litres_per_hour / 60.f;
+    float litres_ps = litres_per_minute / 60.f;
+    float litres_ms = litres_ps / 1000.f;
+
+    //conv.set_max_storage({{resource::POWER, 9 * 1000 * 1000.f}});
+    conv.set_usage_ratio({{resource::C02, 1.f}});
+    conv.set_output_ratio({{resource::OXYGEN, 1.f}});
+    conv.set_amount(litres_ms); ///per ms
+}
+

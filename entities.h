@@ -110,6 +110,38 @@ struct door : entity
     save make_save() override;
 };
 
+///we need an object that can pull from the environment and insert into the resource network
+
+///define resource entity
+struct resource_entity : entity
+{
+    resource_converter conv;
+
+    resource_entity(resource_network& net);
+};
+
+struct solar_panel : resource_entity
+{
+    solar_panel(resource_network& net);
+};
+
+struct hydrogen_battery : resource_entity
+{
+    hydrogen_battery(resource_network& net);
+};
+
+struct gas_storage : resource_entity
+{
+    gas_storage(resource_network& net, air_t type);
+};
+
+struct oxygen_reclaimer : resource_entity
+{
+    oxygen_reclaimer(resource_network& net);
+};
+
+///later make resource_network a physical hub or something perhaps?
+
 
 /*
 ///we really want a door component first actually

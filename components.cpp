@@ -697,9 +697,9 @@ void breather::tick(state& s, vec2f position, float dt)
 
     float breaths_per_second = breaths_per_minute / 60.f;
 
-    float breaths_per_ms = breaths_per_second / 1000.f;
+    //float breaths_per_ms = breaths_per_second / 1000.f;
 
-    float ldt = dt * breaths_per_ms;
+    float ldt = dt * breaths_per_second;
 
     ///use this for some sort of hardcore realism mode where it takes 2 real days time.
     ///or maybe we can just accelerate time?
@@ -730,6 +730,9 @@ resource_converter::resource_converter()
         conversion_usage_ratio.v[i] = 0;
         conversion_output_ratio.v[i] = 0;
     }
+
+    amount = 0.f;
+    efficiency = 1.f;
 }
 
 void resource_converter::set_max_storage(const std::vector<std::pair<resource_t, float>>& lv)
