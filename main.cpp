@@ -28,7 +28,7 @@ int main()
     auto tex = gen.get_tex(gen_width, gen_height);
 
     air_processor air_process;
-    air_process.load(500, 500);
+    air_process.load(gen_width, gen_height);
 
     sf::Sprite spr;
     spr.setTexture(tex);
@@ -192,7 +192,9 @@ int main()
         win.display();
         win.clear();
 
-        //printf("%f\n", dt);
+        printf("%f\n", dt);
+
+        //sf::sleep(sf::microseconds(100000.f));
 
         /*sf::Sprite spr2;
         spr2.setTexture(wtex.getTexture());

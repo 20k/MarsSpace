@@ -24,7 +24,7 @@ void player::tick(state& s, float dt)
 
     vec2f key_dir = key.tick(1.f).norm();
 
-    float cur_speed = speed.get_speed() * dt;
+    float cur_speed = speed.get_speed() * dt * 2; ///temporary hack until i get my shit together
 
     position = mover.tick(s, position, key_dir, cur_speed);
 }

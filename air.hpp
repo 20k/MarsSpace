@@ -14,7 +14,8 @@ namespace air
         OXYGEN,
         C02,
         WATER,
-        TOXIC
+        TOXIC,
+        COUNT
     };
 }
 
@@ -23,7 +24,8 @@ namespace air
 ///but later we'll want to model the actual crap
 struct air_processor
 {
-    float* buf;
+    static constexpr int N = air::COUNT;
+    vec<N, float>* buf;
     int width, height;
 
     void load(int _width, int _height)
@@ -31,13 +33,15 @@ struct air_processor
         width = _width;
         height = _height;
 
-        buf = new float[width*height]();
+        buf = new vec<N, float>[width*height];
 
         ///this seems idiotic, but it runs 2ms faster
         ///I'm not going to argue with that
         for(int i=0; i<width*height; i++)
         {
-            buf[i] = 0.00001f;
+            for(auto& k : buf[i].v)
+                k = 0.00001f;
+            //buf[i] = 0.00001f;
         }
     }
 
@@ -46,7 +50,8 @@ struct air_processor
         if(x < 0 || y < 0 || x >= width || y >= width)
             return;
 
-        buf[y*width + x] += amount;
+        for(int i=0; i<N; i++)
+            buf[y*width + x].v[i] += amount;
     }
 
     ///it is wildly inefficient to do this per frame
@@ -72,7 +77,8 @@ struct air_processor
 
                 vec2f r_pos = round(pos);
 
-                buf[(int)r_pos.v[1] * width + (int)r_pos.v[0]] = -1.f;
+                for(int i=0; i<N; i++)
+                    buf[(int)r_pos.v[1] * width + (int)r_pos.v[0]].v[i] = -1.f;
             }
         }
     }
@@ -81,6 +87,7 @@ struct air_processor
     {
         draw_lines(s);
 
+        //for(int k=0; k<5; k++)
         for(int y=0; y<height; y++)
         {
             for(int x=0; x<width; x++)
@@ -93,13 +100,13 @@ struct air_processor
                     continue;
                 }
 
-                float my_val = buf[y*width + x];
+                float my_val = buf[y*width + x].v[0];
 
                 ///using this as a blocked flag
                 if(my_val < 0)
                     continue;
 
-                vec<4, float> vals = {
+                vec<4, vec<N, float>> vals = {
                     buf[y*width + x + 1],
                     buf[y*width + x - 1],
                     buf[(y+1)*width + x],
@@ -108,30 +115,48 @@ struct air_processor
 
                 ///I'm the last person to ever touch this pixel
                 ///and therefore it is safe for me to reset it if its set to blocked
-                if(buf[(y-1)*width + x] < 0)
+                /*if(buf[(y-1)*width + x] < 0)
                 {
                     buf[(y-1)*width + x] = 0;
+                }*/
+
+                for(int i=0; i<N; i++)
+                {
+                    if(buf[(y-1)*width + x].v[i] < 0)
+                        buf[(y-1)*width + x].v[i] = 0;
                 }
 
                 //vals = max(vals, 0.f);
 
                 //float total = vals.sum();
 
-                float total = 0;
-                int num = 0;
+                vec<N, float> total;
+                vec<N, float> nums;
+
+                total = 0.f;
+                nums = 0.f;
 
                 for(int i=0; i<4; i++)
                 {
-                    if(vals.v[i] >= 0)
+                    /*if(vals.v[i] >= 0)
                     {
                         total += vals.v[i];
                         ++num;
+                    }*/
+
+                    for(int j=0; j<N; j++)
+                    {
+                        if(vals.v[i].v[j] >= 0)
+                        {
+                            total.v[j] += vals.v[i].v[j];
+                            nums.v[j]++;
+                        }
                     }
                 }
 
                 float diffusion_constant = 0.1f;
 
-                float fin = (diffusion_constant * my_val + total) / (num + diffusion_constant);
+                vec<N, float> fin = (diffusion_constant * my_val + total) / (nums + diffusion_constant);
 
                 buf[y*width + x] = fin;
             }
@@ -149,12 +174,12 @@ struct air_processor
         {
             for(int x=0; x<width; x++)
             {
-                float val = buf[y*width + x];
+                vec<N, float> val = buf[y*width + x];
                 val = clamp(val, 0.f, 1.f);
 
-                val = val * 255;
+                val = val * 255.f;
 
-                img.setPixel(x, y, sf::Color(val, val, val, 128));
+                img.setPixel(x, y, sf::Color(val.v[0], val.v[0], val.v[1], 128));
             }
         }
 
