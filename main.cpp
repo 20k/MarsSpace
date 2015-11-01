@@ -5,6 +5,7 @@
 #include "entities.h"
 
 #include "misc.h"
+#include "air.hpp"
 
 using namespace std;
 
@@ -13,13 +14,21 @@ int main()
 {
     int width = 1500, height = 800;
 
+    int gen_width = 500;
+    int gen_height = 500;
+
+    float view_ratio = (float)height/width;
+
     sf::RenderWindow win(sf::VideoMode(width, height), "hi");
 
     sf::View view;
-    view.reset(sf::FloatRect(0, 0, width, height));
+    view.reset(sf::FloatRect(0, 0, gen_width, gen_height));
 
     planet_gen gen;
-    auto tex = gen.get_tex(width, height);
+    auto tex = gen.get_tex(gen_width, gen_height);
+
+    air_processor air_process;
+    air_process.load(500, 500);
 
     sf::Sprite spr;
     spr.setTexture(tex);
@@ -35,7 +44,7 @@ int main()
     stuff.push_back(new planet(tex));
     stuff.push_back(build);
 
-    play->position = (vec2f){width/2.f - 5, height/2.f};
+    play->position = (vec2f){gen_width/2.f - 5, gen_height/2.f};
     play->set_active_player(st);
 
     //opener open(2000.f);
@@ -51,7 +60,7 @@ int main()
     sf::Event Event;
     sf::Keyboard key;
 
-    float zoom_level = 0.25;
+    float zoom_level = 0.55;
 
     history<vec2f> mouse_clicks;
     history<vec2f> mouse_rclicks;
@@ -59,6 +68,8 @@ int main()
     saver save;
 
     sf::Clock clk;
+
+    sf::Mouse mouse;
 
     mouse_fetcher m_fetch;
 
@@ -79,7 +90,8 @@ int main()
 
         zoom_level = clamp(zoom_level, 0.01f, 2.f);
 
-        view.reset(sf::FloatRect(0, 0, width, height));
+        view.reset(sf::FloatRect(0, 0, gen_width, gen_width * view_ratio));
+        view.setCenter(gen_width/2.f, gen_height/2.f);
         view.zoom(zoom_level);
 
         win.setView(view);
@@ -115,6 +127,13 @@ int main()
             stuff.push_back(build);
         }
 
+        if(mouse.isButtonPressed(sf::Mouse::Middle))
+        {
+            vec2f local_pos = m_fetch.get_world(st);
+
+            air_process.add(local_pos.v[0], local_pos.v[1], 1.f);
+        }
+
         if(mouse_clicks.size() == 2)
         {
             vec2f m1 = mouse_clicks.get(0);
@@ -141,8 +160,11 @@ int main()
             stuff.push_back(new door(m1, m2, 2000.f));
         }
 
+
         float dt = clk.getElapsedTime().asMicroseconds() / 1000.f;
         clk.restart();
+
+        air_process.tick(dt);
 
         for(auto& i : stuff)
         {
@@ -156,6 +178,8 @@ int main()
 
         play->tick(st, dt);
 
+        air_process.draw(st);
+
         //mydoor.tick(st, dt);
 
         //open.tick(dt);
@@ -163,6 +187,8 @@ int main()
         //win.draw(spr);
         win.display();
         win.clear();
+
+        printf("%f\n", dt);
 
         /*sf::Sprite spr2;
         spr2.setTexture(wtex.getTexture());
