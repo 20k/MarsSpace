@@ -92,6 +92,9 @@ void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width
 
 ///maybe we want a collider that will return a collision and an optional movement vector
 ///then we can use this for cars as well
+///we're no longer using the vector collision system
+///this means that things going too fast can skip throuhg the wall
+///however it has the capacity to be upgraded to handle that, so no major concern
 vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
 {
     if(dist < 0.001f)
@@ -153,105 +156,7 @@ vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
 
             s2 = is_left_side(i->start, i->finish, new_pos);
         }
-
-        /*if(s1 != s2 && dist_to_line_centre <= rad)
-        {
-            if(to_wall.v[0] == 0 && to_wall.v[1] == 0)
-            {
-                to_wall = (position - avg).norm();
-
-                ///this is really very degenerate to the point where I'm not sure its possible
-                ///for the moment just move the player diagonally
-                if(to_wall.v[0] == 0 && to_wall.v[1] == 0)
-                {
-                    to_wall.v[0] = 1;
-                    to_wall.v[1] = 1;
-                }
-            }
-
-            vec2f perp = point2line_shortest(i->start, (i->finish - i->start), position).rot(M_PI/2.f);
-
-            perp = perp.norm();
-            vec2f ndir = dir.norm();
-
-            if(dot(perp, ndir) < 0)
-                perp = -perp;
-
-            vec2f ret_pos = position + perp * dist;
-        }*/
     }
-
-    /*for(auto& i : s.blockers)
-    {
-        ///degenerate
-        if(i->start == i->finish)
-            continue;
-
-        bool s1 = is_left_side(i->start, i->finish, position);
-        bool s2 = is_left_side(i->start, i->finish, new_pos);
-
-        vec2f avg = (i->start + i->finish) / 2.f;
-
-        ///padme?
-        float rad = (i->finish - i->start).length() / 2.f;
-
-        float dist_to_line_centre = (position - avg).length();
-
-
-        ///so my new position is too close, itll clamp the old to the wall
-        vec2f to_wall = point2line_shortest(i->start, (i->finish - i->start), new_pos);
-
-        float dist_to_wall = to_wall.length();
-
-        const float when_to_start_perp = 1.99f;
-        const float pad = 2.f;
-
-        if((s1 != s2 && dist_to_line_centre <= rad) || (dist_to_wall < when_to_start_perp && dist_to_line_centre <= rad))
-        {
-            ///so, we want to get the current vector
-            ///from me to the wall
-            ///and my movement vector dir
-            ///and then cancel out the to the wall component
-
-            ///degenerate case where we exactly intersect the wall line
-            ///and we're right at the endge too
-            ///if we end up teleporting through walls, this is prolly why
-            if(to_wall.v[0] == 0 && to_wall.v[1] == 0)
-            {
-                to_wall = (position - avg).norm();
-
-                ///this is really very degenerate to the point where I'm not sure its possible
-                ///for the moment just move the player diagonally
-                if(to_wall.v[0] == 0 && to_wall.v[1] == 0)
-                {
-                    to_wall.v[0] = 1;
-                    to_wall.v[1] = 1;
-                }
-            }
-
-
-
-            vec2f perp = point2line_shortest(i->start, (i->finish - i->start), position).rot(M_PI/2.f);
-
-            perp = perp.norm();
-            vec2f ndir = dir.norm();
-
-            if(dot(perp, ndir) < 0)
-                perp = -perp;
-
-            vec2f ret_pos = position + perp * dist;
-
-            auto new_to_wall = point2line_shortest(i->start, (i->finish - i->start), ret_pos);
-
-            float new_extra = std::max(pad - new_to_wall.length(), 0.f);
-
-            //return ret_pos - new_to_wall.norm() * new_extra;
-
-            vec2f final_pos = ret_pos - new_to_wall.norm() * new_extra;
-
-            return tick(s, position, final_pos - position, dist/2.f);
-        }
-    }*/
 
     return new_pos;
 }

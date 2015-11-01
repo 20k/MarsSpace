@@ -28,6 +28,7 @@ void air_processor::add(int x, int y, float amount, air::air type)
         return;
 
     buf[y*width + x].v[type] += amount;
+    buf[y*width + x].v[type] = std::max(buf[y*width + x].v[type], 0.f);
 }
 
 ///it is wildly inefficient to do this per frame
