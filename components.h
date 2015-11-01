@@ -271,7 +271,7 @@ struct resource_converter
     void                            add(const std::vector<std::pair<resource_t, float>>& vec);
     vec<resource::RES_COUNT, float> take(const std::vector<std::pair<resource_t, float>>& vec);
 
-    void convert(float dt);
+    void convert(vecrf& global_storage, vecrf& global_max, float dt);
 
     resource_converter();
 };
@@ -283,7 +283,7 @@ struct resource_network
 
     void add(resource_converter* conv);
 
-    void tick();
+    void tick(float dt);
 };
 
 

@@ -791,9 +791,9 @@ vec<resource::RES_COUNT, float> resource_converter::take(const std::vector<std::
 }
 
 ///currently if i've run out of one input resource, itll still work
-void resource_converter::convert(float dt)
+void resource_converter::convert(vecrf& global_storage, vecrf& global_max, float dt)
 {
-    auto max_available = local_storage;
+    auto max_available = global_storage;
 
     auto to_convert = conversion_usage_ratio * amount * dt;
 
@@ -802,7 +802,7 @@ void resource_converter::convert(float dt)
 
     auto after_remove = max_available - to_convert;
 
-    after_remove = clamp(after_remove, minimum, max_storage);
+    after_remove = clamp(after_remove, minimum, global_max);
 
     to_convert = max_available - after_remove;
 
@@ -815,10 +815,10 @@ void resource_converter::convert(float dt)
 
     auto amount_produced = frac_converted * amount * efficiency * conversion_output_ratio;
 
-    local_storage = local_storage - to_convert;
-    local_storage = local_storage + amount_produced;
+    global_storage = global_storage - to_convert;
+    global_storage = global_storage + amount_produced;
 
-    local_storage = clamp(local_storage, minimum, max_storage);
+    global_storage = clamp(global_storage, minimum, global_max);
 }
 
 void resource_converter::set_amount(float _amount)
@@ -842,13 +842,10 @@ void resource_network::add(resource_converter* conv)
 ///in the long term we'll want to set up container priorities
 ///we also need to be able to extract from the network
 ///proportional is easiest
-void resource_network::tick()
+void resource_network::tick(float dt)
 {
     if(converters.size() == 0)
         return;
-
-    //vecrf minimum;
-    //minimum = 0.f;
 
     vecrf resource_accum;
     resource_accum = 0.f;
@@ -862,17 +859,23 @@ void resource_network::tick()
         total_storage = total_storage + i->max_storage;
     }
 
-    float num = converters.size();
+    for(auto& i : converters)
+    {
+        i->convert(resource_accum, total_storage, dt);
+    }
+
+    /*float num = converters.size();
 
     vecrf avg_per_container = resource_accum / num;
     vecrf running_missed;
-    running_missed = 0;
+    running_missed = 0;*/
 
+    ///distribute resources proportionally
+    ///if something is destroyed, we'll lose the
+    ///proportional resources from the network
     for(auto& c : converters)
     {
         auto storage = c->max_storage;
-
-        #ifdef PROP
 
         vecrf frac_to_store;
 
@@ -890,12 +893,35 @@ void resource_network::tick()
         auto local_frac = resource_accum * frac_to_store;
 
         c->local_storage = local_frac;
+    }
 
-        #endif
+
+    /*for(auto& c : converters)
+    {
+        auto storage = c->max_storage;
+
+        //auto local = c->local_storage;
+
+        auto fill_amount = avg_per_container + running_missed;
+
+        auto new_local = min(fill_amount, storage);
+
+        //auto change = new_local - local;
+
+        auto extra = avg_per_container - new_local;
+
+        running_missed = running_missed + extra;
+
+        c->local_storage = new_local;
+    }*/
+
+    /*for(auto& c : converters)
+    {
+        auto storage = c->max_storage;
 
         auto local = c->local_storage;
 
-        auto fill_amount = avg_per_container + running_missed;
+        auto fill_amount = running_missed;
 
         auto new_local = min(fill_amount, storage);
 
@@ -903,8 +929,8 @@ void resource_network::tick()
 
         auto extra = avg_per_container - change;
 
-        //running_missed = running_missed + extra;
+        running_missed = running_missed + extra;
 
         c->local_storage = new_local;
-    }
+    }*/
 }

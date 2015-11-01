@@ -78,14 +78,14 @@ int main()
     ///with the way I've done this, i'm an idiot
     ///obvs we want to convert 1 hydrogen to more than 1 power....!!
     resource_converter convert;
-    convert.set_max_storage({{resource::POWER, 100.f}, {resource::HYDROGEN, 100.f}});
+    convert.set_max_storage({{resource::POWER, 100.f}, {resource::HYDROGEN, 1.f}});
     convert.set_usage_ratio({{resource::HYDROGEN, 1.f}});
     convert.set_output_ratio({{resource::POWER, 1.f}});
     convert.set_amount(1.5f);
     convert.set_efficiency(1.f);
 
     resource_converter c2;
-    c2.set_max_storage({{resource::HYDROGEN, 10.f}, {resource::POWER, 10.f}});
+    c2.set_max_storage({{resource::HYDROGEN, 100.f}, {resource::POWER, 10.f}});
     c2.set_usage_ratio({{resource::POWER, 1.f}});
     c2.set_output_ratio({{resource::HYDROGEN, 1.f}});
     c2.set_amount(2.f);
@@ -215,11 +215,11 @@ int main()
             i->tick(st, dt);
         }
 
-        convert.convert(dt / 1000.f);
-        c2.convert(dt / 1000.f);
+        //convert.convert(dt / 1000.f);
+        //c2.convert(dt / 1000.f);
         printf("1 %f %f\n", convert.local_storage.v[resource::HYDROGEN], convert.local_storage.v[resource::POWER]);
         printf("2 %f %f\n\n", c2.local_storage.v[resource::HYDROGEN], c2.local_storage.v[resource::POWER]);
-        net.tick();
+        net.tick(dt / 1000.f);
 
         vec2f rounded_mouse_pos = round_to_multiple(mouse_pos, 5);
 
