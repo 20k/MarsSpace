@@ -45,13 +45,12 @@ struct air_processor
         }
     }
 
-    void add(int x, int y, float amount)
+    void add(int x, int y, float amount, air::air type)
     {
         if(x < 0 || y < 0 || x >= width || y >= width)
             return;
 
-        for(int i=0; i<N; i++)
-            buf[y*width + x].v[i] += amount;
+        buf[y*width + x].v[type] += amount;
     }
 
     ///it is wildly inefficient to do this per frame
@@ -83,6 +82,8 @@ struct air_processor
         }
     }
 
+    ///this is going to have to be gpu ported
+    ///luckily not too impossibru
     void tick(state& s, float dt)
     {
         draw_lines(s);
@@ -100,11 +101,13 @@ struct air_processor
                     continue;
                 }
 
-                float my_val = buf[y*width + x].v[0];
+                float is_blocked = buf[y*width + x].v[0];
 
                 ///using this as a blocked flag
-                if(my_val < 0)
+                if(is_blocked < 0)
                     continue;
+
+                vec<N, float> my_val = buf[y*width + x];
 
                 vec<4, vec<N, float>> vals = {
                     buf[y*width + x + 1],
@@ -179,7 +182,7 @@ struct air_processor
 
                 val = val * 255.f;
 
-                img.setPixel(x, y, sf::Color(val.v[0], val.v[0], val.v[1], 128));
+                img.setPixel(x, y, sf::Color(val.v[air::NITROGEN], val.v[air::C02], val.v[air::OXYGEN], 128));
             }
         }
 

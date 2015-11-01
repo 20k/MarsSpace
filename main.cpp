@@ -135,7 +135,7 @@ int main()
         {
             vec2f local_pos = m_fetch.get_world(st);
 
-            air_process.add(local_pos.v[0], local_pos.v[1], 1.f);
+            air_process.add(local_pos.v[0], local_pos.v[1], 1.f, air::OXYGEN);
         }
 
         if(mouse_clicks.size() == 2)
