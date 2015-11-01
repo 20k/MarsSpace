@@ -28,7 +28,7 @@ void player::tick(state& s, float dt)
 
     position = mover.tick(s, position, key_dir, cur_speed);
 
-    //display.tick(s, position, position + (vec2f){10.f, -10.f});
+    display.tick(s, position, position + (vec2f){10.f, -10.f});
 }
 
 ///we need to set_active the player when loading

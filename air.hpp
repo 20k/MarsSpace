@@ -43,6 +43,9 @@ struct air_processor
 
     void load(int _width, int _height);
 
+    ///do a float version of the below that does backwards bilinear interpolation
+    ///on the value
+    ///so that its smooth as something very smooth
     void add(int x, int y, float amount, air::air type);
 
     ///it is wildly inefficient to do this per frame
@@ -54,7 +57,7 @@ struct air_processor
     void tick(state& s, float dt);
     void draw(state& s);
 
-    vec<N, float> get(int x, int y);
+    vec<N, float> get(float x, float y);
 };
 
 #endif // AIR_HPP_INCLUDED

@@ -165,6 +165,7 @@ void air_processor::draw(state& s)
 
     sf::Texture tex;
     tex.loadFromImage(img);
+    tex.setSmooth(true);
 
     sf::Sprite spr;
     spr.setPosition(-0.5, -0.5);
@@ -173,8 +174,11 @@ void air_processor::draw(state& s)
     s.win->draw(spr, rs);
 }
 
-vec<air_processor::N, float> air_processor::get(int x, int y)
+vec<air_processor::N, float> air_processor::get(float x, float y)
 {
+    x = round(x);
+    y = round(y);
+
     if(x < 0 || y < 0 || x >= width || y >= height)
     {
         vec<N, float> ret;
@@ -183,5 +187,5 @@ vec<air_processor::N, float> air_processor::get(int x, int y)
         return ret;
     }
 
-    return buf[y*width + x];
+    return buf[(int)y*width + (int)x];
 }

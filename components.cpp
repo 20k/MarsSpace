@@ -94,9 +94,94 @@ void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width
 ///then we can use this for cars as well
 vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
 {
+    if(dist < 0.001f)
+        return position;
+
     vec2f new_pos = position + dir.norm() * dist;
 
     for(auto& i : s.blockers)
+    {
+        if(i->start == i->finish)
+            continue;
+
+        bool s1 = is_left_side(i->start, i->finish, position);
+        bool s2 = is_left_side(i->start, i->finish, new_pos);
+
+        vec2f avg = (i->start + i->finish) / 2.f;
+
+        ///padme?
+        float rad = (i->finish - i->start).length() / 2.f;
+        float rpad = 1.f;
+
+        float dist_to_line_centre = (new_pos - avg).length();
+
+        vec2f to_wall = point2line_shortest(i->start, (i->finish - i->start), new_pos);
+
+        const float pad = 2.f;
+
+        float to_length = to_wall.length();
+
+        float f1l = (new_pos - i->start).length();
+        float f2l = (new_pos - i->finish).length();
+
+        if(dist_to_line_centre > rad && dist_to_line_centre <= rad + rpad)
+        {
+            if(f1l < f2l)
+                to_wall = -(new_pos - i->start);
+            else
+                to_wall = -(new_pos - i->finish);
+
+            to_length = to_wall.length();
+        }
+
+        if(to_length < pad && dist_to_line_centre <= rad + rpad)
+        {
+            if(to_wall.v[0] == 0 && to_wall.v[1] == 0)
+            {
+                to_wall = (position - avg).norm();
+
+                ///this is really very degenerate to the point where I'm not sure its possible
+                ///for the moment just move the player diagonally
+                if(to_wall.v[0] == 0 && to_wall.v[1] == 0)
+                {
+                    to_wall.v[0] = 1;
+                    to_wall.v[1] = 1;
+                }
+            }
+
+            new_pos = new_pos + -to_wall.norm() * (pad - to_length);
+
+            s2 = is_left_side(i->start, i->finish, new_pos);
+        }
+
+        /*if(s1 != s2 && dist_to_line_centre <= rad)
+        {
+            if(to_wall.v[0] == 0 && to_wall.v[1] == 0)
+            {
+                to_wall = (position - avg).norm();
+
+                ///this is really very degenerate to the point where I'm not sure its possible
+                ///for the moment just move the player diagonally
+                if(to_wall.v[0] == 0 && to_wall.v[1] == 0)
+                {
+                    to_wall.v[0] = 1;
+                    to_wall.v[1] = 1;
+                }
+            }
+
+            vec2f perp = point2line_shortest(i->start, (i->finish - i->start), position).rot(M_PI/2.f);
+
+            perp = perp.norm();
+            vec2f ndir = dir.norm();
+
+            if(dot(perp, ndir) < 0)
+                perp = -perp;
+
+            vec2f ret_pos = position + perp * dist;
+        }*/
+    }
+
+    /*for(auto& i : s.blockers)
     {
         ///degenerate
         if(i->start == i->finish)
@@ -113,12 +198,13 @@ vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
         float dist_to_line_centre = (position - avg).length();
 
 
-        vec2f to_wall = point2line_shortest(i->start, (i->finish - i->start), position);
+        ///so my new position is too close, itll clamp the old to the wall
+        vec2f to_wall = point2line_shortest(i->start, (i->finish - i->start), new_pos);
 
         float dist_to_wall = to_wall.length();
 
-        const float when_to_start_perp = 0.9f;
-        const float pad = 1.f;
+        const float when_to_start_perp = 1.99f;
+        const float pad = 2.f;
 
         if((s1 != s2 && dist_to_line_centre <= rad) || (dist_to_wall < when_to_start_perp && dist_to_line_centre <= rad))
         {
@@ -143,7 +229,9 @@ vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
                 }
             }
 
-            vec2f perp = to_wall.rot(M_PI/2.f);
+
+
+            vec2f perp = point2line_shortest(i->start, (i->finish - i->start), position).rot(M_PI/2.f);
 
             perp = perp.norm();
             vec2f ndir = dir.norm();
@@ -151,11 +239,19 @@ vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
             if(dot(perp, ndir) < 0)
                 perp = -perp;
 
-            float extra = std::max(pad - dist_to_wall, 0.f);
+            vec2f ret_pos = position + perp * dist;
 
-            return position + perp * dist - to_wall.norm() * extra;
+            auto new_to_wall = point2line_shortest(i->start, (i->finish - i->start), ret_pos);
+
+            float new_extra = std::max(pad - new_to_wall.length(), 0.f);
+
+            //return ret_pos - new_to_wall.norm() * new_extra;
+
+            vec2f final_pos = ret_pos - new_to_wall.norm() * new_extra;
+
+            return tick(s, position, final_pos - position, dist/2.f);
         }
-    }
+    }*/
 
     return new_pos;
 }
@@ -523,10 +619,15 @@ void air_displayer::tick(state& s, vec2f pos, vec2f display_pos)
 
     for(int i=0; i<air::COUNT; i++)
     {
-        display = display + air::names[i] + ": " + std::to_string(air_fracs.v[i]) + "%" + "\n";
+        display = display + air::names[i] + ": " + std::to_string(air_fracs.v[i] * 100.f) + "%" + "\n";
     }
 
     display = display + "PRESSURE: " + std::to_string(air_pressure);
 
     txt.render(s, display, display_pos, 16);
+}
+
+void environmental_gas_emitter::tick(state& s, vec2f pos, float amount, air::air type)
+{
+    s.air_process->add(pos.v[0], pos.v[1], amount, type);
 }

@@ -189,4 +189,9 @@ struct air_displayer
     void tick(state& s, vec2f pos, vec2f display_pos);
 };
 
+struct environmental_gas_emitter
+{
+    void tick(state& s, vec2f pos, float amount, air::air type);
+};
+
 #endif // COMPONENTS_H_INCLUDED
