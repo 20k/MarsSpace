@@ -107,8 +107,8 @@ vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
         if(i->start == i->finish)
             continue;
 
-        bool s1 = is_left_side(i->start, i->finish, position);
-        bool s2 = is_left_side(i->start, i->finish, new_pos);
+        //bool s1 = is_left_side(i->start, i->finish, position);
+        //bool s2 = is_left_side(i->start, i->finish, new_pos);
 
         vec2f avg = (i->start + i->finish) / 2.f;
 
@@ -154,7 +154,7 @@ vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
 
             new_pos = new_pos + -to_wall.norm() * (pad - to_length);
 
-            s2 = is_left_side(i->start, i->finish, new_pos);
+            //s2 = is_left_side(i->start, i->finish, new_pos);
         }
     }
 
@@ -507,12 +507,19 @@ vec<air::COUNT, float> air_monitor::get_air_fractions(state& s, vec2f pos)
 {
     auto vec = s.air_process->get(pos.v[0], pos.v[1]);
 
-    return vec.norm();
+    return vec / vec.sum();
+}
+
+vec<air::COUNT, float> air_monitor::get_air_parts(state& s, vec2f pos)
+{
+    auto vec = s.air_process->get(pos.v[0], pos.v[1]);
+
+    return vec;
 }
 
 float air_monitor::get_air_pressure(state& s, vec2f pos)
 {
-    return s.air_process->get(pos.v[0], pos.v[1]).length();
+    return s.air_process->get(pos.v[0], pos.v[1]).sum();
 }
 
 void air_displayer::tick(state& s, vec2f pos, vec2f display_pos)
@@ -532,7 +539,59 @@ void air_displayer::tick(state& s, vec2f pos, vec2f display_pos)
     txt.render(s, display, display_pos, 16);
 }
 
-void environmental_gas_emitter::tick(state& s, vec2f pos, float amount, air::air type)
+void environmental_gas_emitter::emit(state& s, vec2f pos, float amount, air::air type)
 {
     s.air_process->add(pos.v[0], pos.v[1], amount, type);
 }
+
+float environmental_gas_absorber::absorb(state& s, vec2f pos, float amount, air::air type)
+{
+    return s.air_process->take(pos.v[0], pos.v[1], amount, type);
+}
+
+air_environment::air_environment()
+{
+    for(int i=0; i<air::COUNT; i++)
+        local_environment.v[i] = 0;
+}
+
+void air_environment::absorb_all(state& s, vec2f pos, float amount, float max_total)
+{
+    auto air_parts = monitor.get_air_parts(s, pos);
+    float total_available_air = monitor.get_air_pressure(s, pos);
+
+    if(amount < total_available_air)
+        amount = total_available_air;
+
+    float current_amount = local_environment.sum();
+
+    for(int i=0; i<air::COUNT; i++)
+    {
+
+    }
+}
+
+/*air_environment::absorb(state& s, vec2f pos, float amount, float maximum, air::air type)
+{
+    float cur = local_environment.v[type];
+
+    if(cur + amount > maximum)
+    {
+        amount = maximum - cur;
+    }
+
+    local_environment.v[type] += absorber.absorb(s, pos, amount, type);
+
+    local_environment.v[type] = std::min(local_environment.v[type], maximum);
+}
+
+void air_environment::emit(state& s, vec2f pos, float amount, air::air type)
+{
+    float old = local_environment.v[type];
+
+    local_environment.v[type] = std::max(local_environment.v[type] - amount, 0.f);
+
+    float diff = old - local_environment.v[type];
+
+    emitter.emit(s, pos, diff, type);
+}*/

@@ -31,6 +31,19 @@ void air_processor::add(int x, int y, float amount, air::air type)
     buf[y*width + x].v[type] = std::max(buf[y*width + x].v[type], 0.f);
 }
 
+float air_processor::take(int x, int y, float amount, air::air type)
+{
+    if(x < 0 || y < 0 || x >= width || y >= width)
+        return 0.f;
+
+    float old_amount = buf[y*width + x].v[type];
+
+    buf[y*width + x].v[type] -= amount;
+    buf[y*width + x].v[type] = std::max(buf[y*width + x].v[type], 0.f);
+
+    return old_amount - buf[y*width + x].v[type];
+}
+
 ///it is wildly inefficient to do this per frame
 void air_processor::draw_lines(state& s)
 {

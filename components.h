@@ -177,8 +177,11 @@ struct text
 struct air_monitor
 {
     vec<air::COUNT, float> get_air_fractions(state& s, vec2f pos);
+    vec<air::COUNT, float> get_air_parts(state& s, vec2f pos);
 
     float get_air_pressure(state& s, vec2f pos);
+
+
 };
 
 struct air_displayer
@@ -191,7 +194,40 @@ struct air_displayer
 
 struct environmental_gas_emitter
 {
-    void tick(state& s, vec2f pos, float amount, air::air type);
+    void emit(state& s, vec2f pos, float amount, air::air type);
+};
+
+///we want to change this later so that the absorption rate is dependent on the amount left
+///that way low o2 will kill us, not no o2
+///although... its also pressure dependent
+///so.... pv=nrt it? need to work out pv=nrt
+///for normal human breathing, then do fractional bits to work out
+///pressure, and v is absolute amount
+///then ignore t
+struct environmental_gas_absorber
+{
+    float absorb(state& s, vec2f pos, float amount, air::air type);
+};
+
+///we want a maximum of all gas?
+struct air_environment
+{
+    environmental_gas_absorber absorber;
+    environmental_gas_emitter emitter;
+    air_monitor monitor;
+
+    vec<air::COUNT, float> local_environment;
+
+    ///this is specifically diffusion (active or passive)
+    ///into the local environment
+    ///ie breathing to a player
+    ///or air -> rover
+    void absorb_all(state& s, vec2f pos, float amount, float max_total);
+
+    //void absorb(state& s, vec2f pos, float amount, float maximum, air::air type);
+    //void emit(state& s, vec2f pos, float amount, air::air type);
+
+    air_environment();
 };
 
 #endif // COMPONENTS_H_INCLUDED

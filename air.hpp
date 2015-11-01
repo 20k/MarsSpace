@@ -47,6 +47,7 @@ struct air_processor
     ///on the value
     ///so that its smooth as something very smooth
     void add(int x, int y, float amount, air::air type);
+    float take(int x, int y, float amount, air::air type);
 
     ///it is wildly inefficient to do this per frame
     ///or not, we have hardly any actual lines
