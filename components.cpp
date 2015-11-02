@@ -2,6 +2,9 @@
 #include "entities.h"
 #include <fstream>
 #include <ostream>
+#include <gl/gl.h>
+#include <gl/glext.h>
+#include <gl/glcorearb.h>
 
 uint32_t movement_blocker::gid = 0;
 
@@ -20,6 +23,8 @@ void renderable_file::load(const std::string& name)
     img.loadFromFile(name.c_str());
     tex.loadFromImage(img);
     tex.setSmooth(true);
+    //sf::Texture::bind(&tex);
+    //glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 }
 
 void renderable_file::tick(state& s, vec2f pos, float scale)
@@ -576,6 +581,23 @@ void air_displayer::tick(state& s, vec2f display_pos, const vec<air::COUNT, floa
         txt.render(s, display, display_pos, 16, absolute); ///bad
 }
 
+void resource_displayer::tick(state& s, vec2f display_pos, const vecrf& resources, bool absolute)
+{
+    auto resource_parts = resources;
+
+    std::string display;
+
+    for(int i=0; i<resource::RES_COUNT; i++)
+    {
+        display = display + resource::names[i] + ": " + std::to_string(resource_parts.v[i]) + "\n";
+    }
+
+    if(!absolute)
+        txt.render(s, display, display_pos, 16, absolute);
+    else
+        txt.render(s, display, display_pos, 16, absolute); ///bad
+}
+
 void environmental_gas_emitter::emit(state& s, vec2f pos, float amount, air_t type)
 {
     s.air_process->add(pos.v[0], pos.v[1], amount, type);
@@ -793,10 +815,52 @@ vec<resource::RES_COUNT, float> resource_converter::take(const std::vector<std::
     return old - local_storage;
 }
 
+/*void resource_converter::add(const vecrf& v)
+{
+    local_storage = local_storage + v;
+
+    local_storage = max(local_storage, 0.f);
+    local_storage = min(local_storage, max_storage);
+}*/
+
+void convert_amount(float amount, vecrf& global_storage, vecrf& global_max, float dt, float efficiency, const vecrf& conversion_usage_ratio, const vecrf& conversion_output_ratio)
+{
+    auto resources = global_storage;
+
+    auto consume_amount = conversion_usage_ratio * amount * dt;
+
+    auto diff = resources - consume_amount;
+
+    auto minimum_element = diff.min_elem();
+
+    ///we've requested an extra x too much of a particular resources
+    ///we'll have to request minimum_element * conversion_usage_ratio of everything
+    ///or... we could just recurse
+    if(minimum_element < 0)
+    {
+        float amount_too_much_element = fabs(minimum_element);
+
+        printf("throttlin\n");
+
+        return convert_amount(amount_too_much_element, global_storage, global_max, dt, efficiency, conversion_usage_ratio, conversion_output_ratio);
+    }
+
+    auto amount_produced = amount * dt * efficiency * conversion_output_ratio;
+
+    global_storage = global_storage - consume_amount;
+    global_storage = global_storage + amount_produced;
+
+    ///we want to return the resources used if we're above global max
+    global_storage = min(global_storage, global_max);
+    global_storage = max(global_storage, 0.f);
+}
+
 ///currently if i've run out of one input resource, itll still work
 void resource_converter::convert(vecrf& global_storage, vecrf& global_max, float dt)
 {
-    auto max_available = global_storage;
+    convert_amount(amount, global_storage, global_max, dt, efficiency, conversion_usage_ratio, conversion_output_ratio);
+
+    /*auto max_available = global_storage;
 
     auto to_convert = conversion_usage_ratio * amount * dt;
 
@@ -821,7 +885,7 @@ void resource_converter::convert(vecrf& global_storage, vecrf& global_max, float
     global_storage = global_storage - to_convert;
     global_storage = global_storage + amount_produced;
 
-    global_storage = clamp(global_storage, minimum, global_max);
+    global_storage = clamp(global_storage, minimum, global_max);*/
 }
 
 void resource_converter::set_amount(float _amount)

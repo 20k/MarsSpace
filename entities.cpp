@@ -193,6 +193,7 @@ save door::make_save()
     return {entity_type::DOOR, vec};
 }
 
+///I think the resource network may need to become an entity
 resource_entity::resource_entity(resource_network& net)
 {
     net.add(&conv);
@@ -207,7 +208,7 @@ void resource_entity::set_position(vec2f pos)
 
 void resource_entity::tick(state& s, float dt)
 {
-
+    display.tick(s, position + (vec2f){15.f, -10.f}, conv.local_storage);
 }
 
 save resource_entity::make_save()
@@ -221,11 +222,13 @@ solar_panel::solar_panel(resource_network& net) : resource_entity(net)
     conv.set_output_ratio({{resource::POWER, 1.f}});
     conv.set_amount(900); ///watts
 
-    file.load("./res/solar_panel.jpg");
+    file.load("./res/solar_panel.png");
 }
 
 void solar_panel::tick(state& s, float dt)
 {
+    resource_entity::tick(s, dt);
+
     file.tick(s, position, 0.2f);
 }
 
@@ -234,7 +237,7 @@ void solar_panel::tick(state& s, float dt)
 save solar_panel::make_save()
 {
     byte_vector vec;
-    vec.push_back<vec2f>(position);
+    //vec.push_back<vec2f>(position);
 
     return {entity_type::SOLAR_PANEL, vec};
 }
@@ -249,6 +252,7 @@ hydrogen_battery::hydrogen_battery(resource_network& net) : resource_entity(net)
 
 void hydrogen_battery::tick(state& s, float dt)
 {
+    resource_entity::tick(s, dt);
     ///orange
     circle.tick(s, position, 5.f, (vec4f){255, 140, 0, 255});
 }
@@ -256,7 +260,7 @@ void hydrogen_battery::tick(state& s, float dt)
 save hydrogen_battery::make_save()
 {
     byte_vector vec;
-    vec.push_back<vec2f>(position);
+    //vec.push_back<vec2f>(position);
 
     return {entity_type::HYDROGEN_BATTERY, vec};
 }

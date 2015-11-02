@@ -188,9 +188,15 @@ struct air_monitor
 struct air_displayer
 {
     text txt;
-    //air_monitor air_quality;
 
     void tick(state& s, vec2f display_pos, const vec<air::COUNT, float>& air_parts, bool absolute = false);
+};
+
+struct resource_displayer
+{
+    text txt;
+
+    void tick(state& s, vec2f display_pos, const vecrf& resources, bool absolute = false);
 };
 
 struct environmental_gas_emitter
@@ -269,8 +275,12 @@ struct resource_converter
     void set_amount(float amount);
     void set_efficiency(float efficiency);
 
-    void                            add(const std::vector<std::pair<resource_t, float>>& vec);
-    vec<resource::RES_COUNT, float> take(const std::vector<std::pair<resource_t, float>>& vec);
+    void add(const std::vector<std::pair<resource_t, float>>& vec);
+    vecrf take(const std::vector<std::pair<resource_t, float>>& vec);
+
+    //void add(const vecrf& v);
+    //vecrf take(const vecrf& v);
+
 
     void convert(vecrf& global_storage, vecrf& global_max, float dt);
 

@@ -118,6 +118,8 @@ struct door : entity
 ///define resource entity
 struct resource_entity : entity
 {
+    resource_displayer display;
+
     resource_converter conv;
 
     resource_entity(resource_network& net);
