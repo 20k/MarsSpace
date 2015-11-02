@@ -34,6 +34,17 @@ namespace air
         "TOXIC",
         "POWER"
     };
+
+    static std::vector<std::string> short_names
+    {
+        "H2",
+        "N2",
+        "O2",
+        "C02",
+        "H20",
+        "BAD",
+        "PWR"
+    };
 }
 
 typedef air::resource air_t;

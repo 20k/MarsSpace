@@ -158,6 +158,8 @@ struct hydrogen_battery : resource_entity
 struct gas_storage : resource_entity
 {
     renderable_circle circle;
+    text txt;
+    air_t type;
 
     gas_storage(resource_network& net, air_t type);
 

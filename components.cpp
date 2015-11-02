@@ -485,7 +485,7 @@ std::vector<entity*> saver::load_from_file(const std::string& fname, state& s)
     return entities;
 }
 
-void text::render(state& s, const std::string& _str, vec2f _tl, int size, bool absolute)
+void text::render(state& s, const std::string& _str, vec2f _tl, int size, text_options::text_options opt)
 {
     str = _str;
     tl = _tl;
@@ -508,13 +508,20 @@ void text::render(state& s, const std::string& _str, vec2f _tl, int size, bool a
     txt.setString(str);
     txt.setPosition(tl.v[0], tl.v[1]);
 
+    bool is_absolute = opt & text_options::ABS;
+
     ///bad
-    if(!absolute)
+    if(is_absolute)
         txt.setScale(0.1f, 0.1f);
     else
         txt.setScale(1.f, 1.f);
 
-    if(!absolute)
+    if(opt & text_options::CENTERED)
+    {
+        txt.setOrigin({txt.getLocalBounds().width / 2.f, txt.getLocalBounds().height / 2.f});
+    }
+
+    if(is_absolute)
         s.win->draw(txt);
     else
     {
@@ -576,9 +583,9 @@ void air_displayer::tick(state& s, vec2f display_pos, const vec<air::COUNT, floa
         display = display + "PRESSURE: TOTAL VACUUM";
 
     if(!absolute)
-        txt.render(s, display, display_pos, 16, absolute);
+        txt.render(s, display, display_pos, 16, text_options::ABS);
     else
-        txt.render(s, display, display_pos, 16, absolute); ///bad
+        txt.render(s, display, display_pos, 16, text_options::NONE);
 }
 
 void resource_displayer::tick(state& s, vec2f display_pos, const vecrf& resources, bool absolute)
@@ -596,9 +603,9 @@ void resource_displayer::tick(state& s, vec2f display_pos, const vecrf& resource
     }
 
     if(!absolute)
-        txt.render(s, display, display_pos, 16, absolute);
+        txt.render(s, display, display_pos, 16, text_options::ABS);
     else
-        txt.render(s, display, display_pos, 16, absolute); ///bad
+        txt.render(s, display, display_pos, 16, text_options::NONE);
 }
 
 void environmental_gas_emitter::emit(state& s, vec2f pos, float amount, air_t type)

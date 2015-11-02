@@ -267,16 +267,21 @@ save hydrogen_battery::make_save()
     return {entity_type::HYDROGEN_BATTERY, vec};
 }
 
-gas_storage::gas_storage(resource_network& net, air_t type) : resource_entity(net)
+gas_storage::gas_storage(resource_network& net, air_t _type) : resource_entity(net)
 {
     conv.set_max_storage({{type, 50.f}}); ///litres
+    type = _type;
 }
 
 void gas_storage::tick(state& s, float dt)
 {
     resource_entity::tick(s, dt);
 
+    float rad = 5.f;
+
     circle.tick(s, position, 5.f, (vec4f){100, 255, 255, 255});
+
+    txt.render(s, air::short_names[type], position - (vec2f){rad/2.f, rad/2.f}, 16);
 }
 
 save gas_storage::make_save()
