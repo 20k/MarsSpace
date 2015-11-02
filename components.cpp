@@ -734,7 +734,6 @@ void breather::tick(state& s, vec2f position, float dt)
     const float volume_per_breath_litres = 6;
 
 
-
     ///assume 1 is atmospheric pressure
     ///then model lung volume breathing n stuff
     lungs.absorb_all(s, position, volume_per_breath_litres * 1.f * ldt, 1.f);
@@ -887,6 +886,7 @@ void convert_amount(float amount, vecrf& global_storage, vecrf& global_max, vecr
     ///=== 0 change overall
 
     ///we want to return the resources used if we're above global max
+    ///EREGEHRGH
     global_storage = min(global_storage, global_max);
     global_storage = max(global_storage, 0.f);
 
