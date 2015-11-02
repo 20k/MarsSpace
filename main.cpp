@@ -191,7 +191,7 @@ int main()
         {
             vec2f local_pos = m_fetch.get_world(st);
 
-            air_process.add(local_pos.v[0], local_pos.v[1], 1.f, air::C02);
+            air_process.add(local_pos.v[0], local_pos.v[1], 100.f, air::C02);
         }
 
         if(once<sf::Keyboard::F1>())

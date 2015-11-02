@@ -172,7 +172,8 @@ namespace text_options
     {
         NONE = 0,
         CENTERED = 1,
-        ABS = 2
+        ABS = 2,
+        OUTLINED = 4
     };
 }
 

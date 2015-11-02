@@ -113,7 +113,6 @@ struct air_processor
 
     static vec<N, float> martian_atmosphere;// = martian_atmosphere();
 
-
     ///from percentage to 1, then 1 atmosphere -> 0.01
 
     vec<N, float>* buf;

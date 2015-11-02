@@ -539,7 +539,7 @@ void text::render(state& s, const std::string& _str, vec2f _tl, int size, text_o
     else
         txt.setOrigin({0.f, 0.f});
 
-    if(!is_absolute)
+    /*if(!is_absolute)
         s.win->draw(txt);
     else
     {
@@ -547,6 +547,40 @@ void text::render(state& s, const std::string& _str, vec2f _tl, int size, text_o
         sf::View def = s.win->getDefaultView();
         s.win->setView(def);
         s.win->draw(txt);
+        s.win->setView(cur);
+    }*/
+
+    sf::View cur = s.win->getView();
+
+    if(is_absolute)
+    {
+        sf::View def = s.win->getDefaultView();
+        s.win->setView(def);
+    }
+
+    /*if(opt & text_options::OUTLINED)
+    {
+        for(int j=-1; j<=1; j++)
+        {
+            for(int i=-1; i<=1; i++)
+            {
+                auto pos = txt.getPosition();
+
+                pos.x = pos.x + i;
+                pos.y = pos.y + i;
+
+                txt.setPosition(pos);
+                s.win->draw(txt);
+            }
+        }
+    }
+    else
+    {*/
+    s.win->draw(txt);
+    /*}*/
+
+    if(is_absolute)
+    {
         s.win->setView(cur);
     }
 }
@@ -1022,7 +1056,7 @@ void resource_network::tick(state& s, float dt)
     for(auto& i : converters)
     {
         i->absorb_all(s, dt);
-        printf("%f\n", i->environment_absorption.local_environment.v[air::C02]);
+        //printf("%f\n", i->environment_absorption.local_environment.v[air::C02]);
         i->convert(network_resources, max_network_resources, dt);
         i->emit_all(s);
     }

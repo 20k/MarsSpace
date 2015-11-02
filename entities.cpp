@@ -20,13 +20,13 @@ void player::set_active_player(state& s)
 
 void player::tick(state& s, float dt)
 {
-    file.tick(s, position, 0.1f);
-
     vec2f key_dir = key.tick(1.f).norm();
 
     float cur_speed = speed.get_speed() * dt * 2; ///temporary hack until i get my shit together
 
     position = mover.tick(s, position, key_dir, cur_speed);
+
+    file.tick(s, position, 0.1f);
 
     auto air_parts = monitor.get_air_parts(s, position);
 
@@ -298,7 +298,7 @@ void hydrogen_battery::tick(state& s, float dt)
     ///orange
     circle.tick(s, position, 5.f, (vec4f){255, 140, 0, 255});
 
-    txt.render(s, air::short_names[air::POWER], position, 24, text_options::CENTERED);
+    txt.render(s, air::short_names[air::POWER], position, 24, (text_options::text_options)(text_options::CENTERED | text_options::OUTLINED));
 }
 
 save hydrogen_battery::make_save()
@@ -324,9 +324,8 @@ gas_storage::gas_storage(resource_network& net, air_t _type) : gas_storage(_type
 
 gas_storage::gas_storage(byte_fetch& fetch) : gas_storage(fetch.get<air_t>())
 {
-   load(fetch);
+    load(fetch);
 }
-
 
 void gas_storage::tick(state& s, float dt)
 {
@@ -336,7 +335,7 @@ void gas_storage::tick(state& s, float dt)
 
     circle.tick(s, position, rad, (vec4f){100, 255, 255, 255});
 
-    txt.render(s, air::short_names[type], position, 24, text_options::CENTERED);
+    txt.render(s, air::short_names[type], position, 24, (text_options::text_options)(text_options::CENTERED | text_options::OUTLINED));
 }
 
 save gas_storage::make_save()
