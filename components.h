@@ -39,7 +39,7 @@ struct renderable_file
     sf::Texture tex;
 
     void load(const std::string&Y);
-    void tick(state& s, vec2f pos);
+    void tick(state& s, vec2f pos, float scale);
 };
 
 struct renderable_texture
@@ -52,7 +52,7 @@ struct renderable_texture
 
 struct renderable_circle
 {
-    void tick(state& s, vec2f pos, float rad);
+    void tick(state& s, vec2f pos, float rad, vec4f col);
 };
 
 struct renderable_rectangle

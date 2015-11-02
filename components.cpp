@@ -22,7 +22,7 @@ void renderable_file::load(const std::string& name)
     tex.setSmooth(true);
 }
 
-void renderable_file::tick(state& s, vec2f pos)
+void renderable_file::tick(state& s, vec2f pos, float scale)
 {
     sf::Sprite spr;
     spr.setTexture(tex);
@@ -35,7 +35,7 @@ void renderable_file::tick(state& s, vec2f pos)
 
     spr.setOrigin(width/2.f, height/2.f);
     spr.setPosition(xp, yp);
-    spr.setScale(0.1f, 0.1f);
+    spr.setScale(scale, scale);
 
     s.win->draw(spr);
 }
@@ -53,7 +53,7 @@ void renderable_texture::tick(state& s, vec2f pos)
     s.win->draw(spr);
 }
 
-void renderable_circle::tick(state& s, vec2f pos, float rad)
+void renderable_circle::tick(state& s, vec2f pos, float rad, vec4f col)
 {
     sf::CircleShape circle;
     circle.setOrigin(rad, rad);
@@ -61,9 +61,9 @@ void renderable_circle::tick(state& s, vec2f pos, float rad)
 
     circle.setPosition(pos.v[0], pos.v[1]);
 
-    circle.setFillColor(sf::Color(220, 220, 220, 100));
+    circle.setFillColor(sf::Color(col.v[0], col.v[1], col.v[2], col.v[3]));
     circle.setOutlineThickness(0.5f);
-    circle.setOutlineColor(sf::Color(220, 220, 220, 50));
+    circle.setOutlineColor(sf::Color(col.v[0], col.v[1], col.v[2], col.v[3]/2.f));
 
     s.win->draw(circle);
 }
@@ -296,7 +296,7 @@ area_interacter::area_interacter(vec2f _pos, float _radius)
 
 void area_interacter::tick(state& s)
 {
-    circle.tick(s, pos, radius);
+    circle.tick(s, pos, radius, (vec4f){220, 200, 200, 100});
 }
 
 bool area_interacter::player_inside(state& s)

@@ -12,7 +12,10 @@ namespace entity_type
         PLAYER = 0,
         PLANET,
         BUILDING,
-        DOOR
+        DOOR,
+        RESOURCE_ENTITY,
+        SOLAR_PANEL,
+        HYDROGEN_BATTERY
     };
 }
 
@@ -118,27 +121,49 @@ struct resource_entity : entity
     resource_converter conv;
 
     resource_entity(resource_network& net);
+
+    void set_position(vec2f pos);
+
+    virtual void tick(state& s, float dt) override;
+
+    save make_save();
 };
 
 struct solar_panel : resource_entity
 {
+    renderable_file file;
+
     solar_panel(resource_network& net);
+
+    virtual void tick(state& s, float dt) override;
+
+    save make_save();
 };
 
 struct hydrogen_battery : resource_entity
 {
+    renderable_circle circle;
+
     hydrogen_battery(resource_network& net);
+
+    virtual void tick(state& s, float dt) override;
+
+    save make_save();
 };
 
-struct gas_storage : resource_entity
+/*struct gas_storage : resource_entity
 {
     gas_storage(resource_network& net, air_t type);
+
+    virtual void tick(state& s, float dt) override;
 };
 
 struct oxygen_reclaimer : resource_entity
 {
     oxygen_reclaimer(resource_network& net);
-};
+
+    virtual void tick(state& s, float dt) override;
+};*/
 
 ///later make resource_network a physical hub or something perhaps?
 

@@ -20,7 +20,7 @@ void player::set_active_player(state& s)
 
 void player::tick(state& s, float dt)
 {
-    file.tick(s, position);
+    file.tick(s, position, 0.1f);
 
     vec2f key_dir = key.tick(1.f).norm();
 
@@ -196,6 +196,23 @@ save door::make_save()
 resource_entity::resource_entity(resource_network& net)
 {
     net.add(&conv);
+
+    position = (vec2f){0, 0};
+}
+
+void resource_entity::set_position(vec2f pos)
+{
+    position = pos;
+}
+
+void resource_entity::tick(state& s, float dt)
+{
+
+}
+
+save resource_entity::make_save()
+{
+    return {entity_type::RESOURCE_ENTITY, byte_vector()};
 }
 
 solar_panel::solar_panel(resource_network& net) : resource_entity(net)
@@ -203,6 +220,23 @@ solar_panel::solar_panel(resource_network& net) : resource_entity(net)
     conv.set_max_storage({{resource::POWER, 0.1f}});
     conv.set_output_ratio({{resource::POWER, 1.f}});
     conv.set_amount(900); ///watts
+
+    file.load("./res/solar_panel.jpg");
+}
+
+void solar_panel::tick(state& s, float dt)
+{
+    file.tick(s, position, 0.2f);
+}
+
+///we're gunna need to save resource network ids
+///and then recreate them :[
+save solar_panel::make_save()
+{
+    byte_vector vec;
+    vec.push_back<vec2f>(position);
+
+    return {entity_type::SOLAR_PANEL, vec};
 }
 
 hydrogen_battery::hydrogen_battery(resource_network& net) : resource_entity(net)
@@ -213,7 +247,21 @@ hydrogen_battery::hydrogen_battery(resource_network& net) : resource_entity(net)
     //conv.set_amount(1); ///9mw
 }
 
-gas_storage::gas_storage(resource_network& net, air_t type) : resource_entity(net)
+void hydrogen_battery::tick(state& s, float dt)
+{
+    ///orange
+    circle.tick(s, position, 5.f, (vec4f){255, 140, 0, 255});
+}
+
+save hydrogen_battery::make_save()
+{
+    byte_vector vec;
+    vec.push_back<vec2f>(position);
+
+    return {entity_type::HYDROGEN_BATTERY, vec};
+}
+
+/*gas_storage::gas_storage(resource_network& net, air_t type) : resource_entity(net)
 {
     conv.set_max_storage({{type, 50.f}}); ///litres
 }
@@ -224,11 +272,10 @@ oxygen_reclaimer::oxygen_reclaimer(resource_network& net) : resource_entity(net)
     float litres_per_hour = 0.5f;
     float litres_per_minute = litres_per_hour / 60.f;
     float litres_ps = litres_per_minute / 60.f;
-    float litres_ms = litres_ps / 1000.f;
 
     //conv.set_max_storage({{resource::POWER, 9 * 1000 * 1000.f}});
     conv.set_usage_ratio({{resource::C02, 1.f}});
     conv.set_output_ratio({{resource::OXYGEN, 1.f}});
-    conv.set_amount(litres_ms); ///per ms
-}
+    conv.set_amount(litres_ps); ///per ms
+}*/
 

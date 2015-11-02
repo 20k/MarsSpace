@@ -83,7 +83,7 @@ int main()
     convert.set_max_storage({{resource::POWER, 100.f}, {resource::HYDROGEN, 1.f}});
     convert.set_usage_ratio({{resource::HYDROGEN, 1.f}});
     convert.set_output_ratio({{resource::POWER, 1.f}});
-    convert.set_amount(1.5f);
+    convert.set_amount(1.5f / 1000.f);
     convert.set_efficiency(1.f);
 
     resource_converter c2;
@@ -91,13 +91,15 @@ int main()
     c2.set_usage_ratio({{resource::POWER, 1.f}});
     c2.set_output_ratio({{resource::HYDROGEN, 1.f}});
     c2.set_amount(2.f);
-    c2.set_efficiency(1.5f);
+    c2.set_efficiency(1.5f / 1000.f);
 
     convert.add({{resource::HYDROGEN, 10.f}});
 
     resource_network net;
     net.add(&convert);
     net.add(&c2);*/
+
+    resource_network net;
 
     while(win.isOpen())
     {
@@ -180,6 +182,24 @@ int main()
             air_process.add(local_pos.v[0], local_pos.v[1], 1.f, air::C02);
         }
 
+        if(once<sf::Keyboard::F1>())
+        {
+            vec2f m = round_to_multiple(mouse_pos, 5);
+
+            solar_panel* en = new solar_panel(net);
+            en->set_position(m);
+            stuff.push_back(en);
+        }
+
+        if(once<sf::Keyboard::F2>())
+        {
+            vec2f m = round_to_multiple(mouse_pos, 5);
+
+            hydrogen_battery* en = new hydrogen_battery(net);
+            en->set_position(m);
+            stuff.push_back(en);
+        }
+
         if(mouse_clicks.size() == 2)
         {
             vec2f m1 = mouse_clicks.get(0);
@@ -216,6 +236,8 @@ int main()
         {
             i->tick(st, dt);
         }
+
+        net.tick(dt);
 
         //convert.convert(dt / 1000.f);
         //c2.convert(dt / 1000.f);
