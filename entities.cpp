@@ -11,6 +11,8 @@ player::player(const std::string& fname) : entity()
 
     ///should I define units right off the bat
     speed.set_speed(14.f);
+
+    breath.lungs.set_parent(&mysuit.environment);
 }
 
 void player::set_active_player(state& s)
@@ -33,6 +35,8 @@ void player::tick(state& s, float dt)
     display.tick(s, position + (vec2f){10.f, -10.f}, air_parts);
 
     breath.tick(s, position, dt);
+
+    mysuit.tick(s, dt, position);
 }
 
 ///we need to set_active the player when loading
@@ -388,15 +392,6 @@ oxygen_reclaimer::oxygen_reclaimer(byte_fetch& fetch) : oxygen_reclaimer()
 
 void oxygen_reclaimer::tick(state& s, float dt)
 {
-    float litres_per_hour = 0.5f;
-    float litres_per_minute = litres_per_hour / 60.f;
-    float litres_ps = litres_per_minute / 60.f;
-
-    /*environment.absorb_all(s, position, 1.f, 1.f);
-    local_convert.convert(environment.local_environment, local_convert.local_storage, net->max_network_resources, dt);
-    display.tick(s, position + (vec2f){15, -10}, resource_to_air(environment.local_environment));
-    environment.emit_all(s, position, 1.f);*/
-
     resource_entity::tick(s, dt);
 
     circle.tick(s, position, 1.f, (vec4f({100, 100, 255, 255})));
@@ -409,5 +404,16 @@ save oxygen_reclaimer::make_save()
     vec.push_back<vecrf>(conv.local_storage);
 
     return {entity_type::OXYGEN_RECLAIMER, vec};
+}
+
+suit::suit()
+{
+    environment.set_max_air(100.f);
+    environment.my_environment.local_environment.v[air::OXYGEN] = 10.f; ///temp
+}
+
+void suit::tick(state& s, float dt, vec2f pos)
+{
+    display.tick(s, pos + (vec2f){-20, -10.f}, resource_to_air(environment.my_environment.local_environment));
 }
 

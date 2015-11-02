@@ -740,6 +740,7 @@ void air_environment::convert_percentage(float amount, float fraction, air_t inp
     local_environment.v[input] -= converted;
 }
 
+///wrong
 void conditional_environment_modifier::absorb_all(state& s, vec2f pos, float amount)
 {
     if(parent == nullptr)
@@ -750,19 +751,31 @@ void conditional_environment_modifier::absorb_all(state& s, vec2f pos, float amo
         vecrf& local_storage = my_environment.local_environment;
 
         ///parent environment is empty, cannot absorb
-        if(parent_storage.sum() == 0)
+        if(parent_storage.sum() < 0.0001f)
             return;
 
-        vecrf p_fracs = parent_storage / parent_storage.sum();
+        vecrf taken = parent->take(amount);
+
+        vecrf leftover = add(taken);
+
+        parent->add(leftover);
+
+
+
+        /*vecrf p_fracs = parent_storage / parent_storage.sum();
 
         float available_storage = max_air - parent_storage.sum();
 
+        printf("A %f\n", amount);
+
         available_storage = std::max(available_storage, 0.f);
 
-        vecrf amounts = available_storage * p_fracs;
+        vecrf available_to_take = min(available_storage * p_fracs, parent_storage);
+
+        vecrf amounts = available_to_take * p_fracs;
 
         parent_storage = parent_storage - amounts;
-        local_storage = local_storage + amounts;
+        local_storage = local_storage + amounts;*/
     }
 }
 
@@ -785,9 +798,65 @@ void conditional_environment_modifier::emit_all(state& s, vec2f pos, float amoun
     }
 }
 
+vecrf conditional_environment_modifier::take(float amount)
+{
+    float amount_in_storage = my_environment.local_environment.sum();
+
+    if(amount_in_storage < 0.0001f)
+    {
+        vecrf z;
+        z = 0.f;
+        return z;
+    }
+
+    if(amount > amount_in_storage)
+        amount = amount_in_storage;
+
+    auto ret_amount = (my_environment.local_environment / amount_in_storage) * amount;
+
+    my_environment.local_environment = my_environment.local_environment - ret_amount;
+
+    return ret_amount;
+}
+
+vecrf conditional_environment_modifier::add(vecrf amount)
+{
+    float total = amount.sum() + my_environment.local_environment.sum();
+
+    if(total < 0.0001f || amount.sum() < 0.0001f)
+    {
+        vecrf z;
+        z = 0.f;
+        return z;
+    }
+
+    float to_add = total;
+
+    if(to_add > max_air)
+        to_add = max_air;
+
+    float just_amount_extra = to_add - my_environment.local_environment.sum();
+
+    auto ret = just_amount_extra * amount / amount.sum();
+
+    my_environment.local_environment = my_environment.local_environment + ret;
+
+    return amount - ret;
+}
+
 void conditional_environment_modifier::set_max_air(float _max)
 {
     max_air = _max;
+}
+
+void conditional_environment_modifier::set_parent(conditional_environment_modifier* _parent)
+{
+    parent = _parent;
+}
+
+void conditional_environment_modifier::remove_parent()
+{
+    parent = nullptr;
 }
 
 ///i think this assumes 1x1 square tiles
@@ -810,7 +879,7 @@ void breather::tick(state& s, vec2f position, float dt)
 
     ///assume 1 is atmospheric pressure
     ///then model lung volume breathing n stuff
-    lungs.set_max_air(1.f);
+    lungs.set_max_air(1);
     lungs.absorb_all(s, position, volume_per_breath_litres * 1.f * ldt);
     display.tick(s, (vec2f){20.f, 20.f}, resource_to_air(lungs.my_environment.local_environment), true);
 

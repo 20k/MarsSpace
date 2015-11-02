@@ -272,6 +272,9 @@ struct conditional_environment_modifier
     void set_parent(conditional_environment_modifier* parent);
     void remove_parent();
 
+    vecrf take(float amount);
+    vecrf add(vecrf amount);
+
     float max_air = 0.f;
 };
 

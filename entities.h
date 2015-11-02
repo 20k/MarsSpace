@@ -40,6 +40,23 @@ struct entity
     virtual save make_save() = 0;
 };
 
+struct suit;
+
+///entity or component?
+///maybe a suit entity with a suit component?
+///seems preposterous that I'm already at the state of
+///writing the suit
+struct suit
+{
+    conditional_environment_modifier environment;
+    air_displayer display;
+    ///going to need a resource converter later, but for the moment
+    ///I just want to test the environmental stacking
+
+    suit();
+
+    void tick(state&, float dt, vec2f pos);
+};
 
 struct player : entity
 {
@@ -50,6 +67,7 @@ struct player : entity
     air_displayer display; ///generic air unit displayer
     air_monitor monitor; ///environmental monitor
     breather breath;
+    suit mysuit;
 
     player(const std::string& fname);
     player(byte_fetch& fetch, state& s);
@@ -197,12 +215,6 @@ struct oxygen_reclaimer : resource_entity
 
 ///later make resource_network a physical hub or something perhaps?
 
-///seems preposterous that I'm already at the state of
-///writing the suit
-struct suit
-{
-
-};
 
 /*
 ///we really want a door component first actually
