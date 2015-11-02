@@ -21,7 +21,8 @@
 				<Option type="1" />
 				<Option compiler="mingw64" />
 				<Compiler>
-					<Add option="-O2" />
+					<Add option="-Ofast" />
+					<Add option="-march=native" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -30,11 +31,12 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wshadow" />
+			<Add option="-Winit-self" />
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
-			<Add option="-std=gnu++11" />
-			<Add option="-Wall" />
-			<Add option="-Wextra" />
+			<Add option="-std=gnu++14" />
+			<Add option="-Wuninitialized" />
+			<Add option="-Wmaybe-uninitialized" />
 			<Add option="-DGLEW_STATIC" />
 			<Add option="-DNDEBUG" />
 		</Compiler>
@@ -57,6 +59,8 @@
 			<Add option="-lopenal32" />
 			<Add option="-logg" />
 		</Linker>
+		<Unit filename="air.cpp" />
+		<Unit filename="air.hpp" />
 		<Unit filename="byte_struct.h" />
 		<Unit filename="components.cpp" />
 		<Unit filename="components.h" />

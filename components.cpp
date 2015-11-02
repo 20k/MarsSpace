@@ -520,7 +520,7 @@ void text::render(state& s, const std::string& _str, vec2f _tl, int size, text_o
 
     if(opt & text_options::CENTERED)
     {
-        txt.setOrigin({txt.getLocalBounds().width / 2.f, txt.getLocalBounds().height / 1.2});
+        txt.setOrigin({txt.getLocalBounds().width / 2.f, txt.getLocalBounds().height / 1.2f});
     }
     else
         txt.setOrigin({0.f, 0.f});
@@ -993,7 +993,7 @@ void resource_network::tick(state& s, float dt)
         i->emit_all(s);
     }
 
-    printf("num %i\n", converters.size());
+    printf("num %i\n", (int)converters.size());
 
 
     ///distribute resources proportionally
