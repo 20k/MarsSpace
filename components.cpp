@@ -478,6 +478,20 @@ std::vector<entity*> saver::load_from_file(const std::string& fname, state& s)
         {
             ent = new door(fetch);
         }
+        else if(type == entity_type::RESOURCE_ENTITY)
+            ent = new resource_entity(fetch);
+
+        else if(type == entity_type::SOLAR_PANEL)
+            ent = new solar_panel(fetch);
+
+        else if(type == entity_type::HYDROGEN_BATTERY)
+            ent = new hydrogen_battery(fetch);
+
+        else if(type == entity_type::GAS_STORAGE)
+            ent = new gas_storage(fetch);
+
+        else if(type == entity_type::OXYGEN_RECLAIMER)
+            ent = new oxygen_reclaimer(fetch);
 
         entities.push_back(ent);
     }
@@ -962,6 +976,26 @@ void resource_network::add(resource_converter* conv)
     converters.push_back(conv);
 }
 
+void resource_network::rem(resource_converter* conv)
+{
+    network_resources = network_resources - conv->local_storage;
+
+    for(int i=0; i<converters.size(); i++)
+    {
+        if(converters[i] == conv)
+        {
+            converters.erase(converters.begin() + i);
+            i--;
+        }
+    }
+}
+
+void resource_network::clear()
+{
+    network_resources = 0;
+    converters.clear();
+}
+
 ///no processing done here
 ///only resource distribution
 ///distribute equally? or proportionally?
@@ -992,9 +1026,6 @@ void resource_network::tick(state& s, float dt)
         i->convert(network_resources, max_network_resources, dt);
         i->emit_all(s);
     }
-
-    printf("num %i\n", (int)converters.size());
-
 
     ///distribute resources proportionally
     ///if something is destroyed, we'll lose the

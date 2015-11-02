@@ -124,7 +124,12 @@ struct resource_entity : entity
 
     resource_converter conv;
 
+    resource_entity();
     resource_entity(resource_network& net);
+    resource_entity(byte_fetch& fetch);
+
+    void load(byte_fetch& fetch);
+    void load(resource_network& net);
 
     void set_position(vec2f pos);
 
@@ -137,7 +142,9 @@ struct solar_panel : resource_entity
 {
     renderable_file file;
 
+    solar_panel();
     solar_panel(resource_network& net);
+    solar_panel(byte_fetch& fetch);
 
     virtual void tick(state& s, float dt) override;
 
@@ -149,7 +156,9 @@ struct hydrogen_battery : resource_entity
     text txt;
     renderable_circle circle;
 
+    hydrogen_battery();
     hydrogen_battery(resource_network& net);
+    hydrogen_battery(byte_fetch& fetch);
 
     virtual void tick(state& s, float dt) override;
 
@@ -162,7 +171,9 @@ struct gas_storage : resource_entity
     text txt;
     air_t type;
 
+    gas_storage(air_t type);
     gas_storage(resource_network& net, air_t type);
+    gas_storage(byte_fetch& fetch);
 
     virtual void tick(state& s, float dt) override;
 
@@ -175,13 +186,13 @@ struct oxygen_reclaimer : resource_entity
 
     renderable_circle circle;
 
+    oxygen_reclaimer();
     oxygen_reclaimer(resource_network& _net);
+    oxygen_reclaimer(byte_fetch& fetch);
 
     virtual void tick(state& s, float dt) override;
 
     save make_save();
-
-    resource_network* net;
 };
 
 ///later make resource_network a physical hub or something perhaps?

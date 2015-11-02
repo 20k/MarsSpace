@@ -153,9 +153,20 @@ int main()
 
         if(once<sf::Keyboard::N>())
         {
+            net.clear();
             stuff = save.load_from_file("save.txt", st);
             build->walls.clear();
             stuff.push_back(build);
+
+            for(auto& i : stuff)
+            {
+                auto res = dynamic_cast<resource_entity*>(i);
+
+                if(res != nullptr)
+                {
+                    net.add(&res->conv);
+                }
+            }
 
             st.air_process->load_from_file("atmo.txt");
 
@@ -252,8 +263,6 @@ int main()
 
         for(auto& i : stuff)
         {
-            printf("%i\n", i->make_save().type);
-            printf("printed\n");
             i->tick(st, dt);
         }
 

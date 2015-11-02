@@ -218,13 +218,44 @@ save resource_entity::make_save()
     return {entity_type::RESOURCE_ENTITY, byte_vector()};
 }
 
-solar_panel::solar_panel(resource_network& net) : resource_entity(net)
+resource_entity::resource_entity(byte_fetch& fetch)
+{
+
+}
+
+void resource_entity::load(byte_fetch& fetch)
+{
+    position = fetch.get<vec2f>();
+    conv.local_storage = fetch.get<vecrf>();
+}
+
+void resource_entity::load(resource_network& net)
+{
+    net.add(&conv);
+}
+
+resource_entity::resource_entity()
+{
+
+}
+
+solar_panel::solar_panel()
 {
     conv.set_max_storage({{resource::POWER, 0.1f}});
     conv.set_output_ratio({{resource::POWER, 1.f}});
     conv.set_amount(900); ///watts
-
     file.load("./res/solar_panel.png");
+
+}
+
+solar_panel::solar_panel(resource_network& net) : solar_panel()
+{
+    load(net);
+}
+
+solar_panel::solar_panel(byte_fetch& fetch) : solar_panel()
+{
+    load(fetch);
 }
 
 void solar_panel::tick(state& s, float dt)
@@ -239,18 +270,27 @@ void solar_panel::tick(state& s, float dt)
 save solar_panel::make_save()
 {
     byte_vector vec;
-    //vec.push_back<vec2f>(position);
+    vec.push_back<vec2f>(position);
+    vec.push_back<vecrf>(conv.local_storage);
 
     return {entity_type::SOLAR_PANEL, vec};
 }
 
-hydrogen_battery::hydrogen_battery(resource_network& net) : resource_entity(net)
+hydrogen_battery::hydrogen_battery()
 {
     conv.set_max_storage({{resource::POWER, 9 * 1000 * 1000.f}});
-    //conv.set_input_ratio({{resource::POWER, 1.f});
-    //conv.set_output_ratio({{resource::POWER, 1.f}});
-    //conv.set_amount(1); ///9mw
 }
+
+hydrogen_battery::hydrogen_battery(resource_network& net) : hydrogen_battery()
+{
+    load(net);
+}
+
+hydrogen_battery::hydrogen_battery(byte_fetch& fetch) : hydrogen_battery()
+{
+    load(fetch);
+}
+
 
 void hydrogen_battery::tick(state& s, float dt)
 {
@@ -258,22 +298,35 @@ void hydrogen_battery::tick(state& s, float dt)
     ///orange
     circle.tick(s, position, 5.f, (vec4f){255, 140, 0, 255});
 
-    txt.render(s, air::short_names[air::POWER], position, 16, text_options::CENTERED);
+    txt.render(s, air::short_names[air::POWER], position, 24, text_options::CENTERED);
 }
 
 save hydrogen_battery::make_save()
 {
     byte_vector vec;
-    //vec.push_back<vec2f>(position);
+    vec.push_back<vec2f>(position);
+    vec.push_back<vecrf>(conv.local_storage);
 
     return {entity_type::HYDROGEN_BATTERY, vec};
 }
 
-gas_storage::gas_storage(resource_network& net, air_t _type) : resource_entity(net)
+gas_storage::gas_storage(air_t _type)
 {
     type = _type;
     conv.set_max_storage({{type, 50.f}}); ///litres
 }
+
+gas_storage::gas_storage(resource_network& net, air_t _type) : gas_storage(_type)
+{
+    load(net);
+}
+
+
+gas_storage::gas_storage(byte_fetch& fetch) : gas_storage(fetch.get<air_t>())
+{
+   load(fetch);
+}
+
 
 void gas_storage::tick(state& s, float dt)
 {
@@ -283,16 +336,22 @@ void gas_storage::tick(state& s, float dt)
 
     circle.tick(s, position, rad, (vec4f){100, 255, 255, 255});
 
-    txt.render(s, air::short_names[type], position, 16, text_options::CENTERED);
+    txt.render(s, air::short_names[type], position, 24, text_options::CENTERED);
 }
 
 save gas_storage::make_save()
 {
-    return {entity_type::GAS_STORAGE, byte_vector()};
+    byte_vector vec;
+    vec.push_back<air_t>(type);
+    vec.push_back<vec2f>(position);
+    vec.push_back<vecrf>(conv.local_storage);
+
+    return {entity_type::GAS_STORAGE, vec};
 }
 
-oxygen_reclaimer::oxygen_reclaimer(resource_network& _net) : resource_entity(_net)
+oxygen_reclaimer::oxygen_reclaimer()
 {
+
     float litres_per_hour = 0.5f;
     float litres_per_minute = litres_per_hour / 60.f;
     float litres_ps = litres_per_minute / 60.f;
@@ -314,9 +373,19 @@ oxygen_reclaimer::oxygen_reclaimer(resource_network& _net) : resource_entity(_ne
     conv.set_output_ratio({{resource::OXYGEN, 1.f}});
     conv.set_efficiency(gas_accounted_litres_ps / (1000.f + gas_accounted_litres_ps));
     conv.set_amount(1000.f + gas_accounted_litres_ps); ///per s
-
-    net = &_net;
 }
+
+oxygen_reclaimer::oxygen_reclaimer(resource_network& _net) : oxygen_reclaimer()
+{
+    load(_net);
+}
+
+
+oxygen_reclaimer::oxygen_reclaimer(byte_fetch& fetch) : oxygen_reclaimer()
+{
+    load(fetch);
+}
+
 
 void oxygen_reclaimer::tick(state& s, float dt)
 {
@@ -336,6 +405,10 @@ void oxygen_reclaimer::tick(state& s, float dt)
 
 save oxygen_reclaimer::make_save()
 {
-    return {entity_type::OXYGEN_RECLAIMER, byte_vector()};
+    byte_vector vec;
+    vec.push_back<vec2f>(position);
+    vec.push_back<vecrf>(conv.local_storage);
+
+    return {entity_type::OXYGEN_RECLAIMER, vec};
 }
 

@@ -316,6 +316,8 @@ struct resource_network
     std::vector<resource_converter*> converters;
 
     void add(resource_converter* conv);
+    void rem(resource_converter* rem);
+    void clear();
 
     void tick(state& s, float dt);
 
