@@ -289,7 +289,10 @@ oxygen_reclaimer::oxygen_reclaimer(resource_network& _net) : resource_entity(_ne
     float litres_per_hour = 0.5f;
     float litres_per_minute = litres_per_hour / 60.f;
     float litres_ps = litres_per_minute / 60.f;
-    float liquid_to_gas_conversion_ratio = 861;
+    float liquid_to_gas_conversion_ratio_oxygen = 861;
+    float liquid_to_gas_conversion_ratio_c02 = 845;
+
+    float gas_accounted_litres_ps = liquid_to_gas_conversion_ratio_c02 * litres_ps;
 
     float game_speed = 1000.f;
 
@@ -297,12 +300,13 @@ oxygen_reclaimer::oxygen_reclaimer(resource_network& _net) : resource_entity(_ne
     ///well, it should be litres_ps, but unfortunately we cant use realistic values
     ///otherwise itll take 1.5 actual years to play the game
     ///and as exciting as that is, its probably not ideal to build a playerbase
-    conv.set_absorption_rate(liquid_to_gas_conversion_ratio * litres_ps * game_speed);
+    conv.set_absorption_rate(gas_accounted_litres_ps * game_speed);
     conv.set_max_storage({{resource::C02, 1.f}});
     conv.set_usage_ratio({{resource::POWER, 1000.f}});
-    conv.set_usage_ratio({{resource::C02, litres_ps}});
+    conv.set_usage_ratio({{resource::C02, gas_accounted_litres_ps}});
     conv.set_output_ratio({{resource::OXYGEN, 1.f}});
-    conv.set_amount(1000.f + litres_ps); ///per s
+    conv.set_efficiency(gas_accounted_litres_ps / (1000.f + gas_accounted_litres_ps));
+    conv.set_amount(1000.f + gas_accounted_litres_ps); ///per s
 
     net = &_net;
 }
