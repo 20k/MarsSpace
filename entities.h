@@ -197,6 +197,12 @@ struct oxygen_reclaimer : resource_entity
 
 ///later make resource_network a physical hub or something perhaps?
 
+///seems preposterous that I'm already at the state of
+///writing the suit
+struct suit
+{
+
+};
 
 /*
 ///we really want a door component first actually

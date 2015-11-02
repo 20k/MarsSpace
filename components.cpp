@@ -740,43 +740,55 @@ void air_environment::convert_percentage(float amount, float fraction, air_t inp
     local_environment.v[input] -= converted;
 }
 
-/*bool air_environment::convert_absolute(float amount, float convert_amount, air_t input, air_t output)
+void conditional_environment_modifier::absorb_all(state& s, vec2f pos, float amount)
 {
-    float in = local_environment.v[input];
-
-    if(convert_amount > in)
+    if(parent == nullptr)
+        my_environment.absorb_all(s, pos, amount, max_air);
+    else
     {
-        return false;
+        vecrf& parent_storage = parent->my_environment.local_environment;
+        vecrf& local_storage = my_environment.local_environment;
+
+        ///parent environment is empty, cannot absorb
+        if(parent_storage.sum() == 0)
+            return;
+
+        vecrf p_fracs = parent_storage / parent_storage.sum();
+
+        float available_storage = max_air - parent_storage.sum();
+
+        available_storage = std::max(available_storage, 0.f);
+
+        vecrf amounts = available_storage * p_fracs;
+
+        parent_storage = parent_storage - amounts;
+        local_storage = local_storage + amounts;
     }
-
-    local_environment.v[output] += convert_amount;
-    local_environment.v[input] -= convert_amount;
-}*/
-
-/*air_environment::absorb(state& s, vec2f pos, float amount, float maximum, air_t type)
-{
-    float cur = local_environment.v[type];
-
-    if(cur + amount > maximum)
-    {
-        amount = maximum - cur;
-    }
-
-    local_environment.v[type] += absorber.absorb(s, pos, amount, type);
-
-    local_environment.v[type] = std::min(local_environment.v[type], maximum);
 }
 
-void air_environment::emit(state& s, vec2f pos, float amount, air_t type)
+///emitting into an environment is the same as that environment taking form me
+void conditional_environment_modifier::emit_all(state& s, vec2f pos, float amount)
 {
-    float old = local_environment.v[type];
+    if(parent == nullptr)
+    {
+        my_environment.emit_all(s, pos, amount);
+    }
+    else
+    {
+        auto backup_parent = parent;
 
-    local_environment.v[type] = std::max(local_environment.v[type] - amount, 0.f);
+        parent->parent = this;
 
-    float diff = old - local_environment.v[type];
+        parent->absorb_all(s, pos, amount);
 
-    emitter.emit(s, pos, diff, type);
-}*/
+        parent->parent = backup_parent;
+    }
+}
+
+void conditional_environment_modifier::set_max_air(float _max)
+{
+    max_air = _max;
+}
 
 ///i think this assumes 1x1 square tiles
 void breather::tick(state& s, vec2f position, float dt)
@@ -798,15 +810,16 @@ void breather::tick(state& s, vec2f position, float dt)
 
     ///assume 1 is atmospheric pressure
     ///then model lung volume breathing n stuff
-    lungs.absorb_all(s, position, volume_per_breath_litres * 1.f * ldt, 1.f);
-    display.tick(s, (vec2f){20.f, 20.f}, resource_to_air(lungs.local_environment), true);
+    lungs.set_max_air(1.f);
+    lungs.absorb_all(s, position, volume_per_breath_litres * 1.f * ldt);
+    display.tick(s, (vec2f){20.f, 20.f}, resource_to_air(lungs.my_environment.local_environment), true);
 
     ///0.2f because we've inhaled an ideal 1 atm of air
     ///0.2% idealls is o2
     ///0.05 / 0.2 of which is converted to c02 in the ideal case
-    lungs.convert_percentage(volume_per_breath_litres * 0.2f * ldt, 0.05f / 0.20f, air::OXYGEN, air::C02);
+    lungs.my_environment.convert_percentage(volume_per_breath_litres * 0.2f * ldt, 0.05f / 0.20f, air::OXYGEN, air::C02);
 
-    display.tick(s, (vec2f){20.f, 200.f}, resource_to_air(lungs.local_environment), true);
+    display.tick(s, (vec2f){20.f, 200.f}, resource_to_air(lungs.my_environment.local_environment), true);
 
     lungs.emit_all(s, position, 2.f);
 }
@@ -926,7 +939,7 @@ void convert_amount(float amount, vecrf& global_storage, vecrf& global_max, vecr
         //std::cout << conversion_usage_ratio << std::endl;
         //printf("throttlin %f %f %f\n", minimum_element, amount_too_much_element, dt);
 
-        printf("Not enough %s\n", air::names[diff.which_element_minimum()].c_str());
+        //printf("Not enough %s\n", air::names[diff.which_element_minimum()].c_str());
 
         return convert_amount(std::max(amount - amount_too_much_element, 0.f), global_storage, global_max, local_environment, dt, efficiency, conversion_usage_ratio, conversion_output_ratio);
     }

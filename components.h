@@ -255,13 +255,36 @@ struct air_environment
     air_environment();
 };
 
+///either we draw from the environment and emit to it if we can
+///or we draw from and emit to the parent
+///this is just functionality to allow this to happen
+///it does not mandate that it must
+struct conditional_environment_modifier
+{
+    air_environment my_environment;
+
+    conditional_environment_modifier* parent = nullptr;
+
+    void absorb_all(state& s, vec2f pos, float amount);
+    void emit_all(state& s, vec2f pos, float amount);
+    void set_max_air(float _max);
+
+    void set_parent(conditional_environment_modifier* parent);
+    void remove_parent();
+
+    float max_air = 0.f;
+};
+
+
 struct breather
 {
-    air_environment lungs;
+    //air_environment lungs;
+    conditional_environment_modifier lungs;
     air_displayer display;
     air_monitor monitor;
 
     void tick(state& s, vec2f pos, float dt);
+    ///set/remove parent?
 };
 
 ///for one resource or?
