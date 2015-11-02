@@ -256,6 +256,8 @@ struct breather
 ///for one resource or?
 struct resource_converter
 {
+    air_environment environment_absorption;
+
     vec<resource::RES_COUNT, float> local_storage;
     vec<resource::RES_COUNT, float> max_storage;
 
@@ -266,16 +268,21 @@ struct resource_converter
 
     float amount;
     float efficiency;
+    float environmental_absorption_rate;
+
+    vec2f pos;
 
     ///the above two examples combined would convert 1 o2 + 1c02 -> 202 (rubbish but)
 
     void set_max_storage(const std::vector<std::pair<resource_t, float>>& vec);
     void set_usage_ratio(const std::vector<std::pair<resource_t, float>>& vec);
     void set_output_ratio(const std::vector<std::pair<resource_t, float>>& vec);
+    void set_absorption_rate(float _rate);
 
     ///maybe constructor me
     void set_amount(float amount);
     void set_efficiency(float efficiency);
+    void set_position(vec2f _pos);
 
     void add(const std::vector<std::pair<resource_t, float>>& vec);
     vecrf take(const std::vector<std::pair<resource_t, float>>& vec);
@@ -283,8 +290,9 @@ struct resource_converter
     //void add(const vecrf& v);
     //vecrf take(const vecrf& v);
 
-
-    void convert(vecrf& take_from, vecrf& store_in, vecrf& global_max, float dt);
+    void absorb_all(state& s, float dt);
+    void emit_all(state& s);
+    void convert(vecrf& global_storage, vecrf& global_max, float dt);
 
     resource_converter();
 };
@@ -299,7 +307,7 @@ struct resource_network
 
     void add(resource_converter* conv);
 
-    void tick(float dt);
+    void tick(state& s, float dt);
 
     resource_network();
 };

@@ -168,8 +168,6 @@ struct gas_storage : resource_entity
 
 struct oxygen_reclaimer : resource_entity
 {
-    air_environment environment;
-    resource_converter local_convert;
     air_displayer display;
 
     renderable_circle circle;

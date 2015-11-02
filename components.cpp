@@ -731,16 +731,19 @@ void breather::tick(state& s, vec2f position, float dt)
     ///use this for some sort of hardcore realism mode where it takes 2 real days time.
     ///or maybe we can just accelerate time?
     const float volume_per_breath_m3 = 0.0031;
+    const float volume_per_breath_litres = 6;
+
+
 
     ///assume 1 is atmospheric pressure
     ///then model lung volume breathing n stuff
-    lungs.absorb_all(s, position, 1.f * ldt, 1.f);
+    lungs.absorb_all(s, position, volume_per_breath_litres * 1.f * ldt, 1.f);
     display.tick(s, (vec2f){20.f, 20.f}, resource_to_air(lungs.local_environment), true);
 
     ///0.2f because we've inhaled an ideal 1 atm of air
     ///0.2% idealls is o2
     ///0.05 / 0.2 of which is converted to c02 in the ideal case
-    lungs.convert_percentage(0.2f * ldt, 0.05f / 0.20f, air::OXYGEN, air::C02);
+    lungs.convert_percentage(volume_per_breath_litres * 0.2f * ldt, 0.05f / 0.20f, air::OXYGEN, air::C02);
 
     display.tick(s, (vec2f){20.f, 200.f}, resource_to_air(lungs.local_environment), true);
 
@@ -760,6 +763,8 @@ resource_converter::resource_converter()
 
     amount = 0.f;
     efficiency = 1.f;
+    environmental_absorption_rate = 0.f;
+    pos = (vec2f){0.f, 0.f};
 }
 
 void resource_converter::set_max_storage(const std::vector<std::pair<resource_t, float>>& lv)
@@ -788,6 +793,11 @@ void resource_converter::set_output_ratio(const std::vector<std::pair<resource_t
     }
 
     conversion_output_ratio = conversion_output_ratio / conversion_output_ratio.sum();
+}
+
+void resource_converter::set_absorption_rate(float _rate)
+{
+    environmental_absorption_rate = _rate;
 }
 
 void resource_converter::add(const std::vector<std::pair<resource_t, float>>& lv)
@@ -828,9 +838,15 @@ vec<resource::RES_COUNT, float> resource_converter::take(const std::vector<std::
     local_storage = min(local_storage, max_storage);
 }*/
 
-void convert_amount(float amount, vecrf& take_from, vecrf& store_in, vecrf& global_max, float dt, float efficiency, const vecrf& conversion_usage_ratio, const vecrf& conversion_output_ratio)
+///we want to deplete from local resources first, then escalate to global resources
+///this is so that we can absorb a unit of gas from the environment, process it, then re-emit it afterwards
+void convert_amount(float amount, vecrf& global_storage, vecrf& global_max, vecrf& local_environment, float dt, float efficiency, const vecrf& conversion_usage_ratio, const vecrf& conversion_output_ratio)
 {
-    auto resources = take_from;
+    if(amount <= 0.001f)
+        return;
+
+    ///so we steal resources from the local environment (ie what we've deliberately absorbed)
+    auto resources = global_storage + local_environment;
 
     auto consume_amount = conversion_usage_ratio * amount * dt;
 
@@ -841,56 +857,74 @@ void convert_amount(float amount, vecrf& take_from, vecrf& store_in, vecrf& glob
     ///we've requested an extra x too much of a particular resources
     ///we'll have to request minimum_element * conversion_usage_ratio of everything
     ///or... we could just recurse
-    if(minimum_element < 0)
+    if(minimum_element < -0.00001f)
     {
-        float amount_too_much_element = fabs(minimum_element);
+        float amount_too_much_element = fabs(minimum_element) / dt;
+        amount_too_much_element /= conversion_usage_ratio.v[diff.which_element_minimum()];
 
-        printf("throttlin\n");
+        //std::cout << conversion_usage_ratio << std::endl;
+        //printf("throttlin %f %f %f\n", minimum_element, amount_too_much_element, dt);
 
-        return convert_amount(amount_too_much_element, take_from, store_in, global_max, dt, efficiency, conversion_usage_ratio, conversion_output_ratio);
+        printf("Not enough %s\n", air::names[diff.which_element_minimum()].c_str());
+
+        return convert_amount(std::max(amount - amount_too_much_element, 0.f), global_storage, global_max, local_environment, dt, efficiency, conversion_usage_ratio, conversion_output_ratio);
     }
 
     auto amount_produced = amount * dt * efficiency * conversion_output_ratio;
 
-    take_from = take_from - consume_amount;
-    store_in = store_in + amount_produced;
+    auto pre = local_environment;
+
+    local_environment = max(local_environment - consume_amount, 0.f);
+
+    auto local_diff = pre - local_environment;
+
+    global_storage = global_storage - consume_amount;
+    global_storage = global_storage + amount_produced + local_diff;
+    ///so local diff is the amount that was taken from the local environment
+    ///if ie global storage = 0
+    ///we consume consume_amount (which will be the maximum we can take from the local environment
+    ///remove that from global storage, then readd the local diff
+    ///=== 0 change overall
 
     ///we want to return the resources used if we're above global max
-    store_in = min(store_in, global_max);
-    store_in = max(store_in, 0.f);
+    global_storage = min(global_storage, global_max);
+    global_storage = max(global_storage, 0.f);
+
+    ///so we remove the whole consumed amount from the environment
+    ///because its not a store, its just a temporary thing
+    ///so we definitely remove the resources we can have from there
+    ///eg we take all the nitrogen we can from it, there's no 'store'
+    ///we can't accidentally remove a resource we don't want to because we always
+    ///want to take from the local environment
 }
 
 ///currently if i've run out of one input resource, itll still work
-void resource_converter::convert(vecrf& take_from, vecrf& store_in, vecrf& global_max, float dt)
+void resource_converter::convert(vecrf& global_storage, vecrf& global_max, float dt)
 {
-    convert_amount(amount, take_from, store_in, global_max, dt, efficiency, conversion_usage_ratio, conversion_output_ratio);
+    convert_amount(amount, global_storage, global_max, environment_absorption.local_environment, dt, efficiency, conversion_usage_ratio, conversion_output_ratio);
+}
 
-    /*auto max_available = global_storage;
+void resource_converter::set_position(vec2f _pos)
+{
+    pos = _pos;
+}
 
-    auto to_convert = conversion_usage_ratio * amount * dt;
+void resource_converter::absorb_all(state& s, float dt)
+{
+    if(environmental_absorption_rate > 0.f)
+    {
+        environment_absorption.absorb_all(s, pos, environmental_absorption_rate * dt, environmental_absorption_rate);
 
-    vec<resource::RES_COUNT, float> minimum;
-    minimum = 0.f;
+        //printf("%f\n", environmental_absorption_rate * dt);
+    }
+}
 
-    auto after_remove = max_available - to_convert;
-
-    after_remove = clamp(after_remove, minimum, global_max);
-
-    to_convert = max_available - after_remove;
-
-    ///how much we actually converted
-    float frac_converted = to_convert.sum() / amount;
-
-    ///no inputs, must be a free generator
-    if(conversion_usage_ratio.sum() == 0)
-        frac_converted = dt * efficiency;
-
-    auto amount_produced = frac_converted * amount * efficiency * conversion_output_ratio;
-
-    global_storage = global_storage - to_convert;
-    global_storage = global_storage + amount_produced;
-
-    global_storage = clamp(global_storage, minimum, global_max);*/
+void resource_converter::emit_all(state& s)
+{
+    if(environmental_absorption_rate > 0.f)
+    {
+        environment_absorption.emit_all(s, pos, environment_absorption.local_environment.sum());
+    }
 }
 
 void resource_converter::set_amount(float _amount)
@@ -921,7 +955,7 @@ void resource_network::add(resource_converter* conv)
 ///we also need to be able to extract from the network
 ///proportional is easiest
 ///I'm going to have to scrap this and do it properly, aren't I
-void resource_network::tick(float dt)
+void resource_network::tick(state& s, float dt)
 {
     if(converters.size() == 0)
         return;
@@ -939,7 +973,10 @@ void resource_network::tick(float dt)
 
     for(auto& i : converters)
     {
-        i->convert(network_resources, network_resources, max_network_resources, dt);
+        i->absorb_all(s, dt);
+        printf("%f\n", i->environment_absorption.local_environment.v[air::C02]);
+        i->convert(network_resources, max_network_resources, dt);
+        i->emit_all(s);
     }
 
 

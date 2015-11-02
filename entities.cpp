@@ -204,6 +204,8 @@ resource_entity::resource_entity(resource_network& net)
 void resource_entity::set_position(vec2f pos)
 {
     position = pos;
+
+    conv.set_position(position);
 }
 
 void resource_entity::tick(state& s, float dt)
@@ -282,19 +284,25 @@ save gas_storage::make_save()
     return {entity_type::GAS_STORAGE, byte_vector()};
 }
 
-
 oxygen_reclaimer::oxygen_reclaimer(resource_network& _net) : resource_entity(_net)
 {
     float litres_per_hour = 0.5f;
     float litres_per_minute = litres_per_hour / 60.f;
     float litres_ps = litres_per_minute / 60.f;
+    float liquid_to_gas_conversion_ratio = 861;
+
+    float game_speed = 1000.f;
 
     ///all resources are per second. So 1 watt produces litresps c02
-    local_convert.set_max_storage({{resource::C02, 1.f}});
-    //local_convert.set_usage_ratio({{resource::POWER, 1000.f}});
-    local_convert.set_usage_ratio({{resource::C02, litres_ps}});
-    local_convert.set_output_ratio({{resource::OXYGEN, 1.f}});
-    local_convert.set_amount(1000.f + litres_ps); ///per s
+    ///well, it should be litres_ps, but unfortunately we cant use realistic values
+    ///otherwise itll take 1.5 actual years to play the game
+    ///and as exciting as that is, its probably not ideal to build a playerbase
+    conv.set_absorption_rate(liquid_to_gas_conversion_ratio * litres_ps * game_speed);
+    conv.set_max_storage({{resource::C02, 1.f}});
+    conv.set_usage_ratio({{resource::POWER, 1000.f}});
+    conv.set_usage_ratio({{resource::C02, litres_ps}});
+    conv.set_output_ratio({{resource::OXYGEN, 1.f}});
+    conv.set_amount(1000.f + litres_ps); ///per s
 
     net = &_net;
 }
@@ -305,12 +313,12 @@ void oxygen_reclaimer::tick(state& s, float dt)
     float litres_per_minute = litres_per_hour / 60.f;
     float litres_ps = litres_per_minute / 60.f;
 
-    environment.absorb_all(s, position, 1.f, 1.f);
+    /*environment.absorb_all(s, position, 1.f, 1.f);
     local_convert.convert(environment.local_environment, local_convert.local_storage, net->max_network_resources, dt);
     display.tick(s, position + (vec2f){15, -10}, resource_to_air(environment.local_environment));
-    environment.emit_all(s, position, 1.f);
+    environment.emit_all(s, position, 1.f);*/
 
-    //resource_entity::tick(s, dt);
+    resource_entity::tick(s, dt);
 
     circle.tick(s, position, 1.f, (vec4f({100, 100, 255, 255})));
 }

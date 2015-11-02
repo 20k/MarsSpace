@@ -255,7 +255,7 @@ int main()
             i->tick(st, dt);
         }
 
-        net.tick(dt);
+        net.tick(st, dt);
 
         //convert.convert(dt / 1000.f);
         //c2.convert(dt / 1000.f);
@@ -280,7 +280,7 @@ int main()
         win.display();
         win.clear();
 
-        //printf("%f\n", dt);
+        printf("%f\n", dt);
 
         //sf::sleep(sf::microseconds(100000.f));
 
