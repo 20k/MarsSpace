@@ -759,23 +759,6 @@ void conditional_environment_modifier::absorb_all(state& s, vec2f pos, float amo
         vecrf leftover = add(taken);
 
         parent->add(leftover);
-
-
-
-        /*vecrf p_fracs = parent_storage / parent_storage.sum();
-
-        float available_storage = max_air - parent_storage.sum();
-
-        printf("A %f\n", amount);
-
-        available_storage = std::max(available_storage, 0.f);
-
-        vecrf available_to_take = min(available_storage * p_fracs, parent_storage);
-
-        vecrf amounts = available_to_take * p_fracs;
-
-        parent_storage = parent_storage - amounts;
-        local_storage = local_storage + amounts;*/
     }
 }
 
