@@ -32,7 +32,8 @@ namespace air
         "CARBON DIOXIDE",
         "WATER",
         "TOXIC",
-        "POWER"
+        "POWER",
+        "ERROR"
     };
 
     static std::vector<std::string> short_names
@@ -43,7 +44,8 @@ namespace air
         "C02",
         "H20",
         "BAD",
-        "PWR"
+        "PWR",
+        "ERR"
     };
 }
 

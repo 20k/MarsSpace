@@ -493,15 +493,16 @@ void text::render(state& s, const std::string& _str, vec2f _tl, int size, text_o
     static bool loaded = false;
 
     static sf::Font font;
-    sf::Text txt;
+    static sf::Text txt;
 
     if(!loaded)
     {
         font.loadFromFile("./VeraMono.ttf");
+        txt.setFont(font);
+
         loaded = true;
     }
 
-    txt.setFont(font);
 
     txt.setCharacterSize(size);
 
@@ -521,6 +522,8 @@ void text::render(state& s, const std::string& _str, vec2f _tl, int size, text_o
     {
         txt.setOrigin({txt.getLocalBounds().width / 2.f, txt.getLocalBounds().height / 1.2});
     }
+    else
+        txt.setOrigin({0.f, 0.f});
 
     if(!is_absolute)
         s.win->draw(txt);
@@ -561,6 +564,7 @@ void air_displayer::tick(state& s, vec2f display_pos, const vec<air::COUNT, floa
     auto air_fracs = air_parts / air_parts.sum();
     float air_pressure = air_parts.sum();
 
+
     if(air_pressure < 0.00001f || std::isnan(air_pressure))
     {
         air_pressure = 0.f;
@@ -583,10 +587,12 @@ void air_displayer::tick(state& s, vec2f display_pos, const vec<air::COUNT, floa
     else
         display = display + "PRESSURE: TOTAL VACUUM";
 
+
     if(!absolute)
         txt.render(s, display, display_pos, 16, text_options::NONE);
     else
         txt.render(s, display, display_pos, 16, text_options::ABS);
+
 }
 
 void resource_displayer::tick(state& s, vec2f display_pos, const vecrf& resources, bool absolute)
@@ -986,6 +992,8 @@ void resource_network::tick(state& s, float dt)
         i->convert(network_resources, max_network_resources, dt);
         i->emit_all(s);
     }
+
+    printf("num %i\n", converters.size());
 
 
     ///distribute resources proportionally

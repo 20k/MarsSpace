@@ -252,6 +252,8 @@ int main()
 
         for(auto& i : stuff)
         {
+            printf("%i\n", i->make_save().type);
+            printf("printed\n");
             i->tick(st, dt);
         }
 

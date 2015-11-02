@@ -257,6 +257,8 @@ void hydrogen_battery::tick(state& s, float dt)
     resource_entity::tick(s, dt);
     ///orange
     circle.tick(s, position, 5.f, (vec4f){255, 140, 0, 255});
+
+    txt.render(s, air::short_names[air::POWER], position, 16, text_options::CENTERED);
 }
 
 save hydrogen_battery::make_save()
@@ -279,7 +281,7 @@ void gas_storage::tick(state& s, float dt)
 
     float rad = 5.f;
 
-    circle.tick(s, position, 5.f, (vec4f){100, 255, 255, 255});
+    circle.tick(s, position, rad, (vec4f){100, 255, 255, 255});
 
     txt.render(s, air::short_names[type], position, 16, text_options::CENTERED);
 }

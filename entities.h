@@ -146,6 +146,7 @@ struct solar_panel : resource_entity
 
 struct hydrogen_battery : resource_entity
 {
+    text txt;
     renderable_circle circle;
 
     hydrogen_battery(resource_network& net);

@@ -168,7 +168,7 @@ struct saver
 
 namespace text_options
 {
-    enum text_options
+    enum text_options : uint32_t
     {
         NONE = 0,
         CENTERED = 1,
