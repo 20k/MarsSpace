@@ -281,7 +281,7 @@ void gas_storage::tick(state& s, float dt)
 
     circle.tick(s, position, 5.f, (vec4f){100, 255, 255, 255});
 
-    txt.render(s, air::short_names[type], position - (vec2f){rad/2.f, rad/2.f}, 16);
+    txt.render(s, air::short_names[type], position, 16, text_options::CENTERED);
 }
 
 save gas_storage::make_save()
