@@ -485,7 +485,7 @@ std::vector<entity*> saver::load_from_file(const std::string& fname, state& s)
     return entities;
 }
 
-void text::render(state& s, const std::string& _str, vec2f _tl, int size, text_options::text_options opt)
+void text::render(state& s, const std::string& _str, vec2f _tl, int size, bool absolute)//text_options::text_options opt)
 {
     str = _str;
     tl = _tl;
@@ -510,7 +510,7 @@ void text::render(state& s, const std::string& _str, vec2f _tl, int size, text_o
     txt.setString(str);
     txt.setPosition(tl.v[0], tl.v[1]);
 
-    bool is_absolute = opt & text_options::ABS;
+    bool is_absolute = absolute;//opt & text_options::ABS;
 
     ///bad
     if(!is_absolute)
@@ -518,12 +518,12 @@ void text::render(state& s, const std::string& _str, vec2f _tl, int size, text_o
     else
         txt.setScale(1.f, 1.f);
 
-    if(opt & text_options::CENTERED)
+    /*if(opt & text_options::CENTERED)
     {
         txt.setOrigin({txt.getLocalBounds().width / 2.f, txt.getLocalBounds().height / 1.2});
     }
     else
-        txt.setOrigin({0.f, 0.f});
+        txt.setOrigin({0.f, 0.f});*/
 
     if(!is_absolute)
         s.win->draw(txt);
@@ -589,9 +589,9 @@ void air_displayer::tick(state& s, vec2f display_pos, const vec<air::COUNT, floa
 
 
     if(!absolute)
-        txt.render(s, display, display_pos, 16, text_options::NONE);
+        txt.render(s, display, display_pos, 16, absolute);//text_options::NONE);
     else
-        txt.render(s, display, display_pos, 16, text_options::ABS);
+        txt.render(s, display, display_pos, 16, absolute);//text_options::ABS);
 
 }
 
@@ -610,9 +610,9 @@ void resource_displayer::tick(state& s, vec2f display_pos, const vecrf& resource
     }
 
     if(!absolute)
-        txt.render(s, display, display_pos, 16, text_options::NONE);
+        txt.render(s, display, display_pos, 16, absolute);//text_options::NONE);
     else
-        txt.render(s, display, display_pos, 16, text_options::ABS);
+        txt.render(s, display, display_pos, 16, absolute);//text_options::ABS);
 }
 
 void environmental_gas_emitter::emit(state& s, vec2f pos, float amount, air_t type)
@@ -992,9 +992,6 @@ void resource_network::tick(state& s, float dt)
         i->convert(network_resources, max_network_resources, dt);
         i->emit_all(s);
     }
-
-    printf("num %i\n", converters.size());
-
 
     ///distribute resources proportionally
     ///if something is destroyed, we'll lose the

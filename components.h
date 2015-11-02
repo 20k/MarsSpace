@@ -166,7 +166,7 @@ struct saver
     std::vector<entity*> load_from_file(const std::string& fname, state& s);
 };
 
-namespace text_options
+/*namespace text_options
 {
     enum text_options : uint32_t
     {
@@ -174,7 +174,7 @@ namespace text_options
         CENTERED = 1,
         ABS = 2
     };
-}
+}*/
 
 struct text
 {
@@ -182,7 +182,7 @@ struct text
     vec2f tl;
 
     ///need to load then render really
-    void render(state& s, const std::string& _str, vec2f _tl, int size = 16, text_options::text_options opt = text_options::NONE);
+    void render(state& s, const std::string& _str, vec2f _tl, int size, bool absolute);//, text_options::text_options opt);
 };
 
 ///should probably rename this to air_environment_monitor or something
