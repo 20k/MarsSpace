@@ -41,6 +41,35 @@ typedef air::resource resource_t;
 
 typedef vec<air::RES_COUNT, float> vecrf;
 
+inline
+vecrf air_to_resource(vec<air::COUNT, float> ac)
+{
+    vecrf res;
+    res = 0.f;
+
+    for(int i=0; i<air::COUNT; i++)
+    {
+        res.v[i] = ac.v[i];
+    }
+
+    return res;
+}
+
+inline
+vec<air::COUNT, float> resource_to_air(vecrf res)
+{
+    vec<air::COUNT, float> ret;
+
+    ret = 0.f;
+
+    for(int i=0; i<air::COUNT; i++)
+    {
+        ret.v[i] = res.v[i];
+    }
+
+    return ret;
+}
+
 namespace resource = air;
 
 inline

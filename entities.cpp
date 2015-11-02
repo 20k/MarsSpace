@@ -265,21 +265,58 @@ save hydrogen_battery::make_save()
     return {entity_type::HYDROGEN_BATTERY, vec};
 }
 
-/*gas_storage::gas_storage(resource_network& net, air_t type) : resource_entity(net)
+gas_storage::gas_storage(resource_network& net, air_t type) : resource_entity(net)
 {
     conv.set_max_storage({{type, 50.f}}); ///litres
 }
 
+void gas_storage::tick(state& s, float dt)
+{
+    resource_entity::tick(s, dt);
 
-oxygen_reclaimer::oxygen_reclaimer(resource_network& net) : resource_entity(net)
+    circle.tick(s, position, 5.f, (vec4f){100, 255, 255, 255});
+}
+
+save gas_storage::make_save()
+{
+    return {entity_type::GAS_STORAGE, byte_vector()};
+}
+
+
+oxygen_reclaimer::oxygen_reclaimer(resource_network& _net) : resource_entity(_net)
 {
     float litres_per_hour = 0.5f;
     float litres_per_minute = litres_per_hour / 60.f;
     float litres_ps = litres_per_minute / 60.f;
 
-    //conv.set_max_storage({{resource::POWER, 9 * 1000 * 1000.f}});
-    conv.set_usage_ratio({{resource::C02, 1.f}});
-    conv.set_output_ratio({{resource::OXYGEN, 1.f}});
-    conv.set_amount(litres_ps); ///per ms
-}*/
+    ///all resources are per second. So 1 watt produces litresps c02
+    local_convert.set_max_storage({{resource::C02, 1.f}});
+    //local_convert.set_usage_ratio({{resource::POWER, 1000.f}});
+    local_convert.set_usage_ratio({{resource::C02, litres_ps}});
+    local_convert.set_output_ratio({{resource::OXYGEN, 1.f}});
+    local_convert.set_amount(1000.f + litres_ps); ///per s
+
+    net = &_net;
+}
+
+void oxygen_reclaimer::tick(state& s, float dt)
+{
+    float litres_per_hour = 0.5f;
+    float litres_per_minute = litres_per_hour / 60.f;
+    float litres_ps = litres_per_minute / 60.f;
+
+    environment.absorb_all(s, position, 1.f, 1.f);
+    local_convert.convert(environment.local_environment, local_convert.local_storage, net->max_network_resources, dt);
+    display.tick(s, position + (vec2f){15, -10}, resource_to_air(environment.local_environment));
+    environment.emit_all(s, position, 1.f);
+
+    //resource_entity::tick(s, dt);
+
+    circle.tick(s, position, 1.f, (vec4f({100, 100, 255, 255})));
+}
+
+save oxygen_reclaimer::make_save()
+{
+    return {entity_type::OXYGEN_RECLAIMER, byte_vector()};
+}
 

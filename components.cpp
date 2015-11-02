@@ -589,6 +589,9 @@ void resource_displayer::tick(state& s, vec2f display_pos, const vecrf& resource
 
     for(int i=0; i<resource::RES_COUNT; i++)
     {
+        //if(resource_parts.v[i] <= 0.f)
+        //    continue;
+
         display = display + resource::names[i] + ": " + std::to_string(resource_parts.v[i]) + "\n";
     }
 
@@ -610,8 +613,7 @@ float environmental_gas_absorber::absorb(state& s, vec2f pos, float amount, air_
 
 air_environment::air_environment()
 {
-    for(int i=0; i<air::COUNT; i++)
-        local_environment.v[i] = 0;
+    local_environment = 0.f;
 }
 
 ///air environment will be the class that can be enclosed
@@ -638,7 +640,10 @@ void air_environment::absorb_all(state& s, vec2f pos, float amount, float max_to
     ///so amount is the volume of air to take in
     ///we simply request volume air from the thing
 
-    local_environment = local_environment + s.air_process->take_volume(pos.v[0], pos.v[1], amount);
+    auto taken = s.air_process->take_volume(pos.v[0], pos.v[1], amount);
+
+
+    local_environment = local_environment + air_to_resource(taken);
 }
 
 ///above also applies to this obvs
@@ -653,7 +658,7 @@ void air_environment::emit_all(state& s, vec2f pos, float amount)
 
     auto to_emit = frac * amount;
 
-    s.air_process->add_volume(pos.v[0], pos.v[1], to_emit);
+    s.air_process->add_volume(pos.v[0], pos.v[1], resource_to_air(to_emit));
 
     local_environment = local_environment - to_emit;
 }
@@ -730,14 +735,14 @@ void breather::tick(state& s, vec2f position, float dt)
     ///assume 1 is atmospheric pressure
     ///then model lung volume breathing n stuff
     lungs.absorb_all(s, position, 1.f * ldt, 1.f);
-    display.tick(s, (vec2f){20.f, 20.f}, lungs.local_environment, true);
+    display.tick(s, (vec2f){20.f, 20.f}, resource_to_air(lungs.local_environment), true);
 
     ///0.2f because we've inhaled an ideal 1 atm of air
     ///0.2% idealls is o2
     ///0.05 / 0.2 of which is converted to c02 in the ideal case
     lungs.convert_percentage(0.2f * ldt, 0.05f / 0.20f, air::OXYGEN, air::C02);
 
-    display.tick(s, (vec2f){20.f, 200.f}, lungs.local_environment, true);
+    display.tick(s, (vec2f){20.f, 200.f}, resource_to_air(lungs.local_environment), true);
 
     lungs.emit_all(s, position, 2.f);
 }
@@ -823,9 +828,9 @@ vec<resource::RES_COUNT, float> resource_converter::take(const std::vector<std::
     local_storage = min(local_storage, max_storage);
 }*/
 
-void convert_amount(float amount, vecrf& global_storage, vecrf& global_max, float dt, float efficiency, const vecrf& conversion_usage_ratio, const vecrf& conversion_output_ratio)
+void convert_amount(float amount, vecrf& take_from, vecrf& store_in, vecrf& global_max, float dt, float efficiency, const vecrf& conversion_usage_ratio, const vecrf& conversion_output_ratio)
 {
-    auto resources = global_storage;
+    auto resources = take_from;
 
     auto consume_amount = conversion_usage_ratio * amount * dt;
 
@@ -842,23 +847,23 @@ void convert_amount(float amount, vecrf& global_storage, vecrf& global_max, floa
 
         printf("throttlin\n");
 
-        return convert_amount(amount_too_much_element, global_storage, global_max, dt, efficiency, conversion_usage_ratio, conversion_output_ratio);
+        return convert_amount(amount_too_much_element, take_from, store_in, global_max, dt, efficiency, conversion_usage_ratio, conversion_output_ratio);
     }
 
     auto amount_produced = amount * dt * efficiency * conversion_output_ratio;
 
-    global_storage = global_storage - consume_amount;
-    global_storage = global_storage + amount_produced;
+    take_from = take_from - consume_amount;
+    store_in = store_in + amount_produced;
 
     ///we want to return the resources used if we're above global max
-    global_storage = min(global_storage, global_max);
-    global_storage = max(global_storage, 0.f);
+    store_in = min(store_in, global_max);
+    store_in = max(store_in, 0.f);
 }
 
 ///currently if i've run out of one input resource, itll still work
-void resource_converter::convert(vecrf& global_storage, vecrf& global_max, float dt)
+void resource_converter::convert(vecrf& take_from, vecrf& store_in, vecrf& global_max, float dt)
 {
-    convert_amount(amount, global_storage, global_max, dt, efficiency, conversion_usage_ratio, conversion_output_ratio);
+    convert_amount(amount, take_from, store_in, global_max, dt, efficiency, conversion_usage_ratio, conversion_output_ratio);
 
     /*auto max_available = global_storage;
 
@@ -898,8 +903,14 @@ void resource_converter::set_efficiency(float _efficiency)
     efficiency = _efficiency;
 }
 
+resource_network::resource_network()
+{
+    network_resources = 0.f;
+}
+
 void resource_network::add(resource_converter* conv)
 {
+    network_resources = network_resources + conv->local_storage;
     converters.push_back(conv);
 }
 
@@ -909,33 +920,28 @@ void resource_network::add(resource_converter* conv)
 ///in the long term we'll want to set up container priorities
 ///we also need to be able to extract from the network
 ///proportional is easiest
+///I'm going to have to scrap this and do it properly, aren't I
 void resource_network::tick(float dt)
 {
     if(converters.size() == 0)
         return;
 
-    vecrf resource_accum;
-    resource_accum = 0.f;
+    //vecrf resource_accum;
+    //resource_accum = 0.f;
 
-    vecrf total_storage;
-    total_storage = 0.f;
+    max_network_resources = 0.f;
 
     for(auto& i : converters)
     {
-        resource_accum = resource_accum + i->local_storage;
-        total_storage = total_storage + i->max_storage;
+        //resource_accum = resource_accum + i->local_storage;
+        max_network_resources = max_network_resources + i->max_storage;
     }
 
     for(auto& i : converters)
     {
-        i->convert(resource_accum, total_storage, dt);
+        i->convert(network_resources, network_resources, max_network_resources, dt);
     }
 
-    /*float num = converters.size();
-
-    vecrf avg_per_container = resource_accum / num;
-    vecrf running_missed;
-    running_missed = 0;*/
 
     ///distribute resources proportionally
     ///if something is destroyed, we'll lose the
@@ -953,14 +959,23 @@ void resource_network::tick(float dt)
             else
             {
                 ///give me storage relative to the overall storage
-                frac_to_store.v[i] = storage.v[i] / total_storage.v[i];
+                frac_to_store.v[i] = storage.v[i] / max_network_resources.v[i];
             }
         }
 
-        auto local_frac = resource_accum * frac_to_store;
+        ///we're doing this for the moment so that later I can affect the lost local storages
+        ///now that the network actually stores the resources, this is broken
+        auto local_frac = network_resources * frac_to_store;
 
         c->local_storage = local_frac;
     }
+
+
+    /*float num = converters.size();
+
+    vecrf avg_per_container = resource_accum / num;
+    vecrf running_missed;
+    running_missed = 0;*/
 
 
     /*for(auto& c : converters)

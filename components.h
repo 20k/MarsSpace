@@ -216,13 +216,15 @@ struct environmental_gas_absorber
     float absorb(state& s, vec2f pos, float amount, air_t type);
 };
 
+struct resource_converter;
+
 ///we want a maximum of all gas?
 struct air_environment
 {
     environmental_gas_absorber absorber;
     environmental_gas_emitter emitter;
 
-    vec<air::COUNT, float> local_environment;
+    vecrf local_environment;
 
     ///this is specifically diffusion (active or passive)
     ///into the local environment
@@ -234,7 +236,7 @@ struct air_environment
     ///assumes a perfect conversion
     ///can obvs make this lossy later
     void convert_percentage(float amount, float fraction, air_t input, air_t output);
-    bool convert_amount(float amount, float fraction, air_t input, air_t output);
+    //bool convert_amount(float amount, float fraction, air_t input, air_t output);
 
     //void absorb(state& s, vec2f pos, float amount, float maximum, air_t type);
     //void emit(state& s, vec2f pos, float amount, air_t type);
@@ -282,7 +284,7 @@ struct resource_converter
     //vecrf take(const vecrf& v);
 
 
-    void convert(vecrf& global_storage, vecrf& global_max, float dt);
+    void convert(vecrf& take_from, vecrf& store_in, vecrf& global_max, float dt);
 
     resource_converter();
 };
@@ -290,11 +292,16 @@ struct resource_converter
 ///maybe allow resource networks to connect to other resource networks, and then can recurse
 struct resource_network
 {
+    vecrf network_resources;
+    vecrf max_network_resources;
+
     std::vector<resource_converter*> converters;
 
     void add(resource_converter* conv);
 
     void tick(float dt);
+
+    resource_network();
 };
 
 

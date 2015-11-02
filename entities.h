@@ -15,7 +15,9 @@ namespace entity_type
         DOOR,
         RESOURCE_ENTITY,
         SOLAR_PANEL,
-        HYDROGEN_BATTERY
+        HYDROGEN_BATTERY,
+        GAS_STORAGE,
+        OXYGEN_RECLAIMER
     };
 }
 
@@ -128,7 +130,7 @@ struct resource_entity : entity
 
     virtual void tick(state& s, float dt) override;
 
-    save make_save();
+    virtual save make_save();
 };
 
 struct solar_panel : resource_entity
@@ -153,19 +155,33 @@ struct hydrogen_battery : resource_entity
     save make_save();
 };
 
-/*struct gas_storage : resource_entity
+struct gas_storage : resource_entity
 {
+    renderable_circle circle;
+
     gas_storage(resource_network& net, air_t type);
 
     virtual void tick(state& s, float dt) override;
+
+    save make_save();
 };
 
 struct oxygen_reclaimer : resource_entity
 {
-    oxygen_reclaimer(resource_network& net);
+    air_environment environment;
+    resource_converter local_convert;
+    air_displayer display;
+
+    renderable_circle circle;
+
+    oxygen_reclaimer(resource_network& _net);
 
     virtual void tick(state& s, float dt) override;
-};*/
+
+    save make_save();
+
+    resource_network* net;
+};
 
 ///later make resource_network a physical hub or something perhaps?
 

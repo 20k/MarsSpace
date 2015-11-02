@@ -128,6 +128,7 @@ int main()
             win.close();
 
         vec2f mouse_pos = m_fetch.get_world(st);
+        vec2f round_mouse = round_to_multiple(mouse_pos, 5);
 
         if(once<sf::Mouse::Left>())
         {
@@ -184,19 +185,36 @@ int main()
 
         if(once<sf::Keyboard::F1>())
         {
-            vec2f m = round_to_multiple(mouse_pos, 5);
-
             solar_panel* en = new solar_panel(net);
-            en->set_position(m);
+            en->set_position(round_mouse);
             stuff.push_back(en);
         }
 
         if(once<sf::Keyboard::F2>())
         {
-            vec2f m = round_to_multiple(mouse_pos, 5);
-
             hydrogen_battery* en = new hydrogen_battery(net);
-            en->set_position(m);
+            en->set_position(round_mouse);
+            stuff.push_back(en);
+        }
+
+        if(once<sf::Keyboard::F3>())
+        {
+            gas_storage* en = new gas_storage(net, air::OXYGEN);
+            en->set_position(round_mouse);
+            stuff.push_back(en);
+        }
+
+        if(once<sf::Keyboard::F4>())
+        {
+            gas_storage* en = new gas_storage(net, air::C02);
+            en->set_position(round_mouse);
+            stuff.push_back(en);
+        }
+
+        if(once<sf::Keyboard::F5>())
+        {
+            oxygen_reclaimer* en = new oxygen_reclaimer(net);
+            en->set_position(round_mouse);
             stuff.push_back(en);
         }
 
