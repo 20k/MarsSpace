@@ -173,6 +173,14 @@ int main()
             play = dynamic_cast<player*>(st.current_player);
         }
 
+        if(once<sf::Keyboard::F>())
+        {
+            suit_entity* en = play->drop_suit();
+
+            if(en != nullptr)
+                stuff.push_back(en);
+        }
+
         if(key.isKeyPressed(sf::Keyboard::Num1))
         {
             vec2f local_pos = m_fetch.get_world(st);
@@ -261,9 +269,20 @@ int main()
 
         air_process.tick(st, dt);
 
-        for(auto& i : stuff)
+        //for(auto& i : stuff)
+        for(int i=0; i<(int)stuff.size(); i++)
         {
-            i->tick(st, dt);
+            entity* en = stuff[i];
+
+            if(en->to_unload)
+            {
+                delete en;
+                stuff.erase(stuff.begin() + i);
+                i--;
+                continue;
+            }
+
+            en->tick(st, dt);
         }
 
         net.tick(st, dt);

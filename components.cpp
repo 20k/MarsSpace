@@ -292,11 +292,28 @@ vec2f mouse_fetcher::get_screen(state& s)
     return {x, y};
 }
 
-area_interacter::area_interacter(vec2f _pos, float _radius)
+area_interacter::area_interacter(vec2f _pos, float _radius) : area_interacter()
 {
     pos = _pos;
     radius = _radius;
+}
+
+area_interacter::area_interacter()
+{
     just_interacted = false;
+
+    pos = 0.f;
+    radius = 1.f;
+}
+
+void area_interacter::set_position(vec2f _pos)
+{
+    pos = _pos;
+}
+
+void area_interacter::set_radius(float _rad)
+{
+    radius = _rad;
 }
 
 void area_interacter::tick(state& s)
@@ -1206,4 +1223,17 @@ void resource_network::tick(state& s, float dt)
 
         c->local_storage = new_local;
     }*/
+}
+
+
+suit::suit()
+{
+    ///absorption rate
+    environment.set_max_air(100.f);
+    environment.my_environment.local_environment.v[air::OXYGEN] = 1.f; ///temp
+}
+
+void suit::tick(state& s, float dt, vec2f pos)
+{
+    display.tick(s, pos + (vec2f){-20, -10.f}, resource_to_air(environment.my_environment.local_environment));
 }

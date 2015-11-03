@@ -17,7 +17,8 @@ namespace entity_type
         SOLAR_PANEL,
         HYDROGEN_BATTERY,
         GAS_STORAGE,
-        OXYGEN_RECLAIMER
+        OXYGEN_RECLAIMER,
+        SUIT_ENTITY
     };
 }
 
@@ -38,25 +39,16 @@ struct entity
     virtual void tick(state& s, float dt){};
 
     virtual save make_save() = 0;
+
+    virtual ~entity();
+
+    ///remove me at the next available opportunity
+    void schedule_unload();
+
+    bool to_unload;
 };
 
-struct suit;
-
-///entity or component?
-///maybe a suit entity with a suit component?
-///seems preposterous that I'm already at the state of
-///writing the suit
-struct suit
-{
-    conditional_environment_modifier environment;
-    air_displayer display;
-    ///going to need a resource converter later, but for the moment
-    ///I just want to test the environmental stacking
-
-    suit();
-
-    void tick(state&, float dt, vec2f pos);
-};
+struct suit_entity;
 
 struct player : entity
 {
@@ -77,6 +69,13 @@ struct player : entity
     virtual void tick(state& s, float dt) override;
 
     save make_save() override;
+
+    void set_suit(suit& s);
+    suit_entity* drop_suit();
+
+private:
+    void remove_suit(); ///internal, does not take it off, just stops the player from using it
+    bool has_suit;
 };
 
 struct planet : entity
@@ -211,6 +210,22 @@ struct oxygen_reclaimer : resource_entity
     virtual void tick(state& s, float dt) override;
 
     save make_save();
+};
+
+struct suit_entity : entity
+{
+    suit this_suit;
+    renderable_file file;
+    area_interacter interact;
+
+    suit_entity();
+    suit_entity(vec2f _pos);
+
+    virtual void tick(state& s, float dt);
+
+    void set_position(vec2f _pos);
+
+    virtual save make_save();
 };
 
 ///later make resource_network a physical hub or something perhaps?

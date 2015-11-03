@@ -3,9 +3,18 @@
 entity::entity()
 {
     position = (vec2f){0.f, 0.f};
+    to_unload = false;
 }
 
+void entity::schedule_unload()
+{
+    to_unload = true;
+}
 
+entity::~entity()
+{
+
+}
 
 player::player()
 {
@@ -15,6 +24,8 @@ player::player()
     speed.set_speed(14.f);
 
     breath.lungs.set_parent(&mysuit.environment);
+
+    has_suit = true;
 }
 
 void player::set_active_player(state& s)
@@ -38,7 +49,8 @@ void player::tick(state& s, float dt)
 
     breath.tick(s, position, dt);
 
-    mysuit.tick(s, dt, position);
+    if(has_suit)
+        mysuit.tick(s, dt, position);
 }
 
 ///we need to set_active the player when loading
@@ -57,6 +69,8 @@ player::player(byte_fetch& fetch, state& s) : player()
     breath.lungs.my_environment.local_environment = breather_environment;
     mysuit.environment.my_environment.local_environment = suit_environment;
 
+    has_suit = fetch.get<int32_t>();
+
     speed.set_speed(sp);
 
     ///????
@@ -73,8 +87,36 @@ save player::make_save()
     ///Or is this ok?
     vec.push_back<vecrf>(breath.lungs.my_environment.local_environment);
     vec.push_back<vecrf>(mysuit.environment.my_environment.local_environment);
+    vec.push_back<int32_t>(has_suit);
 
     return {entity_type::PLAYER, vec};
+}
+
+///so, for the moment the suit only functions as an atmospheric environment
+///no need to create a proper suit update
+///however, we're going to want to store a pointer to a suit entity later
+void player::set_suit(suit& s)
+{
+    breath.lungs.set_parent(&mysuit.environment);
+    has_suit = true;
+}
+
+void player::remove_suit()
+{
+    breath.lungs.remove_parent();
+    has_suit = false;
+}
+
+suit_entity* player::drop_suit()
+{
+    if(!has_suit)
+        return nullptr;
+
+    suit_entity* s = new suit_entity(position);
+
+    remove_suit();
+
+    return s;
 }
 
 planet::planet(sf::Texture& tex)
@@ -419,14 +461,40 @@ save oxygen_reclaimer::make_save()
     return {entity_type::OXYGEN_RECLAIMER, vec};
 }
 
-suit::suit()
+suit_entity::suit_entity()
 {
-    environment.set_max_air(100.f);
-    environment.my_environment.local_environment.v[air::OXYGEN] = 10.f; ///temp
+    interact.set_radius(2.f);
+    file.load("./res/suit.png");
 }
 
-void suit::tick(state& s, float dt, vec2f pos)
+suit_entity::suit_entity(vec2f _pos) : suit_entity()
 {
-    display.tick(s, pos + (vec2f){-20, -10.f}, resource_to_air(environment.my_environment.local_environment));
+    set_position(_pos);
 }
 
+///area interactor position needs to be where the player was standing when they dropped the suit
+///but enough of that for the moment
+void suit_entity::tick(state& s, float dt)
+{
+    interact.set_position(position);
+
+    ///destroy me, add to player
+    if(interact.player_has_interacted(s))
+    {
+        s.current_player->set_suit(this_suit);
+        schedule_unload();
+    }
+
+    interact.tick(s);
+    file.tick(s, position, 0.1f);
+}
+
+save suit_entity::make_save()
+{
+    return {entity_type::SUIT_ENTITY, byte_vector()};
+}
+
+void suit_entity::set_position(vec2f _pos)
+{
+    position = _pos;
+}

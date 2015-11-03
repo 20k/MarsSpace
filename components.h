@@ -15,6 +15,7 @@
 struct entity;
 struct movement_blocker;
 struct resource_network;
+struct player;
 
 struct state
 {
@@ -24,7 +25,7 @@ struct state
 
     ///or maybe I should make this a std vector for genericness?
     ///use for activating stuff
-    entity* current_player;
+    player* current_player;
 
     sf::Texture planet_tex;
 
@@ -125,6 +126,10 @@ struct area_interacter
     ///maybe remove _pos and radius from the constructor, as we might want to
     ///interact with moving entities (eg get in a sliding rover)
     area_interacter(vec2f _pos, float _radius);
+    area_interacter();
+
+    void set_position(vec2f _pos);
+    void set_radius(float rad);
 
     void tick(state& s);
 
@@ -355,5 +360,35 @@ struct resource_network
     resource_network();
 };
 
+///entity or component?
+///maybe a suit entity with a suit component?
+///seems preposterous that I'm already at the state of
+///writing the suit
+///so suit needs a backup resource converter piece of storage
+///which monitors the atmospheric environment breathed by the player
+///and regulates it
+///so we want some kind of resource monitor
+///where we can set the ideal atmospheric composition
+///and then return the difference between the current atmosphere and the ideal
+///which we can then attempt to fill in from the suit
+///Hydrogen - water - toxic - co2 get stored
+///nitrogen is ignored unless its preventing us from adding in oxygen
+///ie nitrogen pressure + required oxygen pressure > 1 atm
+///oxygen ignored unless too high
+///hydrogen, nitrogen, oxygen can be used for backfilling
+///order of preference - nitrogen, hydrogen, oxygen
+///if we have low nitrogen mix with hydrogen to pevent hydrogen killing you
+///and make sure to maintain ratio with oxygen
+struct suit
+{
+    conditional_environment_modifier environment;
+    air_displayer display;
+    ///going to need a resource converter later, but for the moment
+    ///I just want to test the environmental stacking
+
+    suit();
+
+    void tick(state&, float dt, vec2f pos);
+};
 
 #endif // COMPONENTS_H_INCLUDED
