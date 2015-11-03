@@ -21,6 +21,8 @@ int main()
 
     sf::RenderWindow win(sf::VideoMode(width, height), "hi");
 
+    win.setFramerateLimit(120);
+
     sf::View view;
     view.reset(sf::FloatRect(0, 0, gen_width, gen_height));
 
@@ -310,7 +312,8 @@ int main()
         win.display();
         win.clear();
 
-        //printf("%f\n", dt);
+        if(key.isKeyPressed(sf::Keyboard::V))
+            printf("%f\n", dt);
 
         //sf::sleep(sf::microseconds(100000.f));
 

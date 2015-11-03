@@ -41,22 +41,29 @@ void player::tick(state& s, float dt)
     vec2f key_dir = key.tick(1.f).norm();
 
     ///this is a badly named function, it simply stores my speed modifier
-    float cur_speed = speed.get_speed() * dt * 2; ///temporary hack until i get my shit together
+    //float cur_speed = speed.get_speed() * dt * 2; ///temporary hack until i get my shit together
+
+    float cur_speed = speed.get_speed() * 2 * dt;
+
+    if(has_suit)
+        cur_speed = cur_speed / 2.f;
 
     //position = mover.tick(s, position, key_dir, cur_speed);
     ///cur_speed currently used as max speed, which is.... not what i want at all
     ///also this function isn't time accurate
 
-    float slowdown_frac = 0.9999f;
+    float slowdown_frac = 0.9999f * (dt / 0.01f);
 
     if(key_dir.length() == 0)
     {
-        slowdown_frac = 0.91f;
+        slowdown_frac = 0.91f * (dt / 0.01f);
     }
+
+    slowdown_frac = clamp(slowdown_frac, 0.f, 1.f);
 
     vec2f old_pos = position;
 
-    position = momentum.do_movement(s, position, key_dir, cur_speed, slowdown_frac);
+    position = momentum.do_movement(s, position, key_dir, cur_speed, dt, slowdown_frac);
 
     if((position - old_pos).length() != 0)
     {

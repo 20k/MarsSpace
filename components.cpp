@@ -1272,9 +1272,9 @@ void momentum_handler::set_mass(float _amount)
     mymass.set_mass(_amount);
 }
 
-vec2f momentum_handler::do_movement(state& s, vec2f position, vec2f dir, float dist, float slowdown_frac)
+vec2f momentum_handler::do_movement(state& s, vec2f position, vec2f dir, float dist, float dt, float slowdown_frac)
 {
-    vec2f to_move = velocity + (dir.norm() * dist * mymass.get_velocity_modifier());
+    vec2f to_move = velocity + (dir.norm() * dist * mymass.get_velocity_modifier()) * dt / 0.01f;
 
     moveable mov;
     vec2f new_pos = mov.tick(s, position, to_move.norm(), to_move.length());
