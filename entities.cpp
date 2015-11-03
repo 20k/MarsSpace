@@ -44,7 +44,7 @@ void player::tick(state& s, float dt)
     ///this is a badly named function, it simply stores my speed modifier
     //float cur_speed = speed.get_speed() * dt * 2; ///temporary hack until i get my shit together
 
-    float cur_speed = speed.get_speed() * 2 * dt;
+    float cur_speed = speed.get_speed() * 2;
 
     if(has_suit)
         cur_speed = cur_speed / 2.f;
@@ -53,11 +53,11 @@ void player::tick(state& s, float dt)
     ///cur_speed currently used as max speed, which is.... not what i want at all
     ///also this function isn't time accurate
 
-    float slowdown_frac = 0.9999f * (dt / 0.01f);
+    float slowdown_frac = 0.9999f;
 
     if(key_dir.length() == 0)
     {
-        slowdown_frac = 0.91f * (dt / 0.01f);
+        slowdown_frac = 0.91f;
     }
 
     slowdown_frac = clamp(slowdown_frac, 0.f, 1.f);

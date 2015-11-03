@@ -1274,6 +1274,12 @@ void momentum_handler::set_mass(float _amount)
 
 vec2f momentum_handler::do_movement(state& s, vec2f position, vec2f dir, float dist, float dt, float slowdown_frac)
 {
+    dist = dist * dt;
+
+    slowdown_frac = slowdown_frac * (dt / 0.01f);
+
+    slowdown_frac = clamp(slowdown_frac, 0.f, 1.f);
+
     vec2f to_move = velocity + (dir.norm() * dist * mymass.get_velocity_modifier()) * dt / 0.01f;
 
     moveable mov;

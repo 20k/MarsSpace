@@ -21,7 +21,7 @@ int main()
 
     sf::RenderWindow win(sf::VideoMode(width, height), "hi");
 
-    win.setFramerateLimit(120);
+    //win.setFramerateLimit(120);
 
     sf::View view;
     view.reset(sf::FloatRect(0, 0, gen_width, gen_height));
