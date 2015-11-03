@@ -40,7 +40,7 @@ struct renderable_file
     sf::Texture tex;
 
     void load(const std::string&Y);
-    void tick(state& s, vec2f pos, float scale);
+    void tick(state& s, vec2f pos, float scale, float rotation = 0.f);
 };
 
 struct renderable_texture
@@ -389,6 +389,26 @@ struct suit
     suit();
 
     void tick(state&, float dt, vec2f pos);
+};
+
+struct mass
+{
+    float amount;
+
+    mass();
+
+    void set_mass(float _amount);
+    float get_velocity_modifier();
+};
+
+struct momentum_handler
+{
+    vec2f velocity;
+    mass mymass;
+
+    momentum_handler();
+    void set_mass(float _amount);
+    vec2f do_movement(state& s, vec2f position, vec2f dir, float dist);
 };
 
 #endif // COMPONENTS_H_INCLUDED

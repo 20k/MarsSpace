@@ -3,6 +3,7 @@
 entity::entity()
 {
     position = (vec2f){0.f, 0.f};
+    rotation = 0.f;
     to_unload = false;
 }
 
@@ -41,7 +42,25 @@ void player::tick(state& s, float dt)
 
     position = mover.tick(s, position, key_dir, cur_speed);
 
-    file.tick(s, position, 0.1f);
+    if(key_dir.length() != 0)
+    {
+        float next_rot = key_dir.angle() + M_PI/2.f;
+
+        ///oh god i hate interpolating round a circle
+
+        float min_dist = circle_minimum_distance(rotation, next_rot);
+
+        //printf("%f %f %f\n", rotation, next_rot, min_dist);
+
+        float weight = 5.f;
+
+        rotation = rotation * weight + min_dist/2.f;
+        rotation = rotation / weight;
+    }
+
+
+    //file.tick(s, position, 0.1f); //old
+    file.tick(s, position, 0.025f, rotation);
 
     auto air_parts = monitor.get_air_parts(s, position);
 

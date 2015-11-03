@@ -27,7 +27,7 @@ void renderable_file::load(const std::string& name)
     //glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 }
 
-void renderable_file::tick(state& s, vec2f pos, float scale)
+void renderable_file::tick(state& s, vec2f pos, float scale, float rotation)
 {
     sf::Sprite spr;
     spr.setTexture(tex);
@@ -41,6 +41,7 @@ void renderable_file::tick(state& s, vec2f pos, float scale)
     spr.setOrigin(width/2.f, height/2.f);
     spr.setPosition(xp, yp);
     spr.setScale(scale, scale);
+    spr.setRotation(r2d(rotation));
 
     s.win->draw(spr);
 }
@@ -1236,4 +1237,51 @@ suit::suit()
 void suit::tick(state& s, float dt, vec2f pos)
 {
     display.tick(s, pos + (vec2f){-20, -10.f}, resource_to_air(environment.my_environment.local_environment));
+}
+
+mass::mass()
+{
+    amount = 0.f;
+}
+
+void mass::set_mass(float _amount)
+{
+    amount = _amount;
+}
+
+float mass::get_velocity_modifier()
+{
+    if(amount >= 0.001f)
+    {
+        return 1.f / amount;
+    }
+    else
+    {
+        return 0.f;
+    }
+}
+
+momentum_handler::momentum_handler()
+{
+    velocity = 0.f;
+}
+
+void momentum_handler::set_mass(float _amount)
+{
+    mymass.set_mass(_amount);
+}
+
+vec2f momentum_handler::do_movement(state& s, vec2f position, vec2f dir, float dist)
+{
+    vec2f normal_move_direction = dir.norm() * dist;
+    vec2f velocity_move_direction = velocity;
+
+    vec2f total_move = (normal_move_direction + velocity_move_direction);
+
+    moveable mov;
+    vec2f new_pos = mov.tick(s, position, total_move.norm(), total_move.length());
+
+    velocity = position - new_pos;
+
+    return position;
 }

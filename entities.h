@@ -33,6 +33,7 @@ struct save
 struct entity
 {
     vec2f position;
+    float rotation;
 
     entity();
 
@@ -59,7 +60,7 @@ struct player : entity
     air_displayer display; ///generic air unit displayer
     air_monitor monitor; ///environmental monitor
     breather breath;
-    suit mysuit;
+    suit mysuit; ///suit needs to be a carried entity soon :[
 
     player();
     player(byte_fetch& fetch, state& s);

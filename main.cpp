@@ -310,7 +310,7 @@ int main()
         win.display();
         win.clear();
 
-        printf("%f\n", dt);
+        //printf("%f\n", dt);
 
         //sf::sleep(sf::microseconds(100000.f));
 

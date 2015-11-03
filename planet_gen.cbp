@@ -37,6 +37,8 @@
 			<Add option="-std=gnu++14" />
 			<Add option="-Wuninitialized" />
 			<Add option="-Wmaybe-uninitialized" />
+			<Add option="-Wno-aggressive-loop-optimizations" />
+			<Add option="-Wsequence-point" />
 			<Add option="-DGLEW_STATIC" />
 			<Add option="-DNDEBUG" />
 		</Compiler>
