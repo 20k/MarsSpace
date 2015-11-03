@@ -36,6 +36,7 @@ void player::set_active_player(state& s)
     s.current_player = this;
 }
 
+///momentum is officially a huge clusterfuck, fixme
 void player::tick(state& s, float dt)
 {
     vec2f key_dir = key.tick(1.f).norm();
