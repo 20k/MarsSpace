@@ -247,6 +247,13 @@ struct air_environment
     ///assumes a perfect conversion
     ///can obvs make this lossy later
     void convert_percentage(float amount, float fraction, air_t input, air_t output);
+
+    ///change of heart, doing saving in here means
+    ///that to avoid having to leak implementation details
+    ///i'd also need to do loading in here
+    ///which is impractibly a pain in the arse
+    //byte_vector get_save_data();
+
     //bool convert_amount(float amount, float fraction, air_t input, air_t output);
 
     //void absorb(state& s, vec2f pos, float amount, float maximum, air_t type);
@@ -323,9 +330,6 @@ struct resource_converter
 
     void add(const std::vector<std::pair<resource_t, float>>& vec);
     vecrf take(const std::vector<std::pair<resource_t, float>>& vec);
-
-    //void add(const vecrf& v);
-    //vecrf take(const vecrf& v);
 
     void absorb_all(state& s, float dt);
     void emit_all(state& s);

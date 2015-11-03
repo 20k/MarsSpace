@@ -740,8 +740,15 @@ void air_environment::convert_percentage(float amount, float fraction, air_t inp
     local_environment.v[input] -= converted;
 }
 
-///wrong
-///still wrong, looks like ist still being emitted too fast
+/*byte_vector air_environment::get_save_data()
+{
+    byte_vector vec;
+    vec.push_back<vecrf>(local_environment);
+
+    return vec;
+}*/
+
+///my goodness, this actually works *and* its not horrible!!
 void conditional_environment_modifier::absorb_all(state& s, vec2f pos, float amount)
 {
     if(parent == nullptr)
@@ -749,7 +756,6 @@ void conditional_environment_modifier::absorb_all(state& s, vec2f pos, float amo
     else
     {
         vecrf& parent_storage = parent->my_environment.local_environment;
-        vecrf& local_storage = my_environment.local_environment;
 
         ///parent environment is empty, cannot absorb
         if(parent_storage.sum() < 0.00001f)
@@ -858,7 +864,7 @@ void breather::tick(state& s, vec2f position, float dt)
 
     ///use this for some sort of hardcore realism mode where it takes 2 real days time.
     ///or maybe we can just accelerate time?
-    const float volume_per_breath_m3 = 0.0031;
+    //const float volume_per_breath_m3 = 0.0031;
     //const float volume_per_breath_litres = 6; //real
     const float volume_per_breath_litres = 0.01;
 
@@ -1081,7 +1087,7 @@ void resource_network::rem(resource_converter* conv)
 {
     network_resources = network_resources - conv->local_storage;
 
-    for(int i=0; i<converters.size(); i++)
+    for(int i=0; i<(int)converters.size(); i++)
     {
         if(converters[i] == conv)
         {

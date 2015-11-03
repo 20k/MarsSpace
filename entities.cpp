@@ -51,6 +51,12 @@ player::player(byte_fetch& fetch, state& s) : player()
     position = fetch.get<vec2f>();
     float sp = fetch.get<float>();
 
+    vecrf breather_environment = fetch.get<vecrf>();
+    vecrf suit_environment = fetch.get<vecrf>();
+
+    breath.lungs.my_environment.local_environment = breather_environment;
+    mysuit.environment.my_environment.local_environment = suit_environment;
+
     speed.set_speed(sp);
 
     ///????
@@ -62,6 +68,11 @@ save player::make_save()
     byte_vector vec;
     vec.push_back<vec2f>(position);
     vec.push_back<float>(speed.get_speed());
+
+    ///??? figure out a better way to do this
+    ///Or is this ok?
+    vec.push_back<vecrf>(breath.lungs.my_environment.local_environment);
+    vec.push_back<vecrf>(mysuit.environment.my_environment.local_environment);
 
     return {entity_type::PLAYER, vec};
 }
