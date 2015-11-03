@@ -28,7 +28,7 @@ player::player()
 
     has_suit = true;
 
-    momentum.set_mass(10.f);
+    momentum.set_mass(200.f);
 }
 
 void player::set_active_player(state& s)
@@ -54,17 +54,19 @@ void player::tick(state& s, float dt)
         slowdown_frac = 0.91f;
     }
 
+    vec2f old_pos = position;
+
     position = momentum.do_movement(s, position, key_dir, cur_speed, slowdown_frac);
 
-    if(key_dir.length() != 0)
+    if((position - old_pos).length() != 0)
     {
-        float next_rot = key_dir.angle() + M_PI/2.f;
+        float next_rot = (position - old_pos).angle() + M_PI/2.f;
 
         ///oh god i hate interpolating round a circle
 
         float min_dist = circle_minimum_distance(rotation, next_rot);
 
-        printf("%f %f %f\n", rotation, next_rot, min_dist);
+        //printf("%f %f %f\n", rotation, next_rot, min_dist);
 
         float weight = 3.f;
 
@@ -88,7 +90,15 @@ void player::tick(state& s, float dt)
     breath.tick(s, position, dt);
 
     if(has_suit)
+    {
         mysuit.tick(s, dt, position);
+        momentum.set_mass(100.f);
+    }
+    else
+    {
+        momentum.set_mass(10.f);
+    }
+
 }
 
 ///we need to set_active the player when loading
