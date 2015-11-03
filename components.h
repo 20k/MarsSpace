@@ -408,7 +408,7 @@ struct momentum_handler
 
     momentum_handler();
     void set_mass(float _amount);
-    vec2f do_movement(state& s, vec2f position, vec2f dir, float dist);
+    vec2f do_movement(state& s, vec2f position, vec2f dir, float dist, float slowdown_frac);
 };
 
 #endif // COMPONENTS_H_INCLUDED

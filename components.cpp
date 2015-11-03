@@ -1249,6 +1249,7 @@ void mass::set_mass(float _amount)
     amount = _amount;
 }
 
+///well, mass modifier really..
 float mass::get_velocity_modifier()
 {
     if(amount >= 0.001f)
@@ -1271,17 +1272,28 @@ void momentum_handler::set_mass(float _amount)
     mymass.set_mass(_amount);
 }
 
-vec2f momentum_handler::do_movement(state& s, vec2f position, vec2f dir, float dist)
+vec2f momentum_handler::do_movement(state& s, vec2f position, vec2f dir, float dist, float slowdown_frac)
 {
-    vec2f normal_move_direction = dir.norm() * dist;
-    vec2f velocity_move_direction = velocity;
-
-    vec2f total_move = (normal_move_direction + velocity_move_direction);
+    vec2f to_move = velocity + (dir.norm() * dist * mymass.get_velocity_modifier());
 
     moveable mov;
-    vec2f new_pos = mov.tick(s, position, total_move.norm(), total_move.length());
+    vec2f new_pos = mov.tick(s, position, to_move.norm(), to_move.length());
 
-    velocity = position - new_pos;
+    ///this needs to be based on dt and mass
+    float slowdown_factor = slowdown_frac;
 
-    return position;
+    vec2f new_vel = (new_pos - position) * slowdown_factor;
+
+    velocity = new_vel + (new_vel - velocity);
+
+    if(velocity.length() > dist)
+    {
+        velocity = velocity.norm() * dist;
+    }
+
+    //printf("%f\n", velocity.length());
+
+    return new_pos;
 }
+
+

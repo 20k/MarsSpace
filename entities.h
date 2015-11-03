@@ -61,6 +61,7 @@ struct player : entity
     air_monitor monitor; ///environmental monitor
     breather breath;
     suit mysuit; ///suit needs to be a carried entity soon :[
+    momentum_handler momentum;
 
     player();
     player(byte_fetch& fetch, state& s);

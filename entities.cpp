@@ -27,6 +27,8 @@ player::player()
     breath.lungs.set_parent(&mysuit.environment);
 
     has_suit = true;
+
+    momentum.set_mass(10.f);
 }
 
 void player::set_active_player(state& s)
@@ -38,9 +40,21 @@ void player::tick(state& s, float dt)
 {
     vec2f key_dir = key.tick(1.f).norm();
 
+    ///this is a badly named function, it simply stores my speed modifier
     float cur_speed = speed.get_speed() * dt * 2; ///temporary hack until i get my shit together
 
-    position = mover.tick(s, position, key_dir, cur_speed);
+    //position = mover.tick(s, position, key_dir, cur_speed);
+    ///cur_speed currently used as max speed, which is.... not what i want at all
+    ///also this function isn't time accurate
+
+    float slowdown_frac = 0.9999f;
+
+    if(key_dir.length() == 0)
+    {
+        slowdown_frac = 0.91f;
+    }
+
+    position = momentum.do_movement(s, position, key_dir, cur_speed, slowdown_frac);
 
     if(key_dir.length() != 0)
     {
@@ -50,12 +64,17 @@ void player::tick(state& s, float dt)
 
         float min_dist = circle_minimum_distance(rotation, next_rot);
 
-        //printf("%f %f %f\n", rotation, next_rot, min_dist);
+        printf("%f %f %f\n", rotation, next_rot, min_dist);
 
-        float weight = 5.f;
+        float weight = 3.f;
 
         rotation = rotation * weight + min_dist/2.f;
         rotation = rotation / weight;
+
+        if(rotation > M_PI*2.f)
+            rotation -= M_PI*2.f;
+        if(rotation < 0)
+            rotation += M_PI*2.f;
     }
 
 
