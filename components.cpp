@@ -741,6 +741,7 @@ void air_environment::convert_percentage(float amount, float fraction, air_t inp
 }
 
 ///wrong
+///still wrong, looks like ist still being emitted too fast
 void conditional_environment_modifier::absorb_all(state& s, vec2f pos, float amount)
 {
     if(parent == nullptr)
@@ -751,7 +752,7 @@ void conditional_environment_modifier::absorb_all(state& s, vec2f pos, float amo
         vecrf& local_storage = my_environment.local_environment;
 
         ///parent environment is empty, cannot absorb
-        if(parent_storage.sum() < 0.0001f)
+        if(parent_storage.sum() < 0.00001f)
             return;
 
         vecrf taken = parent->take(amount);
@@ -785,7 +786,7 @@ vecrf conditional_environment_modifier::take(float amount)
 {
     float amount_in_storage = my_environment.local_environment.sum();
 
-    if(amount_in_storage < 0.0001f)
+    if(amount_in_storage < 0.00001f)
     {
         vecrf z;
         z = 0.f;
@@ -806,7 +807,7 @@ vecrf conditional_environment_modifier::add(vecrf amount)
 {
     float total = amount.sum() + my_environment.local_environment.sum();
 
-    if(total < 0.0001f || amount.sum() < 0.0001f)
+    if(total < 0.00001f || amount.sum() < 0.00001f)
     {
         vecrf z;
         z = 0.f;
@@ -843,6 +844,7 @@ void conditional_environment_modifier::remove_parent()
 }
 
 ///i think this assumes 1x1 square tiles
+///need to swap to a proper breathing model
 void breather::tick(state& s, vec2f position, float dt)
 {
     ///lets put this into a breathing manager afterwards
@@ -857,8 +859,8 @@ void breather::tick(state& s, vec2f position, float dt)
     ///use this for some sort of hardcore realism mode where it takes 2 real days time.
     ///or maybe we can just accelerate time?
     const float volume_per_breath_m3 = 0.0031;
-    const float volume_per_breath_litres = 6;
-
+    //const float volume_per_breath_litres = 6; //real
+    const float volume_per_breath_litres = 0.01;
 
     ///assume 1 is atmospheric pressure
     ///then model lung volume breathing n stuff

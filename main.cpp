@@ -35,7 +35,7 @@ int main()
 
     state st(&win, tex, air_process);
 
-    player* play = new player("res/character.png");
+    player* play = new player();
 
     building* build = new building;
     //build->add_wall({0.f, 0.f}, {255.f, 255.f});

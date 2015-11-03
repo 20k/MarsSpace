@@ -69,7 +69,7 @@ struct player : entity
     breather breath;
     suit mysuit;
 
-    player(const std::string& fname);
+    player();
     player(byte_fetch& fetch, state& s);
 
     void set_active_player(state& s);

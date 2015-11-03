@@ -5,9 +5,11 @@ entity::entity()
     position = (vec2f){0.f, 0.f};
 }
 
-player::player(const std::string& fname) : entity()
+
+
+player::player()
 {
-    file.load(fname);
+    file.load("./res/character.png");
 
     ///should I define units right off the bat
     speed.set_speed(14.f);
@@ -40,7 +42,7 @@ void player::tick(state& s, float dt)
 }
 
 ///we need to set_active the player when loading
-player::player(byte_fetch& fetch, state& s) : entity()
+player::player(byte_fetch& fetch, state& s) : player()
 {
     ///temp hack. Should the player just own this?
     ///or should I incorporate it into the save system
