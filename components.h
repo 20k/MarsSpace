@@ -44,7 +44,7 @@ struct renderable_file
     sf::RenderTexture rtex;
 
     void load(const std::string&Y);
-    void tick(state& s, vec2f pos, float scale, float rotation = 0.f);
+    void tick(state& s, vec2f pos, float scale, float rotation = 0.f, bool shadow = false);
 };
 
 struct renderable_texture
@@ -74,7 +74,7 @@ struct moveable
 
 struct keyboard_controller
 {
-    vec2f tick(float dt);
+    vec2f tick();
 };
 
 struct speed_handler
@@ -364,6 +364,63 @@ struct resource_network
     resource_network();
 };
 
+struct damageable
+{
+    float health;
+
+    damageable();
+
+    //void damage_fraction(float fraction);
+    void damage_amount(float fraction);
+
+    void reset();
+
+    bool is_alive();
+
+    float get_health_frac();
+};
+
+struct suit_part
+{
+    damageable damage;
+
+    ///between 0 and 1
+    ///0 at 50% damage, 1 at 100% damage, currently linear interp
+    ///well, really this is environmental normalisation rate
+    ///because we don't leak into the environment as such, but both
+    ///diffuse into each other with a rate moderated by the pressure difference
+    float get_leak_rate();
+};
+
+namespace suit_parts
+{
+    enum suit_parts
+    {
+        HEAD,
+        LSHOULDER,
+        LARM,
+        LHAND,
+        RSHOULDER,
+        RARM,
+        RHAND,
+        CHEST,
+        LLEG,
+        RLEG,
+        LFOOT,
+        RFOOT,
+        COUNT
+    };
+}
+
+typedef suit_parts::suit_parts suit_t;
+
+struct suit_status_displayer
+{
+    renderable_file file;
+
+    suit_status_displayer();
+};
+
 ///entity or component?
 ///maybe a suit entity with a suit component?
 ///seems preposterous that I'm already at the state of
@@ -390,6 +447,8 @@ struct suit
     ///going to need a resource converter later, but for the moment
     ///I just want to test the environmental stacking
 
+    std::map<suit_t, suit_part> parts;
+
     suit();
 
     void tick(state&, float dt, vec2f pos);
@@ -414,5 +473,7 @@ struct momentum_handler
     void set_mass(float _amount);
     vec2f do_movement(state& s, vec2f position, vec2f dir, float dist, float dt, float slowdown_frac);
 };
+
+
 
 #endif // COMPONENTS_H_INCLUDED

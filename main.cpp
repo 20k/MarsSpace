@@ -121,7 +121,8 @@ int main()
         zoom_level = clamp(zoom_level, 0.01f, 2.f);
 
         view.reset(sf::FloatRect(0, 0, gen_width, gen_width * view_ratio));
-        view.setCenter(gen_width/2.f, gen_height/2.f);
+        //view.setCenter(gen_width/2.f, gen_height/2.f);
+        view.setCenter(play->position.v[0], play->position.v[1]);
         view.zoom(zoom_level);
 
         win.setView(view);

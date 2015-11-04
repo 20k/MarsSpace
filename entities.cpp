@@ -39,7 +39,7 @@ void player::set_active_player(state& s)
 ///momentum is officially a huge clusterfuck, fixme
 void player::tick(state& s, float dt)
 {
-    vec2f key_dir = key.tick(1.f).norm();
+    vec2f key_dir = key.tick();
 
     ///this is a badly named function, it simply stores my speed modifier
     //float cur_speed = speed.get_speed() * dt * 2; ///temporary hack until i get my shit together
@@ -55,7 +55,7 @@ void player::tick(state& s, float dt)
 
     float slowdown_frac = 0.9999f;
 
-    if(key_dir.length() == 0)
+    if(key_dir.length() < 0.0001f)
     {
         slowdown_frac = 0.91f;
     }
@@ -89,7 +89,7 @@ void player::tick(state& s, float dt)
 
 
     //file.tick(s, position, 0.1f); //old
-    file.tick(s, position, 0.025f, rotation);
+    file.tick(s, position, 0.025f, rotation, true);
 
     auto air_parts = monitor.get_air_parts(s, position);
 

@@ -36,7 +36,7 @@ void renderable_file::load(const std::string& name)
 ///actually we can do shadows super easily in 2d top down, we just project and scale the drawing skewed
 ///now, we need to blur the crap out of the shadows
 ///we could super downscale them then upscale them?
-void renderable_file::tick(state& s, vec2f pos, float scale, float rotation)
+void renderable_file::tick(state& s, vec2f pos, float scale, float rotation, bool shadow)
 {
     int width = tex.getSize().x;
     int height = tex.getSize().y;
@@ -45,30 +45,15 @@ void renderable_file::tick(state& s, vec2f pos, float scale, float rotation)
     float yp = pos.v[1];
 
 
+    if(shadow)
     {
         rtex.clear(sf::Color(0, 0, 0, 0));
 
         sf::Sprite spr2;
         spr2.setTexture(tex);
-        //spr2.setOrigin(width/2.f, height/2.f);
-
-        //spr2.setOrigin(s.sun_direction.v[0] * rtex.getSize().x/2.f, s.sun_direction.v[1] * rtex.getSize().y/4.f);
-
-        //vec2f scaled_sum = (s.sun_direction + 1.f) / 2.f;
-
-        /*vec2f origin = (vec2f){0.f, 0.f};
-
-        if(s.sun_direction.v[0] == 0)
-            origin.v[0] = rtex.getSize().x / 2.f;
-        else
-            origin.v[0] = s.sun_direction.v[0]*/
 
         vec2f sun = s.sun_direction * 20.f;
 
-        //vec2f origin;
-
-        //origin.v[0] = scaled_sum.v[0] * rtex.getSize().x;
-        //origin.v[1] = scaled_sum.v[1] * rtex.getSize().y;
 
         ///draw rotated first at offset, then scaleme
         spr2.setOrigin(tex.getSize().x/2.f, tex.getSize().y/2.f);
@@ -81,15 +66,6 @@ void renderable_file::tick(state& s, vec2f pos, float scale, float rotation)
 
         rtex.draw(spr2);
         rtex.display();
-
-        /*sf::Sprite spr3;
-        spr3.setTexture(rtex.getTexture());
-        spr3.setOrigin(rtex.getSize().x/2.f, rtex.getSize().y/2.f);
-
-        spr3.setPosition(xp, yp);
-        spr3.setScale(scale, scale);
-
-        s.win->draw(spr3);*/
     }
 
 
@@ -109,7 +85,8 @@ void renderable_file::tick(state& s, vec2f pos, float scale, float rotation)
     rspr.setScale(scale, scale);
     //rspr.setRotation(r2d(rotation));
 
-    s.win->draw(rspr);
+    if(shadow)
+        s.win->draw(rspr);
 
     sf::Sprite spr;
     spr.setTexture(tex);
@@ -245,7 +222,7 @@ vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
     return new_pos;
 }
 
-vec2f keyboard_controller::tick(float dt)
+vec2f keyboard_controller::tick()
 {
     sf::Keyboard key;
 
@@ -261,7 +238,7 @@ vec2f keyboard_controller::tick(float dt)
     if(key.isKeyPressed(sf::Keyboard::D))
         dir.v[0] += 1.f;
 
-    return dir * dt;
+    return dir.norm();
 }
 
 void speed_handler::set_speed(float _speed)
@@ -723,7 +700,13 @@ void air_displayer::tick(state& s, vec2f display_pos, const vec<air::COUNT, floa
 
     for(int i=0; i<air::COUNT; i++)
     {
-        display = display + air::names[i] + ": " + std::to_string(air_fracs.v[i] * 100.f) + "%" + "\n";
+        float val = air_fracs.v[i];
+
+        ///alleviates the case of -0
+        if(val < 0)
+            val = 0;
+
+        display = display + air::names[i] + ": " + std::to_string(val * 100.f) + "%" + "\n";
     }
 
     if(air_pressure > 0.f)
@@ -1304,9 +1287,51 @@ void resource_network::tick(state& s, float dt)
     }*/
 }
 
+damageable::damageable()
+{
+    health = 1.f;
+}
+
+void damageable::damage_amount(float fraction)
+{
+    health -= fraction;
+}
+
+void damageable::reset()
+{
+    health = 1.f;
+}
+
+bool damageable::is_alive()
+{
+    return health > 0.f;
+}
+
+float damageable::get_health_frac()
+{
+    return std::max(health, 0.f);
+}
+
+float suit_part::get_leak_rate()
+{
+    float damage_start = 0.5f;
+
+    float my_damage = 1.f - damage.get_health_frac();
+
+    if(my_damage < damage_start)
+        return 0.f;
+
+    ///so eg 0.5 - 0.2f / 0.8 = 1.f
+    return (my_damage - damage_start) / (1.f - damage_start);
+}
 
 suit::suit()
 {
+    for(int i=0; i<suit_parts::COUNT; i++)
+    {
+        parts[(suit_t)i] = suit_part();
+    }
+
     ///absorption rate
     environment.set_max_air(100.f);
     environment.my_environment.local_environment.v[air::OXYGEN] = 1.f; ///temp
