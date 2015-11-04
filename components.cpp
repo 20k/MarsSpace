@@ -16,6 +16,9 @@ state::state(sf::RenderWindow* _win, sf::Texture& tex, air_processor& _air)
     current_player = nullptr;
 
     air_process = &_air;
+
+    ///1 is sun from up/right
+    sun_direction = (vec2f){0, 1};
 }
 
 void renderable_file::load(const std::string& name)
@@ -23,25 +26,100 @@ void renderable_file::load(const std::string& name)
     img.loadFromFile(name.c_str());
     tex.loadFromImage(img);
     tex.setSmooth(true);
+
+    rtex.create(tex.getSize().x * 4, tex.getSize().y * 4);
+    rtex.setSmooth(true);
     //sf::Texture::bind(&tex);
     //glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 }
 
+///actually we can do shadows super easily in 2d top down, we just project and scale the drawing skewed
+///now, we need to blur the crap out of the shadows
+///we could super downscale them then upscale them?
 void renderable_file::tick(state& s, vec2f pos, float scale, float rotation)
 {
-    sf::Sprite spr;
-    spr.setTexture(tex);
-
     int width = tex.getSize().x;
     int height = tex.getSize().y;
 
     float xp = pos.v[0];
     float yp = pos.v[1];
 
-    spr.setOrigin(width/2.f, height/2.f);
+
+    {
+        rtex.clear(sf::Color(0, 0, 0, 0));
+
+        sf::Sprite spr2;
+        spr2.setTexture(tex);
+        //spr2.setOrigin(width/2.f, height/2.f);
+
+        //spr2.setOrigin(s.sun_direction.v[0] * rtex.getSize().x/2.f, s.sun_direction.v[1] * rtex.getSize().y/4.f);
+
+        //vec2f scaled_sum = (s.sun_direction + 1.f) / 2.f;
+
+        /*vec2f origin = (vec2f){0.f, 0.f};
+
+        if(s.sun_direction.v[0] == 0)
+            origin.v[0] = rtex.getSize().x / 2.f;
+        else
+            origin.v[0] = s.sun_direction.v[0]*/
+
+        vec2f sun = s.sun_direction * 20.f;
+
+        //vec2f origin;
+
+        //origin.v[0] = scaled_sum.v[0] * rtex.getSize().x;
+        //origin.v[1] = scaled_sum.v[1] * rtex.getSize().y;
+
+        ///draw rotated first at offset, then scaleme
+        spr2.setOrigin(tex.getSize().x/2.f, tex.getSize().y/2.f);
+        spr2.setPosition(rtex.getSize().x/2.f + sun.v[0], rtex.getSize().y/2.f + sun.v[1]);
+        spr2.setRotation(r2d(rotation));
+        spr2.setColor(sf::Color(0,0,0,128));
+        //spr2.setScale(2, 2);
+
+        //s.win->draw(spr2);
+
+        rtex.draw(spr2);
+        rtex.display();
+
+        /*sf::Sprite spr3;
+        spr3.setTexture(rtex.getTexture());
+        spr3.setOrigin(rtex.getSize().x/2.f, rtex.getSize().y/2.f);
+
+        spr3.setPosition(xp, yp);
+        spr3.setScale(scale, scale);
+
+        s.win->draw(spr3);*/
+    }
+
+
+    /*spr.setOrigin(width/2.f, height/2.f);
     spr.setPosition(xp, yp);
     spr.setScale(scale, scale);
     spr.setRotation(r2d(rotation));
+
+    spr.setColor(sf::Color(255, 255, 255, 255));
+    spr.setScale(scale, scale);
+    spr.setPosition(xp, yp);*/
+
+    sf::Sprite rspr;
+    rspr.setTexture(rtex.getTexture());
+    rspr.setOrigin(rtex.getSize().x/2.f, rtex.getSize().y/2.f);
+    rspr.setPosition(xp, yp);
+    rspr.setScale(scale, scale);
+    //rspr.setRotation(r2d(rotation));
+
+    s.win->draw(rspr);
+
+    sf::Sprite spr;
+    spr.setTexture(tex);
+
+    //spr.setTexture(rtex.getTexture());
+    spr.setOrigin(tex.getSize().x/2.f, tex.getSize().y/2.f);
+    spr.setRotation(r2d(rotation));
+
+    spr.setPosition(xp, yp);
+    spr.setScale(scale, scale);
 
     s.win->draw(spr);
 }

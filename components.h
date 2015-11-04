@@ -31,6 +31,9 @@ struct state
 
     air_processor* air_process = nullptr;
 
+    ///from the centre of the map
+    vec2f sun_direction;
+
     state(sf::RenderWindow* _win, sf::Texture&, air_processor&);
 };
 
@@ -38,6 +41,7 @@ struct renderable_file
 {
     sf::Image img;
     sf::Texture tex;
+    sf::RenderTexture rtex;
 
     void load(const std::string&Y);
     void tick(state& s, vec2f pos, float scale, float rotation = 0.f);
