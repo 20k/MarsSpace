@@ -117,6 +117,8 @@ struct air_processor
     ///from percentage to 1, then 1 atmosphere -> 0.01
 
     vec<N, float>* buf;
+    vec<N, float>* buf_out;
+
     int width, height;
 
     void load(int _width, int _height);

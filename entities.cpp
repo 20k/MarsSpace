@@ -55,9 +55,10 @@ void player::tick(state& s, float dt)
 
     float slowdown_frac = 0.9999f;
 
-    if(key_dir.length() < 0.0001f)
+    ///needs to be fixed to be frametime independent
+    if(key_dir.length() < 0.001f)
     {
-        slowdown_frac = 0.91f;
+        slowdown_frac = 0.93f;
     }
 
     slowdown_frac = clamp(slowdown_frac, 0.f, 1.f);
@@ -100,13 +101,14 @@ void player::tick(state& s, float dt)
     if(has_suit)
     {
         mysuit.tick(s, dt, position);
+        mysuit.suit_display.tick(s, mysuit);
+
         momentum.set_mass(100.f);
     }
     else
     {
         momentum.set_mass(10.f);
     }
-
 }
 
 ///we need to set_active the player when loading
@@ -154,6 +156,7 @@ save player::make_save()
 void player::set_suit(suit& s)
 {
     breath.lungs.set_parent(&mysuit.environment);
+    mysuit = s;
     has_suit = true;
 }
 
@@ -169,6 +172,7 @@ suit_entity* player::drop_suit()
         return nullptr;
 
     suit_entity* s = new suit_entity(position);
+    s->this_suit = mysuit;
 
     remove_suit();
 
@@ -543,6 +547,7 @@ void suit_entity::tick(state& s, float dt)
 
     interact.tick(s);
     file.tick(s, position, 0.1f);
+    this_suit.tick(s, dt, position);
 }
 
 save suit_entity::make_save()

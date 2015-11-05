@@ -27,8 +27,9 @@ void renderable_file::load(const std::string& name)
     tex.loadFromImage(img);
     tex.setSmooth(true);
 
-    rtex.create(tex.getSize().x * 4, tex.getSize().y * 4);
-    rtex.setSmooth(true);
+    rtex = new sf::RenderTexture;
+    rtex->create(tex.getSize().x * 4, tex.getSize().y * 4);
+    rtex->setSmooth(true);
     //sf::Texture::bind(&tex);
     //glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 }
@@ -36,7 +37,7 @@ void renderable_file::load(const std::string& name)
 ///actually we can do shadows super easily in 2d top down, we just project and scale the drawing skewed
 ///now, we need to blur the crap out of the shadows
 ///we could super downscale them then upscale them?
-void renderable_file::tick(state& s, vec2f pos, float scale, float rotation, bool shadow)
+void renderable_file::tick(state& s, vec2f pos, float scale, float rotation, bool shadow, bool absolute)
 {
     int width = tex.getSize().x;
     int height = tex.getSize().y;
@@ -47,7 +48,7 @@ void renderable_file::tick(state& s, vec2f pos, float scale, float rotation, boo
 
     if(shadow)
     {
-        rtex.clear(sf::Color(0, 0, 0, 0));
+        rtex->clear(sf::Color(0, 0, 0, 0));
 
         sf::Sprite spr2;
         spr2.setTexture(tex);
@@ -57,15 +58,15 @@ void renderable_file::tick(state& s, vec2f pos, float scale, float rotation, boo
 
         ///draw rotated first at offset, then scaleme
         spr2.setOrigin(tex.getSize().x/2.f, tex.getSize().y/2.f);
-        spr2.setPosition(rtex.getSize().x/2.f + sun.v[0], rtex.getSize().y/2.f + sun.v[1]);
+        spr2.setPosition(rtex->getSize().x/2.f + sun.v[0], rtex->getSize().y/2.f + sun.v[1]);
         spr2.setRotation(r2d(rotation));
         spr2.setColor(sf::Color(0,0,0,128));
         //spr2.setScale(2, 2);
 
         //s.win->draw(spr2);
 
-        rtex.draw(spr2);
-        rtex.display();
+        rtex->draw(spr2);
+        rtex->display();
     }
 
 
@@ -79,8 +80,8 @@ void renderable_file::tick(state& s, vec2f pos, float scale, float rotation, boo
     spr.setPosition(xp, yp);*/
 
     sf::Sprite rspr;
-    rspr.setTexture(rtex.getTexture());
-    rspr.setOrigin(rtex.getSize().x/2.f, rtex.getSize().y/2.f);
+    rspr.setTexture(rtex->getTexture());
+    rspr.setOrigin(rtex->getSize().x/2.f, rtex->getSize().y/2.f);
     rspr.setPosition(xp, yp);
     rspr.setScale(scale, scale);
     //rspr.setRotation(r2d(rotation));
@@ -91,15 +92,30 @@ void renderable_file::tick(state& s, vec2f pos, float scale, float rotation, boo
     sf::Sprite spr;
     spr.setTexture(tex);
 
-    //spr.setTexture(rtex.getTexture());
+    //spr.setTexture(rtex->getTexture());
     spr.setOrigin(tex.getSize().x/2.f, tex.getSize().y/2.f);
     spr.setRotation(r2d(rotation));
 
     spr.setPosition(xp, yp);
     spr.setScale(scale, scale);
 
+    sf::View cur = s.win->getView();
+
+    if(absolute)
+    {
+        sf::View def = s.win->getDefaultView();
+
+        s.win->setView(def);
+    }
+
     s.win->draw(spr);
+
+    if(absolute)
+    {
+        s.win->setView(cur);
+    }
 }
+
 
 void renderable_texture::load(sf::Texture& _tex)
 {
@@ -795,9 +811,16 @@ void air_environment::emit_all(state& s, vec2f pos, float amount)
     if(amount >= my_air)
         amount = my_air;
 
-    auto frac = local_environment / local_environment.sum();
+    if(my_air <= 0.00001f)
+        return;
 
-    auto to_emit = frac * amount;
+    //auto frac = local_environment / local_environment.sum();
+
+    //auto to_emit = frac * amount;
+
+    auto to_emit = (amount * local_environment) / local_environment.sum();
+
+    //printf("Emitting %f\n", to_emit.sum());
 
     s.air_process->add_volume(pos.v[0], pos.v[1], resource_to_air(to_emit));
 
@@ -827,6 +850,24 @@ void air_environment::convert_percentage(float amount, float fraction, air_t inp
     return vec;
 }*/
 
+conditional_environment_modifier::conditional_environment_modifier()
+{
+    parent = nullptr;
+}
+
+float conditional_environment_modifier::get_pressure()
+{
+    return my_environment.local_environment.sum();
+}
+
+float conditional_environment_modifier::get_parent_pressure(state& s, vec2f pos)
+{
+    if(parent != nullptr)
+        return parent->my_environment.local_environment.sum();
+
+    return s.air_process->get(pos.v[0], pos.v[1]).sum();
+}
+
 ///my goodness, this actually works *and* its not horrible!!
 void conditional_environment_modifier::absorb_all(state& s, vec2f pos, float amount)
 {
@@ -853,11 +894,13 @@ void conditional_environment_modifier::emit_all(state& s, vec2f pos, float amoun
 {
     if(parent == nullptr)
     {
+        printf("Emitting %f %f %f\n", pos.v[0], pos.v[1], amount);
+
         my_environment.emit_all(s, pos, amount);
     }
     else
     {
-        auto backup_parent = parent;
+        auto backup_parent = parent->parent;
 
         parent->parent = this;
 
@@ -1055,7 +1098,7 @@ vec<resource::RES_COUNT, float> resource_converter::take(const std::vector<std::
 ///this is so that we can absorb a unit of gas from the environment, process it, then re-emit it afterwards
 void convert_amount(float amount, vecrf& global_storage, vecrf& global_max, vecrf& local_environment, float dt, float efficiency, const vecrf& conversion_usage_ratio, const vecrf& conversion_output_ratio)
 {
-    if(amount <= 0.001f)
+    if(amount <= 0.00001f)
         return;
 
     ///so we steal resources from the local environment (ie what we've deliberately absorbed)
@@ -1322,7 +1365,49 @@ float suit_part::get_leak_rate()
         return 0.f;
 
     ///so eg 0.5 - 0.2f / 0.8 = 1.f
-    return (my_damage - damage_start) / (1.f - damage_start);
+    float val = (my_damage - damage_start) / (1.f - damage_start);
+
+    return val * suit_parts::health_to_leak_conversion;
+}
+
+suit_status_displayer::suit_status_displayer()
+{
+    //file.load("./res/02.png");
+}
+
+void suit_status_displayer::tick(state& s, suit& mysuit)
+{
+    /*int width = s.win->getSize().x;
+    int height = s.win->getSize().y;
+
+    float scale = 0.3f;
+
+    int mywidth = file.tex.getSize().x * scale;
+    int myheight = file.tex.getSize().y * scale;
+
+    file.tick(s, (vec2f){mywidth/2.f, height - myheight/2.f}, scale, 0.f, false, true);*/
+
+    text status;
+
+    std::string to_display = "Suit Integrity:\n\n";
+
+    for(int i=0; i<suit_parts::COUNT; i++)
+    {
+        suit_part part = mysuit.parts[(suit_t)i];
+
+        to_display = to_display + suit_parts::names[i] + ": " + std::to_string(part.damage.get_health_frac() * 100.f) + "%";
+
+        if(part.get_leak_rate() > 0.f)
+        {
+            to_display = to_display + " LEAKING!!";
+        }
+
+        to_display = to_display + "\n";
+    }
+
+    to_display = to_display + "\nTotal leak rate: " + std::to_string(mysuit.get_total_leak()) + "\n";
+
+    status.render(s, to_display, (vec2f){50.f, s.win->getSize().y - 230.f}, 10, text_options::ABS);
 }
 
 suit::suit()
@@ -1335,11 +1420,83 @@ suit::suit()
     ///absorption rate
     environment.set_max_air(100.f);
     environment.my_environment.local_environment.v[air::OXYGEN] = 1.f; ///temp
+
+    ///temp, doing damage to suit
+    parts[suit_parts::LARM].damage.damage_amount(0.92f);
 }
 
 void suit::tick(state& s, float dt, vec2f pos)
 {
     display.tick(s, pos + (vec2f){-20, -10.f}, resource_to_air(environment.my_environment.local_environment));
+
+    ///per second
+    float leak_rate = get_total_leak();
+
+    //printf("%f\n", leak_rate * dt);
+
+    //environment.set_parent(nullptr);
+    //environment.emit_all(s, pos, leak_rate * dt);
+
+    float my_pressure = environment.get_pressure();
+    float parent_pressure = environment.get_parent_pressure(s, pos);
+
+    float avg_pressure = (my_pressure + parent_pressure) / 2.f;
+
+    //float pressure_difference = avg_pressure - my_pressure;
+
+    ///this is how fast EVERYONE is equalising
+    float equalisation_constant = leak_rate * suit_parts::leak_to_pressure_normalisation_fraction;
+
+    equalisation_constant = clamp(equalisation_constant, 0.f, 1.f);
+
+    //float pressure_difference_to_them = avg_pressure - my_pressure;
+    //float pressure_difference_to_me = avg_pressure - parent_pressure;
+
+    ///to them
+    float pressure_difference = parent_pressure - my_pressure;
+
+    ///no equalisation needed, give up
+    if(equalisation_constant < 0.00000001f)
+    {
+        return;
+    }
+
+    ///if they're almost at the same amount, slow the gas exchange to passive diffusion levels
+    ///this is basically the switch between advection mediated flow, and diffusion
+    ///not really scientifically accurate, but what are you gunna do
+    if(fabs(pressure_difference) < 0.001f)
+    {
+        equalisation_constant /= 100.f;
+
+        printf("Pressure throttling\n");
+    }
+
+    ///theirs higher than mine
+    ///because this clause is all inclusive
+    ///some pressure equalisation will always take place
+    ///which is what we want, to force advection of gases
+    if(pressure_difference > 0)
+    {
+        environment.absorb_all(s, pos, equalisation_constant);
+    }
+    else
+    {
+        environment.emit_all(s, pos, equalisation_constant);
+    }
+
+    ///so now what we actually wanna do is equalise dependent on leak rate and the pressure difference
+}
+
+float suit::get_total_leak()
+{
+    float accum = 0.f;
+
+    for(auto& i : parts)
+    {
+        accum += i.second.get_leak_rate();
+    }
+
+    return accum;
 }
 
 mass::mass()
@@ -1379,7 +1536,7 @@ vec2f momentum_handler::do_movement(state& s, vec2f position, vec2f dir, float d
 {
     dist = dist * dt;
 
-    slowdown_frac = slowdown_frac * (dt / 0.01f);
+    slowdown_frac = clamp(slowdown_frac * (dt / 0.01f), 0.f, slowdown_frac);
 
     slowdown_frac = clamp(slowdown_frac, 0.f, 1.f);
 

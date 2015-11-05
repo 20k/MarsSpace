@@ -14,12 +14,14 @@ void air_processor::load(int _width, int _height)
     height = _height;
 
     buf = new vec<N, float>[width*height];
+    buf_out = new vec<N, float>[width*height];
 
     ///this seems idiotic, but it runs 2ms faster
     ///I'm not going to argue with that
     for(int i=0; i<width*height; i++)
     {
         buf[i] = martian_atmosphere;
+        buf_out[i] = martian_atmosphere;
     }
 }
 
@@ -58,6 +60,13 @@ vec<air_processor::N, float> air_processor::take_volume(int x, int y, float amou
 
     if(amount > cur_amount)
         amount = cur_amount;
+
+    if(cur_amount < 0.0001f)
+    {
+        vec<N, float> ret;
+        ret = 0.f;
+        return ret;
+    }
 
     auto fracs = buf[y*width + x] / cur_amount;
 
@@ -125,7 +134,7 @@ void air_processor::tick(state& s, float dt)
             ///its just a vacuum
             if(x == 0 || x == width-1 || y == 0 || y == height-1)
             {
-                buf[y*width + x] = martian_atmosphere;
+                buf_out[y*width + x] = martian_atmosphere;
                 continue;
             }
 
@@ -154,7 +163,7 @@ void air_processor::tick(state& s, float dt)
             for(int i=0; i<N; i++)
             {
                 if(buf[(y-1)*width + x].v[i] < 0)
-                    buf[(y-1)*width + x].v[i] = 0;
+                    buf_out[(y-1)*width + x].v[i] = 0;
             }
 
             //vals = max(vals, 0.f);
@@ -169,15 +178,9 @@ void air_processor::tick(state& s, float dt)
 
             for(int i=0; i<4; i++)
             {
-                /*if(vals.v[i] >= 0)
-                {
-                    total += vals.v[i];
-                    ++num;
-                }*/
-
                 for(int j=0; j<N; j++)
                 {
-                    if(vals.v[i].v[j] >= 0)
+                    if(vals.v[i].v[j] > 0.0000001f)
                     {
                         total.v[j] += vals.v[i].v[j];
                         nums.v[j]++;
@@ -189,9 +192,13 @@ void air_processor::tick(state& s, float dt)
 
             vec<N, float> fin = (diffusion_constant * my_val + total) / (nums + diffusion_constant);
 
-            buf[y*width + x] = fin;
+            buf_out[y*width + x] = fin;
         }
     }
+
+    auto backup = buf;
+    buf = buf_out;
+    buf_out = backup;
 }
 
 void air_processor::draw(state& s)

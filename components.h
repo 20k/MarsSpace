@@ -41,10 +41,10 @@ struct renderable_file
 {
     sf::Image img;
     sf::Texture tex;
-    sf::RenderTexture rtex;
+    sf::RenderTexture* rtex;
 
     void load(const std::string&Y);
-    void tick(state& s, vec2f pos, float scale, float rotation = 0.f, bool shadow = false);
+    void tick(state& s, vec2f pos, float scale, float rotation = 0.f, bool shadow = false, bool absolute = false);
 };
 
 struct renderable_texture
@@ -279,7 +279,7 @@ struct conditional_environment_modifier
 {
     air_environment my_environment;
 
-    conditional_environment_modifier* parent = nullptr;
+    conditional_environment_modifier* parent;
 
     void absorb_all(state& s, vec2f pos, float amount);
     void emit_all(state& s, vec2f pos, float amount);
@@ -287,6 +287,11 @@ struct conditional_environment_modifier
 
     void set_parent(conditional_environment_modifier* parent);
     void remove_parent();
+
+    float get_pressure();
+    float get_parent_pressure(state& s, vec2f pos);
+
+    conditional_environment_modifier();
 
     vecrf take(float amount);
     vecrf add(vecrf amount);
@@ -396,7 +401,7 @@ namespace suit_parts
 {
     enum suit_parts
     {
-        HEAD,
+        HEAD = 0,
         LSHOULDER,
         LARM,
         LHAND,
@@ -410,15 +415,40 @@ namespace suit_parts
         RFOOT,
         COUNT
     };
+
+    static std::vector<std::string> names
+    {
+        "Head",
+        "Left Shoulder",
+        "Left Arm",
+        "Left Hand",
+        "Right Shoulder",
+        "Right Arm",
+        "Right Hand",
+        "Chest",
+        "Left Leg",
+        "Right Leg",
+        "Left Foot",
+        "Right Foot",
+        "Error"
+    };
+
+    const float health_to_leak_conversion = 0.1f;
+    ///this means with a leak rate of 1, we'll equalise pressure with the outside world in 1 second
+    const float leak_to_pressure_normalisation_fraction = 0.01f;
 }
 
 typedef suit_parts::suit_parts suit_t;
+
+struct suit;
 
 struct suit_status_displayer
 {
     renderable_file file;
 
     suit_status_displayer();
+
+    void tick(state& s, suit& mysuit);
 };
 
 ///entity or component?
@@ -444,6 +474,7 @@ struct suit
 {
     conditional_environment_modifier environment;
     air_displayer display;
+    suit_status_displayer suit_display;
     ///going to need a resource converter later, but for the moment
     ///I just want to test the environmental stacking
 
@@ -452,6 +483,7 @@ struct suit
     suit();
 
     void tick(state&, float dt, vec2f pos);
+    float get_total_leak();
 };
 
 struct mass
