@@ -250,10 +250,32 @@ int main()
             en->set_position(round_mouse);
             stuff.push_back(en);
         }
-
         if(once<sf::Keyboard::F5>())
         {
+            gas_storage* en = new gas_storage(net, air::NITROGEN);
+            en->set_position(round_mouse);
+
+            vecrf res;
+            res = 0.f;
+
+            res.v[air::NITROGEN] = 50.;
+
+            net.add(res);
+
+
+            stuff.push_back(en);
+        }
+
+        if(once<sf::Keyboard::F6>())
+        {
             oxygen_reclaimer* en = new oxygen_reclaimer(net);
+            en->set_position(round_mouse);
+            stuff.push_back(en);
+        }
+
+        if(once<sf::Keyboard::F7>())
+        {
+            entity* en = new environment_balancer(net);
             en->set_position(round_mouse);
             stuff.push_back(en);
         }

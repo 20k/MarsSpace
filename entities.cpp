@@ -595,22 +595,39 @@ environment_balancer::environment_balancer(byte_fetch& fetch) : environment_bala
     resource_entity::load(fetch);
 }
 
-void environment_balancer::load(resource_network& net)
+void environment_balancer::load(resource_network& _net)
 {
     /*conv.add(&net)
     emitter.add(&net);*/
 
-    net.add(&conv);
+    /*net.add(&conv);
     net.add(&emitter);
+
+    conv.set_amount(1.f);
+    emitter.set_amount(1.f);
+
+    for(int i=0; i<air::COUNT; i++)
+    {
+        conv.set_max_storage({{(air_t)i, 1.f}});
+        emitter.set_max_storage({{(air_t)i, 1.f}});
+    }*/
+
+    net = &_net;
+
+    ///we need to set conv.parent and emitter.parent to be the correct environment
+    ///which means they need to actually work as well
 }
 
+///so, this tries to maintain a certain volume/pressure of gas essentially
+///but doesn't care about its ratios to other gases
+///I have no idea how scientifically accurate this is
 void environment_balancer::tick(state& s, float dt)
 {
     static vecrf ideal_environment = air_to_resource(get_controlled_environment_atmosphere());
 
-    vecrf environment = parent_environment.get_parent(s, position);
+    vecrf parent_air = environment.get_parent(s, position);
 
-    vecrf to_ideal = ideal_environment - environment;
+    vecrf to_ideal = ideal_environment - parent_air;
 
     ///everything > 0
     vecrf to_emit = max(to_ideal, 0.f);
@@ -621,23 +638,23 @@ void environment_balancer::tick(state& s, float dt)
     ///also, it turns out I was really wrong in normalising the conversion parameters
     ///Im going to have to change the api because it sucks
 
-    float air_processed_per_second = 0.01f;
+    float air_processed_per_second = 1.f;
 
-    ///so it can process the entire thing in 1s? seems ridiculous
-    conv.set_air_absorb_rate(air_processed_per_second);
-    emitter.set_air_emit_rate(air_processed_per_second); ///this badly named function controls all air rates
+    environment.set_max_air(air_processed_per_second);
+    environment.absorb_all(s, position, air_processed_per_second * dt);
 
-    ///so... what we want to do is absorb to_absorb from the atmosphere
-    ///so we will absorb into local
-    ///then we want to take local and store it in global
-    ///which we can do by setting the conversion rate to be 1:1
-    conv.set_usage(to_absorb);
-    conv.set_output(to_absorb);
+    auto removed = environment.take(to_absorb);
 
+    auto can_emit = net->take(to_emit);
 
-    //resource_entity::tick(s, dt);
+    auto extra = environment.add(can_emit);
 
-    circle.tick(s, position, 1.f, (vec4f({100, 100, 255, 255})));
+    environment.emit_all(s, position, air_processed_per_second * dt * 10.f);
+
+    net->add(removed);
+    net->add(extra);
+
+    circle.tick(s, position, 1.f, (vec4f({255, 100, 255, 255})));
 }
 
 save environment_balancer::make_save()

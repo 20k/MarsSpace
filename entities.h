@@ -262,7 +262,7 @@ struct environment_balancer : resource_entity
 
     renderable_circle circle;
     air_displayer display;
-    conditional_environment_modifier parent_environment;
+    conditional_environment_modifier environment;
 
     environment_balancer();
     environment_balancer(resource_network& _net);
@@ -273,6 +273,8 @@ struct environment_balancer : resource_entity
     void load(resource_network& net);
 
     save make_save();
+
+    resource_network* net;
 };
 
 

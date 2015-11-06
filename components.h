@@ -298,6 +298,7 @@ struct conditional_environment_modifier
     conditional_environment_modifier();
 
     vecrf take(float amount);
+    vecrf take(vecrf amount);
     vecrf add(vecrf amount);
 
     vecrf get();
@@ -378,6 +379,11 @@ struct resource_network
     void add(resource_converter* conv);
     void rem(resource_converter* rem);
     void clear();
+
+    ///returns what we couldn't add
+    vecrf add(const vecrf& res);
+    ///returns what we could take
+    vecrf take(const vecrf& res);
 
     void tick(state& s, float dt);
 

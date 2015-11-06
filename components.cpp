@@ -934,6 +934,15 @@ vecrf conditional_environment_modifier::take(float amount)
     return ret_amount;
 }
 
+vecrf conditional_environment_modifier::take(vecrf amount)
+{
+    auto old = my_environment.local_environment;
+
+    my_environment.local_environment = max(my_environment.local_environment - amount, 0.f);
+
+    return old - my_environment.local_environment;
+}
+
 vecrf conditional_environment_modifier::add(vecrf amount)
 {
     float total = amount.sum() + my_environment.local_environment.sum();
@@ -1241,12 +1250,14 @@ resource_network::resource_network()
 void resource_network::add(resource_converter* conv)
 {
     network_resources = network_resources + conv->local_storage;
+    max_network_resources = max_network_resources + conv->max_storage;
     converters.push_back(conv);
 }
 
 void resource_network::rem(resource_converter* conv)
 {
     network_resources = network_resources - conv->local_storage;
+    max_network_resources = network_resources - conv->max_storage;
 
     for(int i=0; i<(int)converters.size(); i++)
     {
@@ -1262,6 +1273,28 @@ void resource_network::clear()
 {
     network_resources = 0;
     converters.clear();
+}
+
+vecrf resource_network::add(const vecrf& res)
+{
+    auto old = network_resources;
+
+    network_resources = min(network_resources + res, max_network_resources);
+
+    auto diff = network_resources - old;
+
+    return res - diff;
+}
+
+vecrf resource_network::take(const vecrf& res)
+{
+    auto old = network_resources;
+
+    network_resources = max(network_resources - res, 0.f);
+
+    auto diff = old - network_resources;
+
+    return diff;
 }
 
 ///no processing done here
