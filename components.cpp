@@ -581,6 +581,9 @@ std::vector<entity*> saver::load_from_file(const std::string& fname, state& s)
 
         else if(type == entity_type::OXYGEN_RECLAIMER)
             ent = new oxygen_reclaimer(fetch);
+        else if(type == entity_type::REPAIR_ENTITY)
+            ent = new repair_entity(fetch);
+
 
         entities.push_back(ent);
     }
@@ -956,6 +959,19 @@ vecrf conditional_environment_modifier::add(vecrf amount)
     return amount - ret;
 }
 
+vecrf conditional_environment_modifier::get()
+{
+    return my_environment.local_environment;
+}
+
+vecrf conditional_environment_modifier::get_parent(state& s, vec2f pos)
+{
+    if(parent != nullptr)
+        return parent->get();
+
+    return air_to_resource(s.air_process->get(pos.v[0], pos.v[1]));
+}
+
 void conditional_environment_modifier::set_max_air(float _max)
 {
     max_air = _max;
@@ -1019,9 +1035,27 @@ resource_converter::resource_converter()
 
     amount = 0.f;
     efficiency = 1.f;
-    environmental_absorption_rate = 0.f;
+    environment_absorb_rate = 0.f;
+    environment_emit_rate = 0.f;
     pos = (vec2f){0.f, 0.f};
 }
+
+void resource_converter::set_air_absorb_rate(float _rate)
+{
+    environment_absorb_rate = _rate;
+}
+
+void resource_converter::set_air_emit_rate(float _rate)
+{
+    environment_emit_rate = _rate;
+}
+
+void resource_converter::set_air_transfer_rate(float _rate)
+{
+    set_air_absorb_rate(_rate);
+    set_air_emit_rate(_rate);
+}
+
 
 void resource_converter::set_max_storage(const std::vector<std::pair<resource_t, float>>& lv)
 {
@@ -1051,9 +1085,14 @@ void resource_converter::set_output_ratio(const std::vector<std::pair<resource_t
     conversion_output_ratio = conversion_output_ratio / conversion_output_ratio.sum();
 }
 
-void resource_converter::set_absorption_rate(float _rate)
+void resource_converter::set_usage(const vecrf& vec)
 {
-    environmental_absorption_rate = _rate;
+    conversion_usage_ratio = vec;
+}
+
+void resource_converter::set_output(const vecrf& vec)
+{
+    conversion_output_ratio = vec;
 }
 
 void resource_converter::add(const std::vector<std::pair<resource_t, float>>& lv)
@@ -1168,19 +1207,19 @@ void resource_converter::set_position(vec2f _pos)
 
 void resource_converter::absorb_all(state& s, float dt)
 {
-    if(environmental_absorption_rate > 0.f)
+    if(environment_absorb_rate > 0.f)
     {
-        environment_absorption.absorb_all(s, pos, environmental_absorption_rate * dt, environmental_absorption_rate);
+        environment_absorption.absorb_all(s, pos, environment_absorb_rate * dt, environment_absorb_rate);
 
         //printf("%f\n", environmental_absorption_rate * dt);
     }
 }
 
-void resource_converter::emit_all(state& s)
+void resource_converter::emit_all(state& s, float dt)
 {
-    if(environmental_absorption_rate > 0.f)
+    if(environment_emit_rate > 0.f)
     {
-        environment_absorption.emit_all(s, pos, environment_absorption.local_environment.sum());
+        environment_absorption.emit_all(s, pos, environment_emit_rate * dt);
     }
 }
 
@@ -1253,7 +1292,7 @@ void resource_network::tick(state& s, float dt)
         i->absorb_all(s, dt);
         //printf("%f\n", i->environment_absorption.local_environment.v[air::C02]);
         i->convert(network_resources, max_network_resources, dt);
-        i->emit_all(s);
+        i->emit_all(s, dt);
     }
 
     ///distribute resources proportionally

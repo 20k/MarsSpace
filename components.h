@@ -300,6 +300,9 @@ struct conditional_environment_modifier
     vecrf take(float amount);
     vecrf add(vecrf amount);
 
+    vecrf get();
+    vecrf get_parent(state& s, vec2f pos);
+
     float max_air = 0.f;
 };
 
@@ -330,7 +333,8 @@ struct resource_converter
 
     float amount;
     float efficiency;
-    float environmental_absorption_rate;
+    float environment_absorb_rate;
+    float environment_emit_rate;
 
     vec2f pos;
 
@@ -339,7 +343,13 @@ struct resource_converter
     void set_max_storage(const std::vector<std::pair<resource_t, float>>& vec);
     void set_usage_ratio(const std::vector<std::pair<resource_t, float>>& vec);
     void set_output_ratio(const std::vector<std::pair<resource_t, float>>& vec);
-    void set_absorption_rate(float _rate);
+
+    void set_usage(const vecrf& in);
+    void set_output(const vecrf& out);
+
+    void set_air_absorb_rate(float _rate);
+    void set_air_emit_rate(float _rate);
+    void set_air_transfer_rate(float _rate);
 
     ///maybe constructor me
     void set_amount(float amount);
@@ -350,7 +360,8 @@ struct resource_converter
     vecrf take(const std::vector<std::pair<resource_t, float>>& vec);
 
     void absorb_all(state& s, float dt);
-    void emit_all(state& s);
+    void emit_all(state& s, float dt);
+
     void convert(vecrf& global_storage, vecrf& global_max, float dt);
 
     resource_converter();

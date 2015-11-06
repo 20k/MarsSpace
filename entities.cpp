@@ -137,6 +137,17 @@ void player::tick(state& s, float dt)
             i->on_use(s, dt, this);
         }
     }
+
+
+    std::string display_total;
+
+    for(auto& i : carried)
+    {
+        display_total = display_total + i->get_display_info();
+    }
+
+    text txt;
+    txt.render(s, display_total, (vec2f){s.win->getSize().x - 300, 20}, 16, text_options::ABS);
 }
 
 ///we need to set_active the player when loading
@@ -218,6 +229,7 @@ entity* player::drop(int num)
         return nullptr;
 
     entity* en = carried[num];
+    en->set_position(position);
 
     carried.erase(carried.begin() + num);
 
@@ -514,7 +526,6 @@ save gas_storage::make_save()
 
 oxygen_reclaimer::oxygen_reclaimer()
 {
-
     float litres_per_hour = 0.5f;
     float litres_per_minute = litres_per_hour / 60.f;
     float litres_ps = litres_per_minute / 60.f;
@@ -529,7 +540,8 @@ oxygen_reclaimer::oxygen_reclaimer()
     ///well, it should be litres_ps, but unfortunately we cant use realistic values
     ///otherwise itll take 1.5 actual years to play the game
     ///and as exciting as that is, its probably not ideal to build a playerbase
-    conv.set_absorption_rate(gas_accounted_litres_ps * game_speed);
+    //conv.set_absorption_rate(gas_accounted_litres_ps * game_speed);
+    conv.set_air_transfer_rate(gas_accounted_litres_ps * game_speed);
     conv.set_max_storage({{resource::C02, 1.f}});
     conv.set_usage_ratio({{resource::POWER, 1000.f}});
     conv.set_usage_ratio({{resource::C02, gas_accounted_litres_ps}});
@@ -549,7 +561,6 @@ oxygen_reclaimer::oxygen_reclaimer(byte_fetch& fetch) : oxygen_reclaimer()
     load(fetch);
 }
 
-
 void oxygen_reclaimer::tick(state& s, float dt)
 {
     resource_entity::tick(s, dt);
@@ -564,6 +575,78 @@ save oxygen_reclaimer::make_save()
     vec.push_back<vecrf>(conv.local_storage);
 
     return {entity_type::OXYGEN_RECLAIMER, vec};
+}
+
+environment_balancer::environment_balancer()
+{
+    conv.set_max_storage({{resource::C02, 0.1f}});
+}
+
+environment_balancer::environment_balancer(resource_network& _net) : environment_balancer()
+{
+    ///object fully initialised, not illegal to do this
+    ///if we ever call load from in the resource entity constructor though
+    ///that is very illegals
+    load(_net);
+}
+
+environment_balancer::environment_balancer(byte_fetch& fetch) : environment_balancer()
+{
+    resource_entity::load(fetch);
+}
+
+void environment_balancer::load(resource_network& net)
+{
+    /*conv.add(&net)
+    emitter.add(&net);*/
+
+    net.add(&conv);
+    net.add(&emitter);
+}
+
+void environment_balancer::tick(state& s, float dt)
+{
+    static vecrf ideal_environment = air_to_resource(get_controlled_environment_atmosphere());
+
+    vecrf environment = parent_environment.get_parent(s, position);
+
+    vecrf to_ideal = ideal_environment - environment;
+
+    ///everything > 0
+    vecrf to_emit = max(to_ideal, 0.f);
+    ///everything < 0
+    vecrf to_absorb = max(-to_ideal, 0.f);
+
+    ///again what we really want is an atomic swap
+    ///also, it turns out I was really wrong in normalising the conversion parameters
+    ///Im going to have to change the api because it sucks
+
+    float air_processed_per_second = 0.01f;
+
+    ///so it can process the entire thing in 1s? seems ridiculous
+    conv.set_air_absorb_rate(air_processed_per_second);
+    emitter.set_air_emit_rate(air_processed_per_second); ///this badly named function controls all air rates
+
+    ///so... what we want to do is absorb to_absorb from the atmosphere
+    ///so we will absorb into local
+    ///then we want to take local and store it in global
+    ///which we can do by setting the conversion rate to be 1:1
+    conv.set_usage(to_absorb);
+    conv.set_output(to_absorb);
+
+
+    //resource_entity::tick(s, dt);
+
+    circle.tick(s, position, 1.f, (vec4f({100, 100, 255, 255})));
+}
+
+save environment_balancer::make_save()
+{
+    byte_vector vec;
+    vec.push_back<vec2f>(position);
+    vec.push_back<vecrf>(conv.local_storage);
+
+    return {entity_type::ENVIRONMENT_BALANCER, vec};
 }
 
 suit_entity::suit_entity()
@@ -600,6 +683,23 @@ save suit_entity::make_save()
     return {entity_type::SUIT_ENTITY, byte_vector()};
 }
 
+
+std::string suit_entity::get_display_info()
+{
+    return "Suit";
+}
+
+repair_entity::repair_entity()
+{
+
+}
+
+repair_entity::repair_entity(byte_fetch& fetch)
+{
+    position = fetch.get<vec2f>();
+    repair_amount.repair_remaining = fetch.get<float>();
+}
+
 float repair_entity::add(float amount)
 {
     return repair_amount.add(amount);
@@ -610,10 +710,13 @@ float repair_entity::deplete(float amount)
     return repair_amount.deplete(amount);
 }
 
-
 save repair_entity::make_save()
 {
-    return {entity_type::REPAIR_ENTITY, byte_vector()};
+    byte_vector vec;
+    vec.push_back<vec2f>(position);
+    vec.push_back<float>(repair_amount.repair_remaining);
+
+    return {entity_type::REPAIR_ENTITY, vec};
 }
 
 void repair_entity::tick(state& s, float dt)
@@ -629,7 +732,7 @@ void repair_entity::tick(state& s, float dt)
     interact.tick(s);
 
     text txt;
-    txt.render(s, "Repair Material", position);
+    txt.render(s, get_display_info(), position);
 }
 
 void repair_entity::on_use(state& s, float dt, entity* en)
@@ -648,7 +751,11 @@ void repair_entity::on_use(state& s, float dt, entity* en)
     float extra = play->repair_suit(amount);
 
     add(extra);
+}
 
+std::string repair_entity::get_display_info()
+{
+    return std::string("Repair Material: ") + std::to_string(repair_amount.repair_remaining);
 }
 
 ///dunnae do anything!

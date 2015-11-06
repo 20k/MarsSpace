@@ -19,7 +19,8 @@ namespace entity_type
         GAS_STORAGE,
         OXYGEN_RECLAIMER,
         SUIT_ENTITY,
-        REPAIR_ENTITY
+        REPAIR_ENTITY,
+        ENVIRONMENT_BALANCER
     };
 }
 
@@ -60,6 +61,10 @@ struct entity
 
     ///remove me at the next available opportunity
     void schedule_unload();
+    void schedule_delete();
+
+    ///so that if a player picks me up, I've got a name
+    virtual std::string get_display_info() {return "";};
 
     virtual void set_position(vec2f _pos);
 
@@ -174,7 +179,7 @@ struct resource_entity : entity
     resource_entity(byte_fetch& fetch);
 
     void load(byte_fetch& fetch);
-    void load(resource_network& net);
+    virtual void load(resource_network& net);
 
     virtual void set_position(vec2f _pos) override;
 
@@ -225,6 +230,7 @@ struct gas_storage : resource_entity
     save make_save();
 };
 
+///absorbs co2, stores oxygen in tanks
 struct oxygen_reclaimer : resource_entity
 {
     air_displayer display;
@@ -240,6 +246,36 @@ struct oxygen_reclaimer : resource_entity
     save make_save();
 };
 
+
+///next we need an entity refilling station, as well as an environmental monitor component
+///and then an entity that reads from that component and updates the world accordingly
+///wait we already have an environment monitor
+///really what we want is a conditional environmental monitor though
+///nah, we can just use conditional_environment for it, even though thats
+///not 100% what its built for
+///what we need is somethign to sample the atmosphere, and then emit/absorb any incorrect deviations from standard
+///including pressure!
+
+struct environment_balancer : resource_entity
+{
+    resource_converter emitter;
+
+    renderable_circle circle;
+    air_displayer display;
+    conditional_environment_modifier parent_environment;
+
+    environment_balancer();
+    environment_balancer(resource_network& _net);
+    environment_balancer(byte_fetch& fetch);
+
+    virtual void tick(state& s, float dt) override;
+
+    void load(resource_network& net);
+
+    save make_save();
+};
+
+
 struct suit_entity : entity
 {
     suit this_suit;
@@ -252,6 +288,8 @@ struct suit_entity : entity
     virtual void tick(state& s, float dt);
 
     virtual save make_save();
+
+    std::string get_display_info() override;
 };
 
 ///something that can be used to repair something else
@@ -266,10 +304,15 @@ struct repair_entity : entity
     float add(float amount);
     float deplete(float amount);
 
+    repair_entity();
+    repair_entity(byte_fetch&);
+
     virtual void tick(state& s, float dt) override;
     virtual void on_use(state& s, float dt, entity* en);
 
     virtual save make_save();
+
+    std::string get_display_info() override;
 };
 
 ///later make resource_network a physical hub or something perhaps?

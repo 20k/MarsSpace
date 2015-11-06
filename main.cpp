@@ -191,6 +191,17 @@ int main()
                 stuff.push_back(en);
         }
 
+        if(once<sf::Keyboard::R>())
+        {
+            entity* en = play->drop(0);
+
+            if(en != nullptr)
+            {
+                en->to_unload = false;
+                stuff.push_back(en);
+            }
+        }
+
         if(key.isKeyPressed(sf::Keyboard::Num1))
         {
             vec2f local_pos = m_fetch.get_world(st);

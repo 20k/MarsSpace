@@ -89,7 +89,8 @@ namespace resource = air;
 inline
 vec<air::COUNT, float> get_martian_atmosphere()
 {
-    vec<air::COUNT, float> ret = (vec<air::COUNT, float>){
+    vec<air::COUNT, float> ret = (vec<air::COUNT, float>)
+    {
         0,
         2.7 + 1.6, ///might as well model argon as nitrogen
         0.13,
@@ -98,9 +99,45 @@ vec<air::COUNT, float> get_martian_atmosphere()
         0
     };
 
-    ret = ret * 1.f / (100.f * 100);
+    ret = ret / (100.f);
+
+    const float mars_atmospheric_thickness = 0.01f;
+
+    ret = ret * mars_atmospheric_thickness;
 
     return ret;
+}
+
+inline
+vec<air::COUNT, float> get_earth_atmosphere()
+{
+    vec<air::COUNT, float> urf = (vec<air::COUNT, float>)
+    {
+        0.f,
+        78.084f + 0.9340f,
+        20.946,
+        0.0397,
+        2.5,
+        0.f
+    };
+
+    return urf / 100.f;
+}
+
+inline
+vec<air::COUNT, float> get_controlled_environment_atmosphere()
+{
+    vec<air::COUNT, float> ret = (vec<air::COUNT, float>)
+    {
+        0.f,
+        78.084f + 0.9340f,
+        20.946,
+        0.f,
+        1,
+        0.f
+    };
+
+    return ret / 100.f;
 }
 
 struct state;
