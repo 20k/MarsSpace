@@ -121,6 +121,10 @@ struct mouse_fetcher
     vec2f get_screen(state& s);
 };
 
+///we can give this a watch, ie an entity that it is looking at
+///makes it hard to save unless we go down the unique id route for all entities in a map
+///which is not not doable, but is quite a large annoyance factor
+///although we can do that super automatically through the entity class
 struct area_interacter
 {
     renderable_circle circle;
@@ -377,6 +381,7 @@ struct damageable
 
     //void damage_fraction(float fraction);
     void damage_amount(float fraction);
+    float heal_amount(float frac);
 
     void reset();
 
@@ -483,7 +488,11 @@ struct suit
     suit();
 
     void tick(state&, float dt, vec2f pos);
+
+    float repair(float amount);
+
     float get_total_leak();
+    float get_total_damage();
 };
 
 struct mass
@@ -504,6 +513,15 @@ struct momentum_handler
     momentum_handler();
     void set_mass(float _amount);
     vec2f do_movement(state& s, vec2f position, vec2f dir, float dist, float dt, float slowdown_frac);
+};
+
+struct repair_component
+{
+    float repair_remaining;
+    repair_component();
+
+    float deplete(float amount);
+    float add(float amount);
 };
 
 

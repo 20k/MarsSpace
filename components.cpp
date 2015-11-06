@@ -894,7 +894,7 @@ void conditional_environment_modifier::emit_all(state& s, vec2f pos, float amoun
 {
     if(parent == nullptr)
     {
-        printf("Emitting %f %f %f\n", pos.v[0], pos.v[1], amount);
+        //printf("Emitting %f %f %f\n", pos.v[0], pos.v[1], amount);
 
         my_environment.emit_all(s, pos, amount);
     }
@@ -1338,6 +1338,19 @@ damageable::damageable()
 void damageable::damage_amount(float fraction)
 {
     health -= fraction;
+
+    health = std::max(health, 0.f);
+}
+
+float damageable::heal_amount(float fraction)
+{
+    health += fraction;
+
+    float extra = health > 1.f ? health - 1.f : 0.f;
+
+    health = clamp(health, 0.f, 1.f);
+
+    return extra;
 }
 
 void damageable::reset()
@@ -1440,7 +1453,7 @@ void suit::tick(state& s, float dt, vec2f pos)
     float my_pressure = environment.get_pressure();
     float parent_pressure = environment.get_parent_pressure(s, pos);
 
-    float avg_pressure = (my_pressure + parent_pressure) / 2.f;
+    //float avg_pressure = (my_pressure + parent_pressure) / 2.f;
 
     //float pressure_difference = avg_pressure - my_pressure;
 
@@ -1456,7 +1469,7 @@ void suit::tick(state& s, float dt, vec2f pos)
     float pressure_difference = parent_pressure - my_pressure;
 
     ///no equalisation needed, give up
-    if(equalisation_constant < 0.00000001f)
+    if(equalisation_constant <= 0.00000001f)
     {
         return;
     }
@@ -1464,7 +1477,7 @@ void suit::tick(state& s, float dt, vec2f pos)
     ///if they're almost at the same amount, slow the gas exchange to passive diffusion levels
     ///this is basically the switch between advection mediated flow, and diffusion
     ///not really scientifically accurate, but what are you gunna do
-    if(fabs(pressure_difference) < 0.001f)
+    if(fabs(pressure_difference) <= 0.001f)
     {
         equalisation_constant /= 100.f;
 
@@ -1487,6 +1500,23 @@ void suit::tick(state& s, float dt, vec2f pos)
     ///so now what we actually wanna do is equalise dependent on leak rate and the pressure difference
 }
 
+float suit::repair(float amount)
+{
+    float remaining = amount;
+
+    for(auto& i : parts)
+    {
+        remaining = i.second.damage.heal_amount(remaining);
+
+        ///can't be less than 0, but guard against my own poor programming
+        ///also floats are evil under -Ofast
+        if(remaining <= 0.f)
+            return 0.f;
+    }
+
+    return remaining;
+}
+
 float suit::get_total_leak()
 {
     float accum = 0.f;
@@ -1494,6 +1524,18 @@ float suit::get_total_leak()
     for(auto& i : parts)
     {
         accum += i.second.get_leak_rate();
+    }
+
+    return accum;
+}
+
+float suit::get_total_damage()
+{
+    float accum = 0.f;
+
+    for(auto& i : parts)
+    {
+        accum += 1.f - i.second.damage.get_health_frac();
     }
 
     return accum;
@@ -1560,6 +1602,37 @@ vec2f momentum_handler::do_movement(state& s, vec2f position, vec2f dir, float d
     //printf("%f\n", velocity.length());
 
     return new_pos;
+}
+
+///sometimes I wonder if I'm going much too far with this entity component system
+///then I remember that this project is going so well because of the ridiculous overencapsulation of everything
+///or perhaps I only feel like that because of how much useless code I've written
+repair_component::repair_component()
+{
+    repair_remaining = 1.f;
+}
+
+float repair_component::deplete(float amount)
+{
+    float initial = repair_remaining;
+
+    repair_remaining -= amount;
+
+    repair_remaining = std::max(repair_remaining, 0.f);
+
+    ///amount we could't use
+    return initial - repair_remaining;
+}
+
+float repair_component::add(float amount)
+{
+    repair_remaining += amount;
+
+    float extra = repair_remaining > 1.f ? repair_remaining - 1.f : 0.f;
+
+    repair_remaining = std::min(repair_remaining, 1.f);
+
+    return extra;
 }
 
 

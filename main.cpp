@@ -44,13 +44,20 @@ int main()
 
     resource_network default_network;
 
+    entity* glue = new repair_entity();
+
     std::vector<entity*> stuff;
     stuff.push_back(new planet(tex));
     stuff.push_back(build);
     stuff.push_back(play);
+    stuff.push_back(glue);
 
     play->position = (vec2f){gen_width/2.f - 5, gen_height/2.f};
     play->set_active_player(st);
+
+    glue->set_position(play->position);
+
+
 
     //opener open(2000.f);
     //area_interacter area({width/2.f, height/2.f}, 1.f);
@@ -277,9 +284,12 @@ int main()
         {
             entity* en = stuff[i];
 
+            ///hmm. We're gunna need to distinguish between
+            ///deleting an object permanently
+            ///and simply removing it from the list
             if(en->to_unload)
             {
-                delete en;
+                //delete en;
                 stuff.erase(stuff.begin() + i);
                 i--;
                 continue;

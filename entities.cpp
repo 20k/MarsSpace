@@ -1,5 +1,7 @@
 #include "entities.h"
 
+#include "misc.h"
+
 entity::entity()
 {
     position = (vec2f){0.f, 0.f};
@@ -17,6 +19,11 @@ entity::~entity()
 
 }
 
+void entity::set_position(vec2f _pos)
+{
+    position = _pos;
+}
+
 player::player()
 {
     file.load("./res/character.png");
@@ -29,6 +36,14 @@ player::player()
     has_suit = true;
 
     momentum.set_mass(200.f);
+}
+
+float player::repair_suit(float amount)
+{
+    if(has_suit)
+        return mysuit.repair(amount);
+
+    return amount;
 }
 
 void player::set_active_player(state& s)
@@ -109,6 +124,19 @@ void player::tick(state& s, float dt)
     {
         momentum.set_mass(10.f);
     }
+
+    for(entity* i : carried)
+    {
+        ///@TODO: WE MOST CERTAINLY NEED TO NOT BE DOING THIS
+        ///particularly because atm itll only use the first item o_o
+        //if(once<sf::Keyboard::G>())
+        sf::Keyboard keyb;
+
+        if(keyb.isKeyPressed(sf::Keyboard::G))
+        {
+            i->on_use(s, dt, this);
+        }
+    }
 }
 
 ///we need to set_active the player when loading
@@ -177,6 +205,23 @@ suit_entity* player::drop_suit()
     remove_suit();
 
     return s;
+}
+
+void player::pickup(entity* en)
+{
+    carried.push_back(en);
+}
+
+entity* player::drop(int num)
+{
+    if(num < 0 || num >= carried.size())
+        return nullptr;
+
+    entity* en = carried[num];
+
+    carried.erase(carried.begin() + num);
+
+    return en;
 }
 
 planet::planet(sf::Texture& tex)
@@ -555,7 +600,59 @@ save suit_entity::make_save()
     return {entity_type::SUIT_ENTITY, byte_vector()};
 }
 
-void suit_entity::set_position(vec2f _pos)
+float repair_entity::add(float amount)
 {
-    position = _pos;
+    return repair_amount.add(amount);
 }
+
+float repair_entity::deplete(float amount)
+{
+    return repair_amount.deplete(amount);
+}
+
+
+save repair_entity::make_save()
+{
+    return {entity_type::REPAIR_ENTITY, byte_vector()};
+}
+
+void repair_entity::tick(state& s, float dt)
+{
+    interact.set_position(position);
+
+    if(interact.player_has_interacted(s))
+    {
+        s.current_player->pickup(this);
+        schedule_unload();
+    }
+
+    interact.tick(s);
+
+    text txt;
+    txt.render(s, "Repair Material", position);
+}
+
+void repair_entity::on_use(state& s, float dt, entity* en)
+{
+    player* play = dynamic_cast<player*>(en);
+
+    if(play == nullptr)
+        return;
+
+    float repair_speed = 1.f;
+
+    float amount = deplete(repair_speed * dt);
+
+    printf("Remaining %f\n", repair_amount.repair_remaining);
+
+    float extra = play->repair_suit(amount);
+
+    add(extra);
+
+}
+
+///dunnae do anything!
+/*void repair_entity::tick_held(state& s, float dt)
+{
+
+}*/

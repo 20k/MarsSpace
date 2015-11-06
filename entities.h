@@ -18,7 +18,8 @@ namespace entity_type
         HYDROGEN_BATTERY,
         GAS_STORAGE,
         OXYGEN_RECLAIMER,
-        SUIT_ENTITY
+        SUIT_ENTITY,
+        REPAIR_ENTITY
     };
 }
 
@@ -30,6 +31,10 @@ struct save
     byte_vector vec;
 };
 
+///entity->repair?
+///seems a little too general
+///but then again, all entities below can be repaired and destroyed, so
+///maybe entity->can_repair?
 struct entity
 {
     vec2f position;
@@ -38,6 +43,16 @@ struct entity
     entity();
 
     virtual void tick(state& s, float dt){};
+    ///so, virtual functions are basically function pointers
+    ///which means that itll either call the base default, or
+    ///the class overridden TICK function
+    ///this is what to do while I am being held
+    ///separate tick function because its gunna be real different for a whole bunch of things
+    ///but at the same time lots of stuff will be the same
+    //virtual void tick_held(state& s, float dt){ tick(s, dt); };
+
+    ///I have just been used, and I am being carried by the entity specified below
+    virtual void on_use(state&, float dt, entity*) {}
 
     virtual save make_save() = 0;
 
@@ -46,11 +61,15 @@ struct entity
     ///remove me at the next available opportunity
     void schedule_unload();
 
+    virtual void set_position(vec2f _pos);
+
     bool to_unload;
 };
 
 struct suit_entity;
 
+///I'm going to add carrying functionality ot the player
+///but later I'm going to set it up as a component
 struct player : entity
 {
     renderable_file file;
@@ -63,8 +82,15 @@ struct player : entity
     suit mysuit; ///suit needs to be a carried entity soon :[
     momentum_handler momentum;
 
+    std::vector<entity*> carried;
+
+    void pickup(entity* en);
+    entity* drop(int num);
+
     player();
     player(byte_fetch& fetch, state& s);
+
+    float repair_suit(float amount);
 
     void set_active_player(state& s);
 
@@ -150,7 +176,7 @@ struct resource_entity : entity
     void load(byte_fetch& fetch);
     void load(resource_network& net);
 
-    void set_position(vec2f pos);
+    virtual void set_position(vec2f _pos) override;
 
     virtual void tick(state& s, float dt) override;
 
@@ -225,7 +251,23 @@ struct suit_entity : entity
 
     virtual void tick(state& s, float dt);
 
-    void set_position(vec2f _pos);
+    virtual save make_save();
+};
+
+///something that can be used to repair something else
+///I'm an entity because I can be carried
+///maybe we should have a repair component in here or something
+///for repairing a suit
+struct repair_entity : entity
+{
+    repair_component repair_amount;
+    area_interacter interact;
+
+    float add(float amount);
+    float deplete(float amount);
+
+    virtual void tick(state& s, float dt) override;
+    virtual void on_use(state& s, float dt, entity* en);
 
     virtual save make_save();
 };
