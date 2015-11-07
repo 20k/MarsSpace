@@ -805,7 +805,7 @@ void repair_entity::on_use(state& s, float dt, entity* en)
     if(play == nullptr)
         return;
 
-    float repair_speed = 1.f;
+    float repair_speed = 0.1f;
 
     float amount = deplete(repair_speed * dt);
 

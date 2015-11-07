@@ -782,6 +782,9 @@ void resource_displayer::tick(state& s, vec2f display_pos, const vecrf& resource
 
     for(int i=0; i<resource::RES_COUNT; i++)
     {
+        if(resource_parts.v[i] <= 0.f)
+            resource_parts.v[i] = 0.f;
+
         if(display_all || should_display[(resource_t)i])
             display = display + resource::names[i] + ": " + std::to_string(resource_parts.v[i]) + "\n";
     }
