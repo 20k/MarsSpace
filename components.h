@@ -58,7 +58,7 @@ struct renderable_texture
 
 struct renderable_circle
 {
-    void tick(state& s, vec2f pos, float rad, vec4f col);
+    void tick(state& s, vec2f pos, float rad, vec4f col, float outline_thickness = 0.5f);
 };
 
 struct renderable_rectangle
@@ -140,7 +140,7 @@ struct area_interacter
     void set_position(vec2f _pos);
     void set_radius(float rad);
 
-    void tick(state& s);
+    void tick(state& s, bool gradient_centre = true);
 
     bool player_inside(state& s);
     bool player_has_interacted(state& s); ///will only fire once per button hold

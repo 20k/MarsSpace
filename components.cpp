@@ -130,7 +130,7 @@ void renderable_texture::tick(state& s, vec2f pos)
     s.win->draw(spr);
 }
 
-void renderable_circle::tick(state& s, vec2f pos, float rad, vec4f col)
+void renderable_circle::tick(state& s, vec2f pos, float rad, vec4f col, float outline_thickness)
 {
     sf::CircleShape circle;
     circle.setOrigin(rad, rad);
@@ -139,7 +139,7 @@ void renderable_circle::tick(state& s, vec2f pos, float rad, vec4f col)
     circle.setPosition(pos.v[0], pos.v[1]);
 
     circle.setFillColor(sf::Color(col.v[0], col.v[1], col.v[2], col.v[3]));
-    circle.setOutlineThickness(0.5f);
+    circle.setOutlineThickness(outline_thickness);
     circle.setOutlineColor(sf::Color(col.v[0], col.v[1], col.v[2], col.v[3]/2.f));
 
     s.win->draw(circle);
@@ -388,9 +388,14 @@ void area_interacter::set_radius(float _rad)
     radius = _rad;
 }
 
-void area_interacter::tick(state& s)
+void area_interacter::tick(state& s, bool gradient_centre)
 {
-    circle.tick(s, pos, radius, (vec4f){220, 200, 200, 100});
+    float outline = 0.5f;
+
+    circle.tick(s, pos, radius - outline, (vec4f){220, 200, 200, 100}, outline);
+
+    if(gradient_centre)
+        circle.tick(s, pos, radius/2.f - outline, (vec4f){240, 240, 240, 100}, outline);
 }
 
 bool area_interacter::player_inside(state& s)

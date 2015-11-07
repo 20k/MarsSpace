@@ -298,8 +298,8 @@ save building::make_save()
 
 door::door(vec2f _start, vec2f _finish, float time_to_open) :
     open(time_to_open),
-    i1((_finish - _start).rot(M_PI/2.f).norm() * 5.f + (_start + _finish)/2.f, 2.f), ///temp
-    i2((_finish - _start).rot(-M_PI/2.f).norm() * 5.f + (_start + _finish)/2.f, 2.f), ///temp
+    i1((_finish - _start).rot(M_PI/2.f).norm() * 3.f + (_start + _finish)/2.f, 2.f), ///temp
+    i2((_finish - _start).rot(-M_PI/2.f).norm() * 3.f + (_start + _finish)/2.f, 2.f), ///temp
     block(_start, _finish)
 {
     fixed_start = _start;
@@ -489,8 +489,14 @@ save hydrogen_battery::make_save()
 
 gas_storage::gas_storage(air_t _type)
 {
+    float liquid_litres = 50.f;
+
+    ///eh. Precise accuracy, I don't care atm
+    ///we can change this to an accurate map later
+    float gas_litres = liquid_litres * air::liquid_to_gas_conversion_ratio_c02;
+
     type = _type;
-    conv.set_max_storage({{type, 50.f}}); ///litres
+    conv.set_max_storage({{type, gas_litres}}); ///litres
     display.set_element_to_display(type);
 }
 
@@ -748,7 +754,7 @@ std::string suit_entity::get_display_info()
 
 repair_entity::repair_entity()
 {
-
+    interact.set_radius(1.5f);
 }
 
 repair_entity::repair_entity(byte_fetch& fetch)
@@ -786,7 +792,7 @@ void repair_entity::tick(state& s, float dt)
         schedule_unload();
     }
 
-    interact.tick(s);
+    interact.tick(s, false);
 
     text txt;
     txt.render(s, get_display_info(), position);

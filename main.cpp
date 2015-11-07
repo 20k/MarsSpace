@@ -244,9 +244,9 @@ int main()
             gas_storage* en = new gas_storage(net, air::OXYGEN);
             en->set_position(round_mouse);
 
-            vecrf res;
+            vecrf res = 0.f;
 
-            res.v[air::OXYGEN] = 50.f;
+            res.v[air::OXYGEN] = en->conv.max_storage.v[air::OXYGEN] / 2.f;
 
             net.add(res);
 
@@ -274,7 +274,7 @@ int main()
 
             vecrf res = 0.f;
 
-            res.v[air::NITROGEN] = 50.f;
+            res.v[air::NITROGEN] = en->conv.max_storage.v[air::NITROGEN] / 2.f;
 
             net.add(res);
 
