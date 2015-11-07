@@ -1271,12 +1271,16 @@ void resource_converter::set_efficiency(float _efficiency)
 resource_network::resource_network()
 {
     network_resources = 0.f;
+    max_network_resources = 0.f;
 }
 
 void resource_network::add(resource_converter* conv)
 {
     network_resources = network_resources + conv->local_storage;
     max_network_resources = max_network_resources + conv->max_storage;
+
+    conv->local_storage = 0.f;
+
     converters.push_back(conv);
 }
 
@@ -1346,7 +1350,7 @@ void resource_network::tick(state& s, float dt)
         max_network_resources = max_network_resources + i->max_storage;
     }
 
-    for(auto& i : converters)
+    for(resource_converter* i : converters)
     {
         i->absorb_all(s, dt);
         //printf("%f\n", i->environment_absorption.local_environment.v[air::C02]);
@@ -1528,6 +1532,19 @@ suit::suit()
         parts[(suit_t)i] = suit_part();
     }
 
+    balancer = new environment_balancer(suit_resource_network);
+    balancer->environment.set_parent(&environment);
+
+    resource_storage.set_max_storage({{air::C02, 1.f}});
+    resource_storage.set_max_storage({{air::OXYGEN, 1.f}});
+    resource_storage.set_max_storage({{air::NITROGEN, 1.f}});
+
+    resource_storage.local_storage.v[air::C02] = 0.f;
+    resource_storage.local_storage.v[air::OXYGEN] = 1.f;
+    resource_storage.local_storage.v[air::NITROGEN] = 1.f;
+
+    suit_resource_network.add(&resource_storage);
+
     ///absorption rate
     environment.set_max_air(10000.f);
     environment.my_environment.local_environment.v[air::OXYGEN] = 1.f; ///temp
@@ -1535,12 +1552,25 @@ suit::suit()
     ///hmm. This isn't really ideal modelling temperature as a gas
 
     ///temp, doing damage to suit
-    //parts[suit_parts::LARM].damage.damage_amount(0.92f);
+    parts[suit_parts::LARM].damage.damage_amount(0.6f);
 }
 
+///this is actually very cool
 void suit::tick(state& s, float dt, vec2f pos)
 {
     display.tick(s, pos + (vec2f){-20, -10.f}, resource_to_air(environment.my_environment.local_environment));
+
+    resource_storage.set_position(pos);
+    balancer->set_position(pos);
+
+    suit_resource_network.tick(s, dt);
+
+    resource_displayer res_display;
+    res_display.tick(s, (vec2f){400, 10.f}, suit_resource_network.network_resources, true);
+
+    //printf("%f\n", suit_resource_network.network_resources.v[air::OXYGEN]);
+
+    balancer->process_environment(s, dt);
 
     ///per second
     float leak_rate = get_total_leak();
@@ -1596,6 +1626,8 @@ void suit::tick(state& s, float dt, vec2f pos)
     {
         environment.emit_all(s, pos, equalisation_constant);
     }
+
+
 
     ///so now what we actually wanna do is equalise dependent on leak rate and the pressure difference
 }

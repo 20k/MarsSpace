@@ -16,6 +16,7 @@ struct entity;
 struct movement_blocker;
 struct resource_network;
 struct player;
+struct environment_balancer;
 
 struct state
 {
@@ -501,6 +502,10 @@ struct suit
     conditional_environment_modifier environment;
     air_displayer display;
     suit_status_displayer suit_display;
+
+    resource_network suit_resource_network;
+    environment_balancer* balancer;
+    resource_converter resource_storage;
     ///going to need a resource converter later, but for the moment
     ///I just want to test the environmental stacking
 

@@ -623,10 +623,7 @@ save environment_balancer::make_save()
     return {entity_type::ENVIRONMENT_BALANCER, vec};
 }
 
-///so, this tries to maintain a certain volume/pressure of gas essentially
-///but doesn't care about its ratios to other gases
-///I have no idea how scientifically accurate this is
-void environment_balancer::tick(state& s, float dt)
+void environment_balancer::process_environment(state& s, float dt)
 {
     static vecrf ideal_environment = air_to_resource(get_controlled_environment_atmosphere());
 
@@ -656,8 +653,21 @@ void environment_balancer::tick(state& s, float dt)
 
     environment.emit_all(s, position, air_processed_per_second * dt * 10.f);
 
+    /*printf("Rem %f\n", removed.v[air::OXYGEN]);
+    printf("Add %f\n", extra.v[air::OXYGEN]);
+    printf("store %f\n", net->network_resources.v[air::OXYGEN]);*/
+
+    ///for the moment destroying resources
     net->add(removed);
     net->add(extra);
+}
+
+///so, this tries to maintain a certain volume/pressure of gas essentially
+///but doesn't care about its ratios to other gases
+///I have no idea how scientifically accurate this is
+void environment_balancer::tick(state& s, float dt)
+{
+    process_environment(s,dt);
 
     circle.tick(s, position, 1.f, (vec4f({255, 100, 255, 255})));
 }
