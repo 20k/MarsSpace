@@ -154,12 +154,14 @@ player::player(byte_fetch& fetch, state& s) : player()
     float sp = fetch.get<float>();
 
     vecrf breather_environment = fetch.get<vecrf>();
-    vecrf suit_environment = fetch.get<vecrf>();
 
     breath.lungs.my_environment.local_environment = breather_environment;
-    my_suit->this_suit.environment.my_environment.local_environment = suit_environment;
 
     has_suit = fetch.get<int32_t>();
+
+    ///terminate player fetching
+
+    my_suit->load(fetch);
 
     speed.set_speed(sp);
 
@@ -176,8 +178,9 @@ save player::make_save()
     ///??? figure out a better way to do this
     ///Or is this ok?
     vec.push_back<vecrf>(breath.lungs.my_environment.local_environment);
-    vec.push_back<vecrf>(my_suit->this_suit.environment.my_environment.local_environment); ///soon unnecessary
     vec.push_back<int32_t>(has_suit);
+
+    vec.push_back(my_suit->make_save().vec);
 
     return {entity_type::PLAYER, vec};
 }
@@ -701,9 +704,40 @@ void suit_entity::tick(state& s, float dt)
     tick_suit(s, dt);
 }
 
+suit_entity::suit_entity(byte_fetch& fetch) : suit_entity()
+{
+    load(fetch);
+}
+
+void suit_entity::load(byte_fetch& fetch)
+{
+    position = fetch.get<vec2f>();
+    this_suit.environment.my_environment.local_environment = fetch.get<vecrf>();
+
+    auto saved_resources = fetch.get<vecrf>();
+
+    for(auto& i : this_suit.parts)
+    {
+        i.second.damage.health = fetch.get<float>();
+    }
+
+    this_suit.suit_resource_network.network_resources = saved_resources;
+    this_suit.resource_storage.local_storage = 0.f;
+}
+
 save suit_entity::make_save()
 {
-    return {entity_type::SUIT_ENTITY, byte_vector()};
+    byte_vector vec;
+    vec.push_back<vec2f>(position);
+    vec.push_back<vecrf>(this_suit.environment.my_environment.local_environment);
+    vec.push_back<vecrf>(this_suit.suit_resource_network.network_resources);
+
+    for(auto& i : this_suit.parts)
+    {
+        vec.push_back<float>(i.second.damage.health);
+    }
+
+    return {entity_type::SUIT_ENTITY, vec};
 }
 
 

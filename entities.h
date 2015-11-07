@@ -288,6 +288,9 @@ struct suit_entity : entity
 
     suit_entity();
     suit_entity(vec2f _pos);
+    suit_entity(byte_fetch&);
+
+    void load(byte_fetch&);
 
     void tick_suit(state& s, float dt);
     virtual void tick(state& s, float dt) override;
@@ -311,6 +314,8 @@ struct repair_entity : entity
 
     repair_entity();
     repair_entity(byte_fetch&);
+
+    void load(byte_fetch&);
 
     virtual void tick(state& s, float dt) override;
     virtual void on_use(state& s, float dt, entity* en);

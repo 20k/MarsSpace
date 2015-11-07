@@ -18,6 +18,18 @@ struct byte_vector
         }
     }
 
+
+    void push_back(const std::vector<char>& v)
+    {
+        ptr.insert(ptr.end(), v.begin(), v.end());
+    }
+
+
+    void push_back(const byte_vector& vec)
+    {
+        push_back(vec.ptr);
+    }
+
     std::vector<char> data()
     {
         return ptr;
