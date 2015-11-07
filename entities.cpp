@@ -194,6 +194,7 @@ void player::set_suit(suit_entity* en)
     my_suit = en;
     has_suit = true;
     file.load("./res/character.png");
+    rotation = en->rotation;
 }
 
 void player::remove_suit()
@@ -214,6 +215,7 @@ suit_entity* player::drop_suit()
     remove_suit();
 
     my_suit->set_position(position);
+    my_suit->rotation = rotation;
 
     return my_suit;
 }
@@ -681,7 +683,7 @@ void environment_balancer::tick(state& s, float dt)
 suit_entity::suit_entity()
 {
     interact.set_radius(2.f);
-    file.load("./res/suit.png");
+    file.load("./res/character.png");
 }
 
 suit_entity::suit_entity(vec2f _pos) : suit_entity()
@@ -708,7 +710,8 @@ void suit_entity::tick(state& s, float dt)
     }
 
     interact.tick(s);
-    file.tick(s, position, 0.1f);
+    file.tick(s, position, 0.025f, rotation, true);
+
     tick_suit(s, dt);
 }
 
@@ -759,7 +762,7 @@ repair_entity::repair_entity()
     interact.set_radius(1.5f);
 }
 
-repair_entity::repair_entity(byte_fetch& fetch)
+repair_entity::repair_entity(byte_fetch& fetch) : repair_entity()
 {
     position = fetch.get<vec2f>();
     repair_amount.repair_remaining = fetch.get<float>();
