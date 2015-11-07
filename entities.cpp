@@ -386,7 +386,7 @@ void resource_entity::set_position(vec2f pos)
 
 void resource_entity::tick(state& s, float dt)
 {
-    display.tick(s, position + (vec2f){15.f, -10.f}, conv.local_storage);
+    display.tick(s, position + (vec2f){10.f, -10.f}, conv.local_storage);
 }
 
 save resource_entity::make_save()
