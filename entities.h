@@ -84,9 +84,10 @@ struct player : entity
     air_displayer display; ///generic air unit displayer
     air_monitor monitor; ///environmental monitor
     breather breath;
-    suit mysuit; ///suit needs to be a carried entity soon :[
+    //suit mysuit; ///suit needs to be a carried entity soon :[
     momentum_handler momentum;
 
+    suit_entity* my_suit;
     std::vector<entity*> carried;
 
     void pickup(entity* en);
@@ -103,7 +104,9 @@ struct player : entity
 
     save make_save() override;
 
-    void set_suit(suit& s);
+    //void set_suit(suit& s);
+
+    void set_suit(suit_entity* en);
     suit_entity* drop_suit();
 
 private:
@@ -286,7 +289,8 @@ struct suit_entity : entity
     suit_entity();
     suit_entity(vec2f _pos);
 
-    virtual void tick(state& s, float dt);
+    void tick_suit(state& s, float dt);
+    virtual void tick(state& s, float dt) override;
 
     virtual save make_save();
 

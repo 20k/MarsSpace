@@ -31,17 +31,19 @@ player::player()
     ///should I define units right off the bat
     speed.set_speed(14.f);
 
-    breath.lungs.set_parent(&mysuit.environment);
-
     has_suit = true;
 
     momentum.set_mass(200.f);
+
+    my_suit = new suit_entity(position);
+
+    breath.lungs.set_parent(&my_suit->this_suit.environment);
 }
 
 float player::repair_suit(float amount)
 {
     if(has_suit)
-        return mysuit.repair(amount);
+        return my_suit->this_suit.repair(amount);
 
     return amount;
 }
@@ -56,17 +58,10 @@ void player::tick(state& s, float dt)
 {
     vec2f key_dir = key.tick();
 
-    ///this is a badly named function, it simply stores my speed modifier
-    //float cur_speed = speed.get_speed() * dt * 2; ///temporary hack until i get my shit together
-
     float cur_speed = speed.get_speed() * 2;
 
     if(has_suit)
         cur_speed = cur_speed / 2.f;
-
-    //position = mover.tick(s, position, key_dir, cur_speed);
-    ///cur_speed currently used as max speed, which is.... not what i want at all
-    ///also this function isn't time accurate
 
     float slowdown_frac = 0.9999f;
 
@@ -90,8 +85,6 @@ void player::tick(state& s, float dt)
 
         float min_dist = circle_minimum_distance(rotation, next_rot);
 
-        //printf("%f %f %f\n", rotation, next_rot, min_dist);
-
         float weight = 3.f;
 
         rotation = rotation * weight + min_dist/2.f;
@@ -113,10 +106,11 @@ void player::tick(state& s, float dt)
 
     breath.tick(s, position, dt);
 
-    if(has_suit)
+    if(has_suit && my_suit)
     {
-        mysuit.tick(s, dt, position);
-        mysuit.suit_display.tick(s, mysuit);
+        my_suit->set_position(position);
+        my_suit->tick_suit(s, dt);
+        my_suit->this_suit.suit_display.tick(s, my_suit->this_suit);
 
         momentum.set_mass(100.f);
     }
@@ -137,7 +131,6 @@ void player::tick(state& s, float dt)
             i->on_use(s, dt, this);
         }
     }
-
 
     std::string display_total;
 
@@ -164,7 +157,7 @@ player::player(byte_fetch& fetch, state& s) : player()
     vecrf suit_environment = fetch.get<vecrf>();
 
     breath.lungs.my_environment.local_environment = breather_environment;
-    mysuit.environment.my_environment.local_environment = suit_environment;
+    my_suit->this_suit.environment.my_environment.local_environment = suit_environment;
 
     has_suit = fetch.get<int32_t>();
 
@@ -183,7 +176,7 @@ save player::make_save()
     ///??? figure out a better way to do this
     ///Or is this ok?
     vec.push_back<vecrf>(breath.lungs.my_environment.local_environment);
-    vec.push_back<vecrf>(mysuit.environment.my_environment.local_environment);
+    vec.push_back<vecrf>(my_suit->this_suit.environment.my_environment.local_environment); ///soon unnecessary
     vec.push_back<int32_t>(has_suit);
 
     return {entity_type::PLAYER, vec};
@@ -192,10 +185,10 @@ save player::make_save()
 ///so, for the moment the suit only functions as an atmospheric environment
 ///no need to create a proper suit update
 ///however, we're going to want to store a pointer to a suit entity later
-void player::set_suit(suit& s)
+void player::set_suit(suit_entity* en)
 {
-    breath.lungs.set_parent(&mysuit.environment);
-    mysuit = s;
+    breath.lungs.set_parent(&en->this_suit.environment);
+    my_suit = en;
     has_suit = true;
 }
 
@@ -210,12 +203,14 @@ suit_entity* player::drop_suit()
     if(!has_suit)
         return nullptr;
 
-    suit_entity* s = new suit_entity(position);
-    s->this_suit = mysuit;
+    //suit_entity* s = new suit_entity(position);
+    //s->this_suit = mysuit;
 
     remove_suit();
 
-    return s;
+    my_suit->set_position(position);
+
+    return my_suit;
 }
 
 void player::pickup(entity* en)
@@ -683,6 +678,11 @@ suit_entity::suit_entity(vec2f _pos) : suit_entity()
     set_position(_pos);
 }
 
+void suit_entity::tick_suit(state& s, float dt)
+{
+    this_suit.tick(s, dt, position);
+}
+
 ///area interactor position needs to be where the player was standing when they dropped the suit
 ///but enough of that for the moment
 void suit_entity::tick(state& s, float dt)
@@ -692,13 +692,13 @@ void suit_entity::tick(state& s, float dt)
     ///destroy me, add to player
     if(interact.player_has_interacted(s))
     {
-        s.current_player->set_suit(this_suit);
+        s.current_player->set_suit(this);
         schedule_unload();
     }
 
     interact.tick(s);
     file.tick(s, position, 0.1f);
-    this_suit.tick(s, dt, position);
+    tick_suit(s, dt);
 }
 
 save suit_entity::make_save()

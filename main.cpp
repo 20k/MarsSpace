@@ -339,6 +339,7 @@ int main()
             if(en->to_unload)
             {
                 //delete en;
+                en->to_unload = false;
                 stuff.erase(stuff.begin() + i);
                 i--;
                 continue;
