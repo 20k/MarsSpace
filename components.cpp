@@ -1560,7 +1560,7 @@ suit::suit()
     ///hmm. This isn't really ideal modelling temperature as a gas
 
     ///temp, doing damage to suit
-    parts[suit_parts::LARM].damage.damage_amount(0.6f);
+    //parts[suit_parts::LARM].damage.damage_amount(0.6f);
 }
 
 ///this is actually very cool

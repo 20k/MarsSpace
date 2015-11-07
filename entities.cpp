@@ -58,10 +58,10 @@ void player::tick(state& s, float dt)
 {
     vec2f key_dir = key.tick();
 
-    float cur_speed = speed.get_speed() * 2;
+    float cur_speed = speed.get_speed() * 1.5;
 
     if(has_suit)
-        cur_speed = cur_speed / 2.f;
+        cur_speed = speed.get_speed();
 
     float slowdown_frac = 0.9999f;
 
@@ -193,12 +193,14 @@ void player::set_suit(suit_entity* en)
     breath.lungs.set_parent(&en->this_suit.environment);
     my_suit = en;
     has_suit = true;
+    file.load("./res/character.png");
 }
 
 void player::remove_suit()
 {
     breath.lungs.remove_parent();
     has_suit = false;
+    file.load("./res/nosuit.png");
 }
 
 suit_entity* player::drop_suit()
