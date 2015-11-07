@@ -593,6 +593,9 @@ std::vector<entity*> saver::load_from_file(const std::string& fname, state& s)
         else if(type == entity_type::ENVIRONMENT_BALANCER)
             ent = new environment_balancer(fetch);
 
+        else if(type == entity_type::SUIT_ENTITY)
+            ent = new suit_entity(fetch);
+
 
         entities.push_back(ent);
     }
