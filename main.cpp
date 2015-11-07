@@ -174,7 +174,9 @@ int main()
 
                 if(res != nullptr)
                 {
-                    net.add(&res->conv);
+                    //net.add(&res->conv);
+
+                    res->load(net);
                 }
             }
 
@@ -241,24 +243,38 @@ int main()
         {
             gas_storage* en = new gas_storage(net, air::OXYGEN);
             en->set_position(round_mouse);
+
+            vecrf res;
+
+            res.v[air::OXYGEN] = 50.f;
+
+            net.add(res);
+
             stuff.push_back(en);
         }
 
         if(once<sf::Keyboard::F4>())
         {
             gas_storage* en = new gas_storage(net, air::C02);
+
+            vecrf res = 0.f;
+
+            res.v[air::C02] = 5.f;
+
+            net.add(res);
+
             en->set_position(round_mouse);
             stuff.push_back(en);
         }
+
         if(once<sf::Keyboard::F5>())
         {
             gas_storage* en = new gas_storage(net, air::NITROGEN);
             en->set_position(round_mouse);
 
-            vecrf res;
-            res = 0.f;
+            vecrf res = 0.f;
 
-            res.v[air::NITROGEN] = 50.;
+            res.v[air::NITROGEN] = 50.f;
 
             net.add(res);
 

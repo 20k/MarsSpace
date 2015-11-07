@@ -233,8 +233,6 @@ struct gas_storage : resource_entity
 ///absorbs co2, stores oxygen in tanks
 struct oxygen_reclaimer : resource_entity
 {
-    air_displayer display;
-
     renderable_circle circle;
 
     oxygen_reclaimer();
@@ -261,8 +259,8 @@ struct environment_balancer : resource_entity
     resource_converter emitter;
 
     renderable_circle circle;
-    air_displayer display;
     conditional_environment_modifier environment;
+    air_displayer air_quality;
 
     environment_balancer();
     environment_balancer(resource_network& _net);

@@ -581,8 +581,12 @@ std::vector<entity*> saver::load_from_file(const std::string& fname, state& s)
 
         else if(type == entity_type::OXYGEN_RECLAIMER)
             ent = new oxygen_reclaimer(fetch);
+
         else if(type == entity_type::REPAIR_ENTITY)
             ent = new repair_entity(fetch);
+
+        else if(type == entity_type::ENVIRONMENT_BALANCER)
+            ent = new environment_balancer(fetch);
 
 
         entities.push_back(ent);
@@ -701,8 +705,22 @@ void air_displayer::tick(state& s, vec2f display_pos, const vec<air::COUNT, floa
     //auto air_fracs = air_quality.get_air_fractions(s, pos);
     //float air_pressure = air_quality.get_air_pressure(s, pos);
 
-    auto air_fracs = air_parts / air_parts.sum();
-    float air_pressure = air_parts.sum();
+    //auto air_fracs = air_parts / air_parts.sum();
+    //float air_pressure = air_parts.sum();
+    ///we want to skip temperature here
+
+
+    float air_pressure = 0.f;
+
+    for(int i=0; i<air::COUNT; i++)
+    {
+        //if(i == air::TEMPERATURE)
+        //    continue;
+
+        air_pressure += air_parts.v[i];
+    }
+
+    auto air_fracs = air_parts / air_pressure;
 
 
     if(air_pressure < 0.00001f || std::isnan(air_pressure))
@@ -725,6 +743,9 @@ void air_displayer::tick(state& s, vec2f display_pos, const vec<air::COUNT, floa
         if(val < 0)
             val = 0;
 
+        //if(i == air::TEMPERATURE)
+        //    val = air_parts.v[i] / 100.f;
+
         display = display + air::names[i] + ": " + std::to_string(val * 100.f) + "%" + "\n";
     }
 
@@ -741,18 +762,23 @@ void air_displayer::tick(state& s, vec2f display_pos, const vec<air::COUNT, floa
 
 }
 
+void resource_displayer::set_element_to_display(resource_t type, bool val)
+{
+    should_display[type] = val;
+}
+
 void resource_displayer::tick(state& s, vec2f display_pos, const vecrf& resources, bool absolute)
 {
+    bool display_all = should_display.size() == 0;
+
     auto resource_parts = resources;
 
     std::string display;
 
     for(int i=0; i<resource::RES_COUNT; i++)
     {
-        //if(resource_parts.v[i] <= 0.f)
-        //    continue;
-
-        display = display + resource::names[i] + ": " + std::to_string(resource_parts.v[i]) + "\n";
+        if(display_all || should_display[(resource_t)i])
+            display = display + resource::names[i] + ": " + std::to_string(resource_parts.v[i]) + "\n";
     }
 
     if(!absolute)
@@ -1442,7 +1468,7 @@ float damageable::get_health_frac()
 
 float suit_part::get_leak_rate()
 {
-    float damage_start = 0.5f;
+    float damage_start = 0.05f;
 
     float my_damage = 1.f - damage.get_health_frac();
 
@@ -1503,11 +1529,13 @@ suit::suit()
     }
 
     ///absorption rate
-    environment.set_max_air(100.f);
+    environment.set_max_air(10000.f);
     environment.my_environment.local_environment.v[air::OXYGEN] = 1.f; ///temp
+    //environment.my_environment.local_environment.v[air::TEMPERATURE] = 294;
+    ///hmm. This isn't really ideal modelling temperature as a gas
 
     ///temp, doing damage to suit
-    parts[suit_parts::LARM].damage.damage_amount(0.92f);
+    //parts[suit_parts::LARM].damage.damage_amount(0.92f);
 }
 
 void suit::tick(state& s, float dt, vec2f pos)

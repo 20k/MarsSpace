@@ -8,6 +8,10 @@ namespace air
     ///we could include argon, but its basically the same as nitrogen
     ///we're going to have to model temperature sooner or later
     ///modelling it as a gas would probably work just fine
+    ///if we just define LOX, LN2, and LH2O and LC02, then we can
+    ///define resource conversions between them and fix the gas problem
+    ///or maybe we need to define temperature and auto do state management
+    ///that would be awfully convenient
     enum resource : uint8_t
     {
         HYDROGEN = 0,
@@ -16,6 +20,7 @@ namespace air
         C02,
         WATER,
         TOXIC,
+        //TEMPERATURE,
         POWER
     };
 
@@ -32,6 +37,7 @@ namespace air
         "CARBON DIOXIDE",
         "WATER",
         "TOXIC",
+        //"TEMPERATURE",
         "POWER",
         "ERROR"
     };
@@ -44,9 +50,15 @@ namespace air
         "C02",
         "H20",
         "BAD",
+        //"TEMP",
         "PWR",
         "ERR"
     };
+
+    ///need to use this when converting back and forth
+    ///this is why all the numbers are funny
+    static float liquid_to_gas_conversion_ratio_oxygen = 861;
+    static float liquid_to_gas_conversion_ratio_c02 = 845;
 }
 
 typedef air::resource air_t;
@@ -96,7 +108,8 @@ vec<air::COUNT, float> get_martian_atmosphere()
         0.13,
         95.32,
         0.01,
-        0
+        0/*,
+        218 * 100 / 0.01f*/
     };
 
     ret = ret / (100.f);
@@ -118,7 +131,8 @@ vec<air::COUNT, float> get_earth_atmosphere()
         20.946,
         0.0397,
         2.5,
-        0.f
+        0.f/*,
+        287 * 100*/
     };
 
     return urf / 100.f;
@@ -134,7 +148,8 @@ vec<air::COUNT, float> get_controlled_environment_atmosphere()
         20.946,
         0.f,
         1,
-        0.f
+        0.f/*,
+        294 * 100*/
     };
 
     return ret / 100.f;

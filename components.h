@@ -218,6 +218,10 @@ struct air_displayer
 
 struct resource_displayer
 {
+    std::map<resource_t, bool> should_display;
+
+    void set_element_to_display(resource_t type, bool val = true);
+
     text txt;
 
     void tick(state& s, vec2f display_pos, const vecrf& resources, bool absolute = false);

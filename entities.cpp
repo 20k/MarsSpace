@@ -147,7 +147,7 @@ void player::tick(state& s, float dt)
     }
 
     text txt;
-    txt.render(s, display_total, (vec2f){s.win->getSize().x - 300, 20}, 16, text_options::ABS);
+    txt.render(s, display_total, (vec2f){s.win->getSize().x - 300.f, 20.f}, 16, text_options::ABS);
 }
 
 ///we need to set_active the player when loading
@@ -225,7 +225,7 @@ void player::pickup(entity* en)
 
 entity* player::drop(int num)
 {
-    if(num < 0 || num >= carried.size())
+    if(num < 0 || num >= (int)carried.size())
         return nullptr;
 
     entity* en = carried[num];
@@ -422,6 +422,7 @@ solar_panel::solar_panel()
     conv.set_amount(900); ///watts
     file.load("./res/solar_panel.png");
 
+    display.set_element_to_display(resource::POWER);
 }
 
 solar_panel::solar_panel(resource_network& net) : solar_panel()
@@ -455,6 +456,8 @@ save solar_panel::make_save()
 hydrogen_battery::hydrogen_battery()
 {
     conv.set_max_storage({{resource::POWER, 9 * 1000 * 1000.f}});
+
+    display.set_element_to_display(resource::POWER);
 }
 
 hydrogen_battery::hydrogen_battery(resource_network& net) : hydrogen_battery()
@@ -490,6 +493,7 @@ gas_storage::gas_storage(air_t _type)
 {
     type = _type;
     conv.set_max_storage({{type, 50.f}}); ///litres
+    display.set_element_to_display(type);
 }
 
 gas_storage::gas_storage(resource_network& net, air_t _type) : gas_storage(_type)
@@ -529,10 +533,8 @@ oxygen_reclaimer::oxygen_reclaimer()
     float litres_per_hour = 0.5f;
     float litres_per_minute = litres_per_hour / 60.f;
     float litres_ps = litres_per_minute / 60.f;
-    float liquid_to_gas_conversion_ratio_oxygen = 861;
-    float liquid_to_gas_conversion_ratio_c02 = 845;
 
-    float gas_accounted_litres_ps = liquid_to_gas_conversion_ratio_c02 * litres_ps;
+    float gas_accounted_litres_ps = air::liquid_to_gas_conversion_ratio_c02 * litres_ps;
 
     float game_speed = 1000.f;
 
@@ -548,6 +550,9 @@ oxygen_reclaimer::oxygen_reclaimer()
     conv.set_output_ratio({{resource::OXYGEN, 1.f}});
     conv.set_efficiency(gas_accounted_litres_ps / (1000.f + gas_accounted_litres_ps));
     conv.set_amount(1000.f + gas_accounted_litres_ps); ///per s
+
+    ///none
+    display.set_element_to_display((resource_t)resource::C02);
 }
 
 oxygen_reclaimer::oxygen_reclaimer(resource_network& _net) : oxygen_reclaimer()
@@ -580,6 +585,12 @@ save oxygen_reclaimer::make_save()
 environment_balancer::environment_balancer()
 {
     conv.set_max_storage({{resource::C02, 0.1f}});
+
+    ///bad
+    ///really bad
+    net = nullptr;
+
+    display.set_element_to_display((resource_t)resource::RES_COUNT);
 }
 
 environment_balancer::environment_balancer(resource_network& _net) : environment_balancer()
@@ -597,25 +608,19 @@ environment_balancer::environment_balancer(byte_fetch& fetch) : environment_bala
 
 void environment_balancer::load(resource_network& _net)
 {
-    /*conv.add(&net)
-    emitter.add(&net);*/
-
-    /*net.add(&conv);
-    net.add(&emitter);
-
-    conv.set_amount(1.f);
-    emitter.set_amount(1.f);
-
-    for(int i=0; i<air::COUNT; i++)
-    {
-        conv.set_max_storage({{(air_t)i, 1.f}});
-        emitter.set_max_storage({{(air_t)i, 1.f}});
-    }*/
-
     net = &_net;
 
     ///we need to set conv.parent and emitter.parent to be the correct environment
     ///which means they need to actually work as well
+}
+
+save environment_balancer::make_save()
+{
+    byte_vector vec;
+    vec.push_back<vec2f>(position);
+    vec.push_back<vecrf>(conv.local_storage);
+
+    return {entity_type::ENVIRONMENT_BALANCER, vec};
 }
 
 ///so, this tries to maintain a certain volume/pressure of gas essentially
@@ -655,15 +660,6 @@ void environment_balancer::tick(state& s, float dt)
     net->add(extra);
 
     circle.tick(s, position, 1.f, (vec4f({255, 100, 255, 255})));
-}
-
-save environment_balancer::make_save()
-{
-    byte_vector vec;
-    vec.push_back<vec2f>(position);
-    vec.push_back<vecrf>(conv.local_storage);
-
-    return {entity_type::ENVIRONMENT_BALANCER, vec};
 }
 
 suit_entity::suit_entity()
