@@ -354,6 +354,8 @@ wall_segment::wall_segment(vec2f _start, vec2f _finish) : block(_start, _finish)
 {
     start = _start;
     finish = _finish;
+
+
 }
 
 void wall_segment::tick(state& s)

@@ -95,7 +95,7 @@ void air_processor::draw_lines(state& s)
 {
     for(auto& b : s.blockers)
     {
-        vec2f start = b->start;
+        /*vec2f start = b->start;
         vec2f finish = b->finish;
 
         vec2f dir = (finish - start);
@@ -104,9 +104,16 @@ void air_processor::draw_lines(state& s)
         dir = dir / dist;
 
         int num = dist;
+        int n = 0;*/
+
+        vec2f dir;
+        int num;
+
+        line_draw_helper(b->start, b->finish, dir, num);
+
         int n = 0;
 
-        for(vec2f pos = start; n <= num; pos = pos + dir, n++)
+        for(vec2f pos = b->start; n <= num; pos = pos + dir, n++)
         {
             if(pos.v[0] < 0 || pos.v[0] >= width || pos.v[1] < 0 || pos.v[1] >= height)
                 continue;
@@ -212,6 +219,7 @@ void air_processor::draw(state& s)
     {
         for(int x=0; x<width; x++)
         {
+            ///if we're exactly 0, make me the average of my neighbours instead
             vec<N, float> val = buf[y*width + x];
             val = clamp(val, 0.f, 1.f);
 

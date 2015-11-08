@@ -37,6 +37,10 @@ struct byte_vector
 };
 
 
+///could have a fetch.get(offset) which does not increment the internal counter
+///then at the end we can do internal_counter += offset
+///this would remove c++s undefined order of argument function calling problem
+
 struct byte_fetch
 {
     std::vector<char> ptr;

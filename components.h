@@ -121,7 +121,9 @@ struct wall_segment
 {
     movement_blocker block;
     renderable_rectangle rect;
-    constructable construct;
+    //constructable construct;
+
+    std::vector<constructable> construct;
 
     vec2f start, finish;
 
