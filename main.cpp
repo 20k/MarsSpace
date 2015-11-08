@@ -156,6 +156,13 @@ int main()
             mouse_clicks.clear();
         }
 
+        if(once<sf::Keyboard::Insert>())
+        {
+            entity* en = new resource_packet(air::FABRIC);
+            en->set_position(mouse_pos);
+            stuff.push_back(en);
+        }
+
         if(once<sf::Keyboard::B>())
         {
             auto vec = stuff;
@@ -342,8 +349,11 @@ int main()
             ///and simply removing it from the list
             if(en->to_unload)
             {
-                //delete en;
                 en->to_unload = false;
+
+                if(en->to_delete)
+                    delete en;
+
                 stuff.erase(stuff.begin() + i);
                 i--;
                 continue;

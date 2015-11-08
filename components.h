@@ -256,7 +256,7 @@ struct resource_displayer
 
     text txt;
 
-    void tick(state& s, vec2f display_pos, const vecrf& resources, bool absolute = false);
+    void tick(state& s, vec2f display_pos, const vecrf& resources, int size, bool absolute);
 };
 
 struct environmental_gas_emitter

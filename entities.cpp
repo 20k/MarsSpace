@@ -9,11 +9,19 @@ entity::entity()
     position = (vec2f){0.f, 0.f};
     rotation = 0.f;
     to_unload = false;
+    to_delete = false;
 }
 
 void entity::schedule_unload()
 {
     to_unload = true;
+}
+
+void entity::schedule_delete()
+{
+    schedule_unload();
+
+    to_delete = true;
 }
 
 entity::~entity()
@@ -40,6 +48,13 @@ player::player()
     my_suit = new suit_entity(position);
 
     breath.lungs.set_parent(&my_suit->this_suit.environment);
+
+    for(int i=0; i<air::RES_COUNT; i++)
+    {
+        carried_resources.set_max_storage({{(resource_t)i, 1.f}});
+    }
+
+    player_resource_network.add(&carried_resources);
 }
 
 float player::repair_suit(float amount)
@@ -121,6 +136,8 @@ void player::tick(state& s, float dt)
         momentum.set_mass(10.f);
     }
 
+    ///print currently selected element
+    ///keyboard controls - arrow keys
     for(entity* i : carried)
     {
         ///@TODO: WE MOST CERTAINLY NEED TO NOT BE DOING THIS
@@ -148,9 +165,17 @@ void player::tick(state& s, float dt)
     {
         music::swap_to_song_type(music::LOWAIR);
     }
+
+    carried_display.tick(s, (vec2f){700.f, 20.f}, player_resource_network.network_resources, 10, true);
+
+    player_resource_network.tick(s, dt);
 }
 
 ///we need to set_active the player when loading
+///want to save carried resources eventually
+///wait, maybe we can literally do this through the save component
+///I might be a genius
+///I'll have to chop it up a bit, but that is hilarious
 player::player(byte_fetch& fetch, state& s) : player()
 {
     ///temp hack. Should the player just own this?
@@ -166,6 +191,8 @@ player::player(byte_fetch& fetch, state& s) : player()
     breath.lungs.my_environment.local_environment = breather_environment;
 
     has_suit = fetch.get<int32_t>();
+
+    player_resource_network.add(fetch.get<vecrf>());
 
     ///terminate player fetching
     if(has_suit)
@@ -191,6 +218,8 @@ save player::make_save()
     ///Or is this ok?
     vec.push_back<vecrf>(breath.lungs.my_environment.local_environment);
     vec.push_back<int32_t>(has_suit);
+
+    vec.push_back<vecrf>(carried_resources.local_storage);
 
     if(has_suit)
         vec.push_back(my_suit->make_save().vec);
@@ -296,9 +325,9 @@ building::building(byte_fetch& fetch, state& s)
 
         add_wall(s, start, finish);
 
-        int num = fetch.get<int32_t>();
+        int sub_num = fetch.get<int32_t>();
 
-        if(num == 0)
+        if(sub_num == 0)
             walls.back().sub_segments.clear();
 
         for(auto& j : walls.back().sub_segments)
@@ -420,7 +449,7 @@ void resource_entity::set_position(vec2f pos)
 
 void resource_entity::tick(state& s, float dt)
 {
-    display.tick(s, position + (vec2f){10.f, -10.f}, conv.local_storage);
+    display.tick(s, position + (vec2f){10.f, -10.f}, conv.local_storage, 16, false);
 }
 
 save resource_entity::make_save()
@@ -447,6 +476,61 @@ void resource_entity::load(resource_network& net)
 resource_entity::resource_entity()
 {
 
+}
+
+resource_packet::resource_packet(resource_t _type)
+{
+    type = _type;
+
+    ///number out of a hat for the moment
+    conv.set_max_storage({{type, 10.f}});
+    conv.local_storage.v[type] = 10.f;
+
+    display.set_element_to_display(type);
+}
+
+resource_packet::resource_packet(byte_fetch& fetch)
+{
+    position = fetch.get<vec2f>();
+    type = fetch.get<resource_t>();
+}
+
+void resource_packet::tick(state& s, float dt)
+{
+    interact.set_position(position);
+    interact.set_radius(2.f);
+    interact.tick(s);
+
+    txt.render(s, air::short_names[type], position, 16, text_options::CENTERED);
+
+    if(interact.player_has_interacted(s))
+    {
+        //s.current_player->carried_resources = s.current_player->carried_resources + conv.local_storage;
+        //conv.local_storage = 0.f;
+        schedule_unload();
+
+        s.current_player->pickup(this);
+    }
+}
+
+void resource_packet::on_use(state& s, float dt, entity* parent)
+{
+    player* play = dynamic_cast<player*>(parent);
+
+    if(play == nullptr)
+        return;
+
+    vecrf extra = play->player_resource_network.add(conv.local_storage);
+    conv.local_storage = extra;
+}
+
+save resource_packet::make_save()
+{
+    byte_vector vec;
+    vec.push_back<vec2f>(position);
+    vec.push_back<resource_t>(type);
+
+    return {entity_type::RESOURCE_PACKET, vec};
 }
 
 solar_panel::solar_panel()

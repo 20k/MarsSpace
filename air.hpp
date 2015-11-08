@@ -21,13 +21,15 @@ namespace air
         WATER,
         TOXIC,
         //TEMPERATURE,
-        POWER
+        POWER,
+        FABRIC ///or some building material of some description
+        ///@TODO: add glue here
     };
 
     ///this is how many air types there are, ie we go from hydrogen to toxic
     ///but they're all resources
     static constexpr uint8_t COUNT = TOXIC + 1;
-    static constexpr uint8_t RES_COUNT = POWER + 1;
+    static constexpr uint8_t RES_COUNT = FABRIC + 1;
 
     static std::vector<std::string> names
     {
@@ -39,6 +41,7 @@ namespace air
         "TOXIC",
         //"TEMPERATURE",
         "POWER",
+        "FABRIC",
         "ERROR"
     };
 
@@ -52,6 +55,7 @@ namespace air
         "BAD",
         //"TEMP",
         "PWR",
+        "FABR",
         "ERR"
     };
 

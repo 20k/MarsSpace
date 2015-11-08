@@ -732,6 +732,9 @@ std::vector<entity*> saver::load_from_file(const std::string& fname, state& s)
         else if(type == entity_type::SUIT_ENTITY)
             ent = new suit_entity(fetch);
 
+        else if(type == entity_type::RESOURCE_PACKET)
+            ent = new resource_packet(fetch);
+
 
         entities.push_back(ent);
     }
@@ -911,7 +914,7 @@ void resource_displayer::set_element_to_display(resource_t type, bool val)
     should_display[type] = val;
 }
 
-void resource_displayer::tick(state& s, vec2f display_pos, const vecrf& resources, bool absolute)
+void resource_displayer::tick(state& s, vec2f display_pos, const vecrf& resources, int size, bool absolute)
 {
     bool display_all = should_display.size() == 0;
 
@@ -929,9 +932,9 @@ void resource_displayer::tick(state& s, vec2f display_pos, const vecrf& resource
     }
 
     if(!absolute)
-        txt.render(s, display, display_pos, 16, text_options::NONE);
+        txt.render(s, display, display_pos, size, text_options::NONE);
     else
-        txt.render(s, display, display_pos, 16, text_options::ABS);
+        txt.render(s, display, display_pos, size, text_options::ABS);
 }
 
 void environmental_gas_emitter::emit(state& s, vec2f pos, float amount, air_t type)
@@ -1713,7 +1716,7 @@ void suit::tick(state& s, float dt, vec2f pos)
     suit_resource_network.tick(s, dt);
 
     resource_displayer res_display;
-    res_display.tick(s, (vec2f){400, 10.f}, suit_resource_network.network_resources, true);
+    res_display.tick(s, (vec2f){400, 10.f}, suit_resource_network.network_resources, 16, true);
 
     //printf("%f\n", suit_resource_network.network_resources.v[air::OXYGEN]);
 

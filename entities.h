@@ -20,7 +20,8 @@ namespace entity_type
         OXYGEN_RECLAIMER,
         SUIT_ENTITY,
         REPAIR_ENTITY,
-        ENVIRONMENT_BALANCER
+        ENVIRONMENT_BALANCER,
+        RESOURCE_PACKET
     };
 }
 
@@ -69,6 +70,7 @@ struct entity
     virtual void set_position(vec2f _pos);
 
     bool to_unload;
+    bool to_delete;
 };
 
 struct suit_entity;
@@ -83,12 +85,16 @@ struct player : entity
     speed_handler speed;
     air_displayer display; ///generic air unit displayer
     air_monitor monitor; ///environmental monitor
+    resource_displayer carried_display; ///or... do I watch to ditch this and purely use carried entites?
     breather breath;
-    //suit mysuit; ///suit needs to be a carried entity soon :[
     momentum_handler momentum;
 
     suit_entity* my_suit;
     std::vector<entity*> carried;
+    resource_converter carried_resources;
+
+    ///anything I am able to access
+    resource_network player_resource_network;
 
     void pickup(entity* en);
     entity* drop(int num);
@@ -191,6 +197,21 @@ struct resource_entity : entity
     virtual void tick(state& s, float dt) override;
 
     virtual save make_save();
+};
+
+struct resource_packet : resource_entity
+{
+    resource_t type;
+    area_interacter interact;
+    text txt;
+
+    resource_packet(resource_t _type);
+    resource_packet(byte_fetch&);
+
+    virtual void on_use(state& s, float dt, entity* parent) override;
+    void tick(state& s, float dt);
+
+    save make_save() override;
 };
 
 struct solar_panel : resource_entity
