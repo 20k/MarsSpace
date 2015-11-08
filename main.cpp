@@ -7,6 +7,8 @@
 #include "misc.h"
 #include "air.hpp"
 
+#include "sound.h"
+
 using namespace std;
 
 
@@ -107,6 +109,8 @@ int main()
     resource_network net;
     net.add(&convert);
     net.add(&c2);*/
+
+    music::swap_to_song_type(music::MAINMENU);
 
     resource_network net;
 
@@ -365,13 +369,13 @@ int main()
 
         air_process.draw(st);
 
-        //mydoor.tick(st, dt);
+        text txt;
+        txt.render(st, music::get_current_song_name(), (vec2f){width - 400, 10.f}, 10, text_options::ABS);
 
-        //open.tick(dt);
-
-        //win.draw(spr);
         win.display();
         win.clear();
+
+        music::tick();
 
         if(key.isKeyPressed(sf::Keyboard::V))
             printf("%f\n", dt);

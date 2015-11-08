@@ -2,6 +2,8 @@
 
 #include "misc.h"
 
+#include "sound.h"
+
 entity::entity()
 {
     position = (vec2f){0.f, 0.f};
@@ -141,6 +143,11 @@ void player::tick(state& s, float dt)
 
     text txt;
     txt.render(s, display_total, (vec2f){s.win->getSize().x - 300.f, 20.f}, 16, text_options::ABS);
+
+    if(breath.lungs.get_parent_pressure(s, position) < 0.4f)
+    {
+        music::swap_to_song_type(music::LOWAIR);
+    }
 }
 
 ///we need to set_active the player when loading
