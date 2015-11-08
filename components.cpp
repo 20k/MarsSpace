@@ -167,6 +167,27 @@ void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width
     s.win->draw(rect);
 }
 
+constructable::constructable()
+{
+    max_work = 0.f;
+    achieved_work = 0.f;
+}
+
+void constructable::set_work_to_complete(float amount)
+{
+    max_work = amount;
+}
+
+void constructable::apply_work(float amount)
+{
+    achieved_work += amount;
+}
+
+bool constructable::is_constructed()
+{
+    return achieved_work >= max_work;
+}
+
 ///maybe we want a collider that will return a collision and an optional movement vector
 ///then we can use this for cars as well
 ///we're no longer using the vector collision system
@@ -1563,7 +1584,7 @@ suit::suit()
     ///hmm. This isn't really ideal modelling temperature as a gas
 
     ///temp, doing damage to suit
-    parts[suit_parts::LARM].damage.damage_amount(0.6f);
+    //parts[suit_parts::LARM].damage.damage_amount(0.6f);
 }
 
 ///this is actually very cool

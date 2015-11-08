@@ -144,7 +144,7 @@ void player::tick(state& s, float dt)
     text txt;
     txt.render(s, display_total, (vec2f){s.win->getSize().x - 300.f, 20.f}, 16, text_options::ABS);
 
-    if(breath.lungs.get_parent_pressure(s, position) < 0.4f)
+    if(breath.lungs.get_parent_pressure(s, position) < music::low_air_threshold)
     {
         music::swap_to_song_type(music::LOWAIR);
     }

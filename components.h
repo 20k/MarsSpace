@@ -66,6 +66,18 @@ struct renderable_rectangle
     void tick(state& s, vec2f start, vec2f finish, float thickness);
 };
 
+struct constructable
+{
+    float max_work;
+    float achieved_work;
+
+    void set_work_to_complete(float amount);
+    void apply_work(float amount);
+    bool is_constructed();
+
+    constructable();
+};
+
 ///this may look like the worst class in the entire universe, but i guarantee you itll be more useful later
 ///gets blocked by stuff
 struct moveable
@@ -109,6 +121,7 @@ struct wall_segment
 {
     movement_blocker block;
     renderable_rectangle rect;
+    constructable construct;
 
     vec2f start, finish;
 

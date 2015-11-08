@@ -389,5 +389,7 @@ int main()
         win.display();*/
     }
 
+    music::swap_to_song_type(music::NONE);
+
     return 0;
 }
