@@ -98,6 +98,7 @@ struct player : entity
 
     void pickup(entity* en);
     entity* drop(int num);
+    entity* drop_current();
 
     player();
     player(byte_fetch& fetch, state& s);
@@ -115,9 +116,14 @@ struct player : entity
     void set_suit(suit_entity* en);
     suit_entity* drop_suit();
 
+    void inc_inventory();
+    void dec_inventory();
+
 private:
     void remove_suit(); ///internal, does not take it off, just stops the player from using it
     bool has_suit;
+
+    int inventory_item_selected;
 };
 
 struct planet : entity
@@ -212,6 +218,8 @@ struct resource_packet : resource_entity
     void tick(state& s, float dt);
 
     save make_save() override;
+
+    std::string get_display_info() override;
 };
 
 struct solar_panel : resource_entity

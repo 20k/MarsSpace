@@ -55,6 +55,8 @@ player::player()
     }
 
     player_resource_network.add(&carried_resources);
+
+    inventory_item_selected = 0;
 }
 
 float player::repair_suit(float amount)
@@ -138,7 +140,7 @@ void player::tick(state& s, float dt)
 
     ///print currently selected element
     ///keyboard controls - arrow keys
-    for(entity* i : carried)
+    /*for(entity* i : carried)
     {
         ///@TODO: WE MOST CERTAINLY NEED TO NOT BE DOING THIS
         ///particularly because atm itll only use the first item o_o
@@ -149,17 +151,37 @@ void player::tick(state& s, float dt)
         {
             i->on_use(s, dt, this);
         }
-    }
+    }*/
 
-    std::string display_total;
+    sf::Keyboard keyb;
 
-    for(auto& i : carried)
+    ///gradually getting less hitler
+    if(keyb.isKeyPressed(sf::Keyboard::G))
     {
-        display_total = display_total + i->get_display_info();
+        if(carried.size() > 0)
+        {
+            carried[inventory_item_selected]->on_use(s, dt, this);
+        }
     }
+
+    std::string display_total = "Inventory:\n\n";
+
+    //for(auto& i : carried)
+    for(int i=0; i<carried.size(); i++)
+    {
+        std::string extra = "   ";
+
+        if(i == inventory_item_selected)
+            extra = "-->";
+
+        display_total = display_total + extra + carried[i]->get_display_info() + "\n";
+    }
+
+    if(carried.size() == 0)
+        display_total = display_total + "None\n";
 
     text txt;
-    txt.render(s, display_total, (vec2f){s.win->getSize().x - 300.f, 20.f}, 16, text_options::ABS);
+    txt.render(s, display_total, (vec2f){s.win->getSize().x - 200.f, 40.f}, 10, text_options::ABS);
 
     if(breath.lungs.get_parent_pressure(s, position) < music::low_air_threshold)
     {
@@ -194,6 +216,9 @@ player::player(byte_fetch& fetch, state& s) : player()
 
     player_resource_network.add(fetch.get<vecrf>());
 
+    ///temporarily broken as there is no inventory to save :[
+    inventory_item_selected = fetch.get<int32_t>();
+
     ///terminate player fetching
     if(has_suit)
         my_suit->load(fetch);
@@ -220,6 +245,8 @@ save player::make_save()
     vec.push_back<int32_t>(has_suit);
 
     vec.push_back<vecrf>(carried_resources.local_storage);
+
+    vec.push_back<int32_t>(inventory_item_selected);
 
     if(has_suit)
         vec.push_back(my_suit->make_save().vec);
@@ -251,9 +278,6 @@ suit_entity* player::drop_suit()
     if(!has_suit)
         return nullptr;
 
-    //suit_entity* s = new suit_entity(position);
-    //s->this_suit = mysuit;
-
     remove_suit();
 
     my_suit->set_position(position);
@@ -278,6 +302,29 @@ entity* player::drop(int num)
     carried.erase(carried.begin() + num);
 
     return en;
+}
+
+entity* player::drop_current()
+{
+    return drop(inventory_item_selected);
+}
+
+void player::inc_inventory()
+{
+    inventory_item_selected += 1;
+    inventory_item_selected = clamp(inventory_item_selected, 0, (int)carried.size()-1);
+
+    if(carried.size() == 0)
+        inventory_item_selected = 0;
+}
+
+void player::dec_inventory()
+{
+    inventory_item_selected -= 1;
+    inventory_item_selected = clamp(inventory_item_selected, 0, (int)carried.size()-1);
+
+    if(carried.size() == 0)
+        inventory_item_selected = 0;
 }
 
 planet::planet(sf::Texture& tex)
@@ -531,6 +578,11 @@ save resource_packet::make_save()
     vec.push_back<resource_t>(type);
 
     return {entity_type::RESOURCE_PACKET, vec};
+}
+
+std::string resource_packet::get_display_info()
+{
+    return air::names[type] + ": " + std::to_string(conv.local_storage.v[type]);
 }
 
 solar_panel::solar_panel()

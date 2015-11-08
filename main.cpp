@@ -116,7 +116,7 @@ int main()
 
     while(win.isOpen())
     {
-        while(win.pollEvent(Event))
+        if(win.pollEvent(Event))
         {
             if(Event.type == sf::Event::Closed)
                 win.close();
@@ -126,6 +126,18 @@ int main()
                 float delta = Event.mouseWheelScroll.delta;
 
                 zoom_level -= zoom_level * delta / 10.f;
+            }
+
+            if(Event.type == sf::Event::KeyPressed)
+            {
+                if(Event.key.code == sf::Keyboard::Up)
+                {
+                    st.current_player->dec_inventory();
+                }
+                if(Event.key.code == sf::Keyboard::Down)
+                {
+                    st.current_player->inc_inventory();
+                }
             }
         }
 
@@ -206,7 +218,7 @@ int main()
 
         if(once<sf::Keyboard::R>())
         {
-            entity* en = play->drop(0);
+            entity* en = play->drop_current();
 
             if(en != nullptr)
             {
