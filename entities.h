@@ -126,6 +126,8 @@ struct planet : entity
     save make_save() override;
 };
 
+
+///perhaps just entity_wall
 struct building : entity
 {
     std::vector<wall_segment> walls;

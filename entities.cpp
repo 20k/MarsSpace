@@ -158,6 +158,7 @@ player::player(byte_fetch& fetch, state& s) : player()
     file.load("res/character.png");
 
     position = fetch.get<vec2f>();
+    rotation = fetch.get<float>();
     float sp = fetch.get<float>();
 
     vecrf breather_environment = fetch.get<vecrf>();
@@ -183,6 +184,7 @@ save player::make_save()
 {
     byte_vector vec;
     vec.push_back<vec2f>(position);
+    vec.push_back<float>(rotation);
     vec.push_back<float>(speed.get_speed());
 
     ///??? figure out a better way to do this
@@ -293,6 +295,16 @@ building::building(byte_fetch& fetch, state& s)
         auto finish = fetch.get<vec2f>();
 
         add_wall(s, start, finish);
+
+        int num = fetch.get<int32_t>();
+
+        if(num == 0)
+            walls.back().sub_segments.clear();
+
+        for(auto& j : walls.back().sub_segments)
+        {
+            j.construct.achieved_work = fetch.get<float>();
+        }
     }
 }
 
@@ -306,7 +318,16 @@ save building::make_save()
     {
         vec.push_back<vec2f>(i.start);
         vec.push_back<vec2f>(i.finish);
+
+        vec.push_back<int32_t>(i.sub_segments.size());
+
+        for(auto& j : i.sub_segments)
+        {
+            vec.push_back<float>(j.construct.achieved_work);
+        }
     }
+
+    //vec.push_back<int32_t>()
 
     return {entity_type::BUILDING, vec};
 }

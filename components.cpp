@@ -411,7 +411,6 @@ wall_segment::wall_segment(vec2f _start, vec2f _finish) : block(_start, _finish)
     start = _start;
     finish = _finish;
 
-
     vec2f dir = (finish - start).norm();
     float length = (finish - start).length();
 
@@ -444,7 +443,6 @@ wall_segment::wall_segment(vec2f _start, vec2f _finish) : block(_start, _finish)
 
 void wall_segment::tick(state& s, float dt)
 {
-    //
     bool all_complete = true;
 
     for(int i=0; i<sub_segments.size(); i++)
