@@ -95,17 +95,6 @@ void air_processor::draw_lines(state& s)
 {
     for(auto& b : s.blockers)
     {
-        /*vec2f start = b->start;
-        vec2f finish = b->finish;
-
-        vec2f dir = (finish - start);
-        float dist = dir.largest_elem();
-
-        dir = dir / dist;
-
-        int num = dist;
-        int n = 0;*/
-
         vec2f dir;
         int num;
 

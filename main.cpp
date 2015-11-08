@@ -370,7 +370,7 @@ int main()
         air_process.draw(st);
 
         text txt;
-        txt.render(st, music::get_current_song_name(), (vec2f){width - 400, 10.f}, 10, text_options::ABS);
+        txt.render(st, music::get_current_song_name(), (vec2f){width - 400.f, 10.f}, 10, text_options::ABS);
 
         win.display();
         win.clear();

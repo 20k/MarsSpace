@@ -63,7 +63,7 @@ struct renderable_circle
 
 struct renderable_rectangle
 {
-    void tick(state& s, vec2f start, vec2f finish, float thickness);
+    void tick(state& s, vec2f start, vec2f finish, float thickness, vec4f col = (vec4f)(190, 190, 190, 255));
 };
 
 struct constructable
@@ -74,6 +74,7 @@ struct constructable
     void set_work_to_complete(float amount);
     void apply_work(float amount);
     bool is_constructed();
+    float get_completed_frac();
 
     constructable();
 };
@@ -117,26 +118,6 @@ struct movement_blocker
     std::shared_ptr<movement_blocker> remote;
 };
 
-struct wall_segment
-{
-    movement_blocker block;
-    renderable_rectangle rect;
-    //constructable construct;
-
-    std::vector<constructable> construct;
-
-    vec2f start, finish;
-
-    wall_segment(vec2f _start, vec2f _finish);
-    void tick(state& s);
-};
-
-struct mouse_fetcher
-{
-    vec2f get_world(state& s);
-    vec2f get_screen(state& s);
-};
-
 ///we can give this a watch, ie an entity that it is looking at
 ///makes it hard to save unless we go down the unique id route for all entities in a map
 ///which is not not doable, but is quite a large annoyance factor
@@ -159,9 +140,45 @@ struct area_interacter
 
     bool player_inside(state& s);
     bool player_has_interacted(state& s); ///will only fire once per button hold
+    bool player_has_interacted_continuous(state& s); ///will fire continuously
 
 private:
     bool just_interacted;
+};
+
+
+struct wall_segment_segment
+{
+    vec2f start, finish;
+    constructable construct;
+
+    renderable_rectangle rect;
+
+    area_interacter i1, i2;
+
+    wall_segment_segment(vec2f _start, vec2f _finish);
+
+    void tick(state& s, float dt);
+};
+
+struct wall_segment
+{
+    movement_blocker block;
+    renderable_rectangle rect;
+    //constructable construct;
+
+    std::vector<wall_segment_segment> sub_segments;
+
+    vec2f start, finish;
+
+    wall_segment(vec2f _start, vec2f _finish);
+    void tick(state& s, float dt);
+};
+
+struct mouse_fetcher
+{
+    vec2f get_world(state& s);
+    vec2f get_screen(state& s);
 };
 
 ///literally just goes from 0 -> 1, or 1 -> 0 with a time delay

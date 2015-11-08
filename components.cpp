@@ -145,9 +145,11 @@ void renderable_circle::tick(state& s, vec2f pos, float rad, vec4f col, float ou
     s.win->draw(circle);
 }
 
-void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width)
+void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width, vec4f col)
 {
     vec2f diff = finish - start;
+
+    col = clamp(col, 0.f, 255.f);
 
     float angle = diff.angle();
     float len = diff.length();
@@ -159,7 +161,7 @@ void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width
     rect.setOrigin(0.f, width/2.f);
 
     rect.setRotation(angle*360/(2*M_PIf));
-    rect.setFillColor(sf::Color(190, 190, 190));
+    rect.setFillColor(sf::Color(col.v[0], col.v[1], col.v[2], col.v[3]));
 
     rect.setOutlineThickness(0.5);
     rect.setOutlineColor(sf::Color(110,110,110, 255));
@@ -186,6 +188,14 @@ void constructable::apply_work(float amount)
 bool constructable::is_constructed()
 {
     return achieved_work >= max_work;
+}
+
+float constructable::get_completed_frac()
+{
+    if(max_work <= 0.f)
+        return 1.f;
+
+    return achieved_work / max_work;
 }
 
 ///maybe we want a collider that will return a collision and an optional movement vector
@@ -350,19 +360,108 @@ void movement_blocker::modify_bounds(vec2f _start, vec2f _finish)
     }
 }
 
+wall_segment_segment::wall_segment_segment(vec2f _start, vec2f _finish)
+{
+    start = _start;
+    finish = _finish;
+
+    i1.set_position((finish - start).rot(M_PI/2.f).norm() * 3.f + (start + finish)/2.f), ///temp
+    i2.set_position((finish - _start).rot(-M_PI/2.f).norm() * 3.f + (start + finish)/2.f), ///temp)
+
+    i1.set_radius(1.5f);
+    i2.set_radius(1.5f);
+
+    construct.set_work_to_complete(1.f);
+}
+
+void wall_segment_segment::tick(state& s, float dt)
+{
+    vec4f not_completed_col = (vec4f){255, 140, 140, 255};
+
+    not_completed_col = not_completed_col / 2.f + (not_completed_col / 2.f) * construct.get_completed_frac();
+
+    vec4f completed_col = (vec4f){140, 255, 140, 255};
+
+    vec4f display_col;
+
+    if(construct.is_constructed())
+    {
+        display_col = completed_col;
+    }
+    else
+    {
+        display_col = not_completed_col;
+    }
+
+    rect.tick(s, start, finish, 0.5f, display_col);
+
+    i1.tick(s);
+    i2.tick(s);
+
+    const float work_speed = 1.f;
+
+    if(i1.player_has_interacted_continuous(s) || i2.player_has_interacted_continuous(s))
+    {
+        construct.apply_work(work_speed * dt);
+    }
+}
+
 wall_segment::wall_segment(vec2f _start, vec2f _finish) : block(_start, _finish)
 {
     start = _start;
     finish = _finish;
 
 
+    vec2f dir = (finish - start).norm();
+    float length = (finish - start).length();
+
+    int num = length/5;
+    dir = dir * 5.f;
+
+    vec2f last_start = start;
+
+    int n = 0;
+
+    for(vec2f pos = start + dir; n <= num; pos = pos + dir, n++)
+    {
+        vec2f diff = pos - start;
+
+        float travelled = diff.length();
+
+        if(travelled > length)
+        {
+            pos = start + dir.norm() * length;
+        }
+
+        if((pos - last_start).length() < 0.1f)
+            continue;
+
+        sub_segments.push_back(wall_segment_segment(last_start, pos));
+
+        last_start = pos;
+    }
 }
 
-void wall_segment::tick(state& s)
+void wall_segment::tick(state& s, float dt)
 {
-    rect.tick(s, start, finish, 1.f);
+    //
+    bool all_complete = true;
 
-    block.tick(s);
+    for(int i=0; i<sub_segments.size(); i++)
+    {
+        sub_segments[i].tick(s, dt);
+
+        all_complete = all_complete && sub_segments[i].construct.is_constructed();
+    }
+
+    if(all_complete)
+    {
+        sub_segments.clear();
+
+        rect.tick(s, start, finish, 0.5f);
+
+        block.tick(s);
+    }
 }
 
 vec2f mouse_fetcher::get_world(state& s)
@@ -459,6 +558,22 @@ bool area_interacter::player_has_interacted(state& s)
     else
     {
         just_interacted = false;
+    }
+
+    return false;
+}
+
+bool area_interacter::player_has_interacted_continuous(state& s)
+{
+    if(!player_inside(s))
+        return false;
+
+    ///need to pull this logic out into a separate component
+    sf::Keyboard key;
+
+    if(key.isKeyPressed(sf::Keyboard::E))
+    {
+        return true;
     }
 
     return false;

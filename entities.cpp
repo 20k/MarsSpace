@@ -280,7 +280,7 @@ void building::add_wall(state& s, vec2f start, vec2f finish)
 void building::tick(state& s, float dt)
 {
     for(auto& i : walls)
-        i.tick(s);
+        i.tick(s, dt);
 }
 
 building::building(byte_fetch& fetch, state& s)
