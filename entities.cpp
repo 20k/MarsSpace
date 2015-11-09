@@ -965,6 +965,9 @@ save repair_entity::make_save()
 
 void repair_entity::tick(state& s, float dt)
 {
+    if(to_unload)
+        return;
+
     interact.set_position(position);
 
     if(interact.player_has_interacted(s))

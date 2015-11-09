@@ -354,9 +354,6 @@ int main()
         {
             entity* en = stuff[i];
 
-            ///hmm. We're gunna need to distinguish between
-            ///deleting an object permanently
-            ///and simply removing it from the list
             if(en->to_unload)
             {
                 en->to_unload = false;
@@ -370,6 +367,18 @@ int main()
             }
 
             en->tick(st, dt);
+
+            if(en->to_unload)
+            {
+                en->to_unload = false;
+
+                if(en->to_delete)
+                    delete en;
+
+                stuff.erase(stuff.begin() + i);
+                i--;
+                continue;
+            }
         }
 
         net.tick(st, dt);
