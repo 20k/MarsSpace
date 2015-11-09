@@ -22,7 +22,7 @@ namespace air
         TOXIC,
         //TEMPERATURE,
         POWER,
-        FABRIC ///or some building material of some description
+        FABRIC ///or some building material of some description ///defined in m2
         ///@TODO: add glue here
     };
 

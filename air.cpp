@@ -134,6 +134,8 @@ void air_processor::tick(state& s, float dt)
                 continue;
             }
 
+            buf_out[y*width + x] = 0.f;
+
             float is_blocked = buf[y*width + x].v[0];
 
             ///using this as a blocked flag
@@ -159,7 +161,10 @@ void air_processor::tick(state& s, float dt)
             for(int i=0; i<N; i++)
             {
                 if(buf[(y-1)*width + x].v[i] < 0)
+                {
                     buf_out[(y-1)*width + x].v[i] = 0;
+                    buf[(y-1)*width + x].v[i] = 0;
+                }
             }
 
             //vals = max(vals, 0.f);
@@ -176,7 +181,7 @@ void air_processor::tick(state& s, float dt)
             {
                 for(int j=0; j<N; j++)
                 {
-                    if(vals.v[i].v[j] > 0.0000001f)
+                    if(vals.v[i].v[j] > 0.000001f)
                     {
                         total.v[j] += vals.v[i].v[j];
                         nums.v[j]++;

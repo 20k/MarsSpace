@@ -60,7 +60,6 @@ int main()
     glue->set_position(play->position);
 
 
-
     //opener open(2000.f);
     //area_interacter area({width/2.f, height/2.f}, 1.f);
     //door mydoor({width/2.f, height/2.f}, {width/2.f + 5, height/2.f}, 2000.f);
@@ -82,8 +81,6 @@ int main()
     saver save;
 
     sf::Clock clk;
-
-    sf::Mouse mouse;
 
     mouse_fetcher m_fetch;
 

@@ -140,19 +140,6 @@ void player::tick(state& s, float dt)
 
     ///print currently selected element
     ///keyboard controls - arrow keys
-    /*for(entity* i : carried)
-    {
-        ///@TODO: WE MOST CERTAINLY NEED TO NOT BE DOING THIS
-        ///particularly because atm itll only use the first item o_o
-        //if(once<sf::Keyboard::G>())
-        sf::Keyboard keyb;
-
-        if(keyb.isKeyPressed(sf::Keyboard::G))
-        {
-            i->on_use(s, dt, this);
-        }
-    }*/
-
     sf::Keyboard keyb;
 
     ///gradually getting less hitler
@@ -164,9 +151,8 @@ void player::tick(state& s, float dt)
         }
     }
 
-    std::string display_total = "Inventory:\n\n";
+    std::string display_total = "   Inventory:\n\n";
 
-    //for(auto& i : carried)
     for(int i=0; i<carried.size(); i++)
     {
         std::string extra = "   ";
@@ -178,7 +164,7 @@ void player::tick(state& s, float dt)
     }
 
     if(carried.size() == 0)
-        display_total = display_total + "None\n";
+        display_total = display_total + "   None\n";
 
     text txt;
     txt.render(s, display_total, (vec2f){s.win->getSize().x - 200.f, 40.f}, 10, text_options::ABS);
@@ -441,6 +427,7 @@ void door::tick(state& s, float dt)
 
     ///at full open we want the rendering to be maximally long, so 1.f - open frac
     vec2f new_end = squash.get_squashed_end(fixed_start, fixed_finish, close_frac);
+
     block.modify_bounds(fixed_start, new_end);
 
     rect.tick(s, fixed_start, new_end, 0.5f);
