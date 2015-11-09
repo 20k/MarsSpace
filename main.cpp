@@ -263,6 +263,7 @@ int main()
             if((lp2 - wall.start).length() <= (wall.start - wall.finish).length())
                 build->walls.push_back(s2);
 
+            build->walls[i1].destroy(st);
             build->walls.erase(build->walls.begin() + i1);
 
             wall_ids.clear();
