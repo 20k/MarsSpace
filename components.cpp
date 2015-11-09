@@ -493,6 +493,13 @@ wall_segment::wall_segment(vec2f _start, vec2f _finish) : block(_start, _finish)
     start = _start;
     finish = _finish;
 
+    generate_sub_segments();
+}
+
+void wall_segment::generate_sub_segments()
+{
+    sub_segments.clear();
+
     vec2f dir = (finish - start).norm();
     float length = (finish - start).length();
 
@@ -542,6 +549,50 @@ void wall_segment::tick(state& s, float dt)
 
         block.tick(s);
     }
+}
+
+void wall_segment::destroy(state& s)
+{
+    block.destroy_remote(s);
+}
+
+std::vector<wall_segment> wall_splitter::split(state& s, float frac, wall_segment& seg)
+{
+    vec2f new_middle = mix(seg.start, seg.finish, frac);
+
+    /*seg.destroy(s);
+    seg.block.modify_bounds(start, new_middle);*/
+
+    wall_segment s1(seg.start, new_middle);
+    wall_segment s2(new_middle, seg.finish);
+
+    if(seg.sub_segments.size() == 0)
+    {
+        s1.sub_segments.clear();
+        s2.sub_segments.clear();
+    }
+
+    return {s1, s2};
+}
+
+///we need to deal with subsegments
+wall_segment wall_segment::split_at_fraction(state& s, float frac)
+{
+    vec2f new_middle = mix(start, finish, frac);
+
+    destroy(s);
+    block.modify_bounds(start, new_middle);
+
+    wall_segment new_segment(new_middle, finish);
+
+    finish = new_middle;
+
+    if(sub_segments.size() != 0)
+        generate_sub_segments();
+    else
+        new_segment.sub_segments.clear();
+
+    return new_segment;
 }
 
 vec2f mouse_fetcher::get_world(state& s)

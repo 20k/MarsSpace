@@ -48,11 +48,21 @@ int main()
 
     entity* glue = new repair_entity();
 
+    //build->add_wall(st, (vec2f){0, 0}, (vec2f){gen_width, gen_height});
+    //build->walls.back().sub_segments.clear();
+
+
     std::vector<entity*> stuff;
     stuff.push_back(new planet(tex));
     stuff.push_back(build);
     stuff.push_back(play);
     stuff.push_back(glue);
+
+    //wall_segment seg = build->walls.back().split_at_fraction(st, 0.5f);
+
+    //build->walls.push_back();
+    //build->walls.push_back(seg.split_at_fraction(st, 0.7f));
+
 
     play->position = (vec2f){gen_width/2.f - 5, gen_height/2.f};
     play->set_active_player(st);
@@ -75,6 +85,8 @@ int main()
 
     float zoom_level = 0.55;
 
+    history<int> wall_ids;
+    history<vec2f> line_points;
     history<vec2f> mouse_clicks;
     history<vec2f> mouse_rclicks;
 
@@ -152,6 +164,118 @@ int main()
 
         vec2f mouse_pos = m_fetch.get_world(st);
         vec2f round_mouse = round_to_multiple(mouse_pos, 5);
+
+        if(once<sf::Mouse::Middle>())
+        {
+            if(wall_ids.size() == 0)
+            {
+                vec2f line_point = 0.f;
+                float minimum_distance = FLT_MAX;
+                int minimum_id = -1;
+
+                for(int i=0; i<build->walls.size(); i++)
+                {
+                    vec2f start, fn;
+
+                    start = build->walls[i].start;
+                    fn = build->walls[i].finish;
+
+                    vec2f dist = point2line_shortest(start, (fn - start), mouse_pos);
+
+                    vec2f avg = (start + fn)/2.f;
+
+                    float rad = (start - fn).length() / 2.f;
+
+                    ///also need to restrict to bounds
+                    if(dist.length() < minimum_distance && (mouse_pos - avg).length() < rad + 10.f)
+                    {
+                        minimum_distance = dist.length();
+                        minimum_id = i;
+                        line_point = mouse_pos + dist;
+                    }
+                }
+
+                if(minimum_id != -1)
+                {
+                    wall_ids.push_back(minimum_id);
+
+                    line_points.push_back(line_point);
+                }
+            }
+            else
+            {
+                int i1 = wall_ids.get(0);
+
+                vec2f start, fn;
+
+                start = build->walls[i1].start;
+                fn = build->walls[i1].finish;
+
+                vec2f dist = point2line_shortest(start, (fn - start), mouse_pos);
+
+                vec2f line_point = mouse_pos + dist;
+
+                line_points.push_back(line_point);
+
+                wall_ids.push_back(i1);
+            }
+
+        }
+
+        if(wall_ids.size() == 2)
+        {
+            wall_splitter split;
+
+            int i1 = wall_ids.get(1);
+
+            vec2f lp1 = line_points.get(1);
+            vec2f lp2 = line_points.get(0);
+
+            wall_segment wall = build->walls[i1];
+
+            ///badcode alert
+            vec2f modified_start = (wall.start - wall.finish).norm() * 20.f + wall.start;
+            vec2f modified_finish = (wall.finish - wall.start).norm() * 20.f + wall.finish;
+
+            float d1 = (lp1 - modified_start).length();
+
+            float d3 = (lp2 - modified_start).length();
+
+            ///lp1 further from the start than
+            if(d1 > d3)
+            {
+                std::swap(lp1, lp2);
+            }
+
+            ///lp1 closest to start, lp2 further away
+
+            wall_segment s1(wall.start, lp1), s2(lp2, wall.finish);
+
+            if(wall.sub_segments.size() == 0)
+            {
+                s1.sub_segments.clear();
+                s2.sub_segments.clear();
+            }
+
+            if((lp1 - wall.finish).length() <= (wall.start - wall.finish).length())
+                build->walls.push_back(s1);
+
+            if((lp2 - wall.start).length() <= (wall.start - wall.finish).length())
+                build->walls.push_back(s2);
+
+            build->walls.erase(build->walls.begin() + i1);
+
+            wall_ids.clear();
+            line_points.clear();
+        }
+
+        if(once<sf::Keyboard::Tab>())
+        {
+            for(auto& i : build->walls)
+            {
+                i.sub_segments.clear();
+            }
+        }
 
         if(once<sf::Mouse::Left>())
         {

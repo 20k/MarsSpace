@@ -189,7 +189,17 @@ struct wall_segment
     vec2f start, finish;
 
     wall_segment(vec2f _start, vec2f _finish);
+
+    wall_segment split_at_fraction(state& s, float frac);
+
+    void generate_sub_segments();
     void tick(state& s, float dt);
+    void destroy(state& s);
+};
+
+struct wall_splitter
+{
+    std::vector<wall_segment> split(state& s, float frac, wall_segment& seg);
 };
 
 struct mouse_fetcher

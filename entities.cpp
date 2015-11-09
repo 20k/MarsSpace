@@ -125,6 +125,7 @@ void player::tick(state& s, float dt)
 
     breath.tick(s, position, dt);
 
+    ///suit entity should have mass and be carried
     if(has_suit && my_suit)
     {
         my_suit->set_position(position);
@@ -176,6 +177,8 @@ void player::tick(state& s, float dt)
 
     carried_display.tick(s, (vec2f){700.f, 20.f}, player_resource_network.network_resources, 10, true);
 
+    ///still unsure about lumpy distribution. Ideally we'd want to take from the currently
+    ///selected resource or the nearest... maybe? Or perhaps lumpy *is* best?
     player_resource_network.tick(s, dt, true);
 }
 
