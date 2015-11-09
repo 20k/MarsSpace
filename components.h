@@ -79,6 +79,24 @@ struct constructable
     constructable();
 };
 
+///implicitly coupled with constructable
+struct resource_requirer
+{
+    vecrf res_required;
+    vecrf res_added;
+
+    resource_requirer();
+
+    void set_resource_requried(resource_t type, float max_resource);
+
+    vecrf add(vecrf res);
+
+    float get_resource_amount_required_to_complete_fraction(float frac);
+
+    float get_completed_frac();
+    bool is_completed();
+};
+
 ///this may look like the worst class in the entire universe, but i guarantee you itll be more useful later
 ///gets blocked by stuff
 struct moveable
@@ -146,11 +164,11 @@ private:
     bool just_interacted;
 };
 
-
 struct wall_segment_segment
 {
     vec2f start, finish;
     constructable construct;
+    resource_requirer res_require;
 
     renderable_rectangle rect;
 

@@ -153,11 +153,6 @@ void air_processor::tick(state& s, float dt)
 
             ///I'm the last person to ever touch this pixel
             ///and therefore it is safe for me to reset it if its set to blocked
-            /*if(buf[(y-1)*width + x] < 0)
-            {
-                buf[(y-1)*width + x] = 0;
-            }*/
-
             for(int i=0; i<N; i++)
             {
                 if(buf[(y-1)*width + x].v[i] < 0)
@@ -166,10 +161,6 @@ void air_processor::tick(state& s, float dt)
                     buf[(y-1)*width + x].v[i] = 0;
                 }
             }
-
-            //vals = max(vals, 0.f);
-
-            //float total = vals.sum();
 
             vec<N, float> total;
             vec<N, float> nums;

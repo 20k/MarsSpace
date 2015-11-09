@@ -198,6 +198,53 @@ float constructable::get_completed_frac()
     return achieved_work / max_work;
 }
 
+resource_requirer::resource_requirer()
+{
+    res_required = 0.f;
+}
+
+void resource_requirer::set_resource_requried(resource_t type, float max_resource)
+{
+    res_required.v[type] = max_resource;
+}
+
+vecrf resource_requirer::add(vecrf res)
+{
+    auto res_prev = res_added;
+
+    res_added = res_added + res;
+
+    res_added = min(res_added, res_required);
+
+    return res - (res_added - res_prev);
+}
+
+float resource_requirer::get_completed_frac()
+{
+    float resource_required = res_required.sum_absolute();
+    float work_put_in = res_added.sum_absolute();
+
+    if(resource_required < 0.00001f)
+        return 1.f;
+
+    return work_put_in / resource_required;
+}
+
+bool resource_requirer::is_completed()
+{
+    return get_completed_frac() >= 0.9999999f;
+}
+
+float resource_requirer::get_resource_amount_required_to_complete_fraction(float frac)
+{
+    if(res_required.sum_absolute() < 0.00001f)
+        return 0.f;
+
+    float abs_val = res_required.sum_absolute();
+
+    return frac * abs_val;
+}
+
 ///maybe we want a collider that will return a collision and an optional movement vector
 ///then we can use this for cars as well
 ///we're no longer using the vector collision system
@@ -372,6 +419,8 @@ wall_segment_segment::wall_segment_segment(vec2f _start, vec2f _finish)
     i2.set_radius(1.5f);
 
     construct.set_work_to_complete(1.f);
+
+    res_require.set_resource_requried(air::FABRIC, 0.25f);
 }
 
 void wall_segment_segment::tick(state& s, float dt)
@@ -402,7 +451,37 @@ void wall_segment_segment::tick(state& s, float dt)
 
     if(i1.player_has_interacted_continuous(s) || i2.player_has_interacted_continuous(s))
     {
-        construct.apply_work(work_speed * dt);
+        player* play = s.current_player;
+
+        float max_resource_usage_this_tick = res_require.get_resource_amount_required_to_complete_fraction(work_speed * dt);
+
+        vecrf resources_available = play->player_resource_network.network_resources;
+
+
+        ///test adding resources first, find out if we've exceeded our max amount of
+        ///resources added per frame, then do
+        resource_requirer test_resources = res_require;
+        vecrf extra = test_resources.add(resources_available);
+
+
+        vecrf diff = resources_available - extra;
+
+        vecrf new_diff = diff;
+
+        if(diff.sum_absolute() > max_resource_usage_this_tick && diff.sum_absolute() > 0.00001f)
+        {
+            new_diff = diff / diff.sum_absolute();
+            new_diff = new_diff * max_resource_usage_this_tick;
+        }
+
+        printf("Used %f\n", new_diff.sum_absolute());
+
+        res_require.add(new_diff);
+        play->player_resource_network.take(new_diff);
+
+        float amount_of_work_by_material = (work_speed * dt) * new_diff.sum_absolute() / max_resource_usage_this_tick;
+
+        construct.apply_work(amount_of_work_by_material);
     }
 }
 
