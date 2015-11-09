@@ -201,6 +201,7 @@ float constructable::get_completed_frac()
 resource_requirer::resource_requirer()
 {
     res_required = 0.f;
+    res_added = 0.f;
 }
 
 void resource_requirer::set_resource_requried(resource_t type, float max_resource)

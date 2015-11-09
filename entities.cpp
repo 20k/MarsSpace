@@ -366,6 +366,7 @@ building::building(byte_fetch& fetch, state& s)
         for(auto& j : walls.back().sub_segments)
         {
             j.construct.achieved_work = fetch.get<float>();
+            j.res_require.res_added = fetch.get<vecrf>();
         }
     }
 }
@@ -386,6 +387,7 @@ save building::make_save()
         for(auto& j : i.sub_segments)
         {
             vec.push_back<float>(j.construct.achieved_work);
+            vec.push_back<vecrf>(j.res_require.res_added);
         }
     }
 
@@ -514,6 +516,11 @@ resource_entity::resource_entity()
 
 resource_packet::resource_packet(resource_t _type)
 {
+    load(_type);
+}
+
+void resource_packet::load(resource_t _type)
+{
     type = _type;
 
     ///number out of a hat for the moment
@@ -525,8 +532,14 @@ resource_packet::resource_packet(resource_t _type)
 
 resource_packet::resource_packet(byte_fetch& fetch)
 {
-    position = fetch.get<vec2f>();
     type = fetch.get<resource_t>();
+
+    resource_packet::load(type);
+
+    position = fetch.get<vec2f>();
+    conv.local_storage = fetch.get<vecrf>();
+
+    printf("%f\n", conv.local_storage.v[type]);
 }
 
 void resource_packet::tick(state& s, float dt)
@@ -539,8 +552,6 @@ void resource_packet::tick(state& s, float dt)
 
     if(interact.player_has_interacted(s))
     {
-        //s.current_player->carried_resources = s.current_player->carried_resources + conv.local_storage;
-        //conv.local_storage = 0.f;
         schedule_unload();
 
         s.current_player->pickup(this);
@@ -554,15 +565,22 @@ void resource_packet::on_use(state& s, float dt, entity* parent)
     if(play == nullptr)
         return;
 
+    printf("pre %f\n", conv.local_storage.v[type]);
+
     vecrf extra = play->player_resource_network.add(conv.local_storage);
     conv.local_storage = extra;
+
+    printf("post %f\n", extra.v[type]);
 }
 
 save resource_packet::make_save()
 {
     byte_vector vec;
-    vec.push_back<vec2f>(position);
     vec.push_back<resource_t>(type);
+    vec.push_back<vec2f>(position);
+    vec.push_back<vecrf>(conv.local_storage);
+
+    printf("%f\n", conv.local_storage.v[type]);
 
     return {entity_type::RESOURCE_PACKET, vec};
 }

@@ -192,7 +192,8 @@ int main()
             {
                 auto res = dynamic_cast<resource_entity*>(i);
 
-                if(res != nullptr)
+                ///this is going to cause me problems later
+                if(res != nullptr && dynamic_cast<resource_packet*>(i) == nullptr)
                 {
                     //net.add(&res->conv);
 

@@ -217,6 +217,8 @@ struct resource_packet : resource_entity
     virtual void on_use(state& s, float dt, entity* parent) override;
     void tick(state& s, float dt);
 
+    void load(resource_t _type);
+
     save make_save() override;
 
     std::string get_display_info() override;
