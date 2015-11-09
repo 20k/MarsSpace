@@ -354,6 +354,7 @@ int main()
         {
             entity* en = stuff[i];
 
+            ///if any previous element has made me invalid
             if(en->to_unload)
             {
                 en->to_unload = false;
@@ -368,6 +369,7 @@ int main()
 
             en->tick(st, dt);
 
+            ///if my tick made me invalid
             if(en->to_unload)
             {
                 en->to_unload = false;
