@@ -91,7 +91,7 @@ struct player : entity
 
     suit_entity* my_suit;
     std::vector<entity*> carried;
-    resource_converter carried_resources;
+    //resource_converter carried_resources;
 
     ///anything I am able to access
     resource_network player_resource_network;

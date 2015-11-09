@@ -414,6 +414,8 @@ struct resource_converter
     void add(const std::vector<std::pair<resource_t, float>>& vec);
     vecrf take(const std::vector<std::pair<resource_t, float>>& vec);
 
+    vecrf add(const vecrf& amount); ///returns any left over
+
     void absorb_all(state& s, float dt);
     void emit_all(state& s, float dt);
 
@@ -423,6 +425,9 @@ struct resource_converter
 };
 
 ///maybe allow resource networks to connect to other resource networks, and then can recurse
+///this is a redistributing resource network
+///ie the network resources are proportionally shuttled between the elements
+///we also need a non redistributing resource network :[
 struct resource_network
 {
     vecrf network_resources;
@@ -439,7 +444,9 @@ struct resource_network
     ///returns what we could take
     vecrf take(const vecrf& res);
 
-    void tick(state& s, float dt);
+    ///default is proportional allocation
+    ///lump means that the maximum is placed in the first, then the next etc
+    void tick(state& s, float dt, bool lump = false);
 
     resource_network();
 };

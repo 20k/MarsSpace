@@ -474,10 +474,10 @@ void wall_segment_segment::tick(state& s, float dt)
             new_diff = new_diff * max_resource_usage_this_tick;
         }
 
-        printf("Used %f\n", new_diff.sum_absolute());
+        /*printf("Used %f\n", new_diff.sum_absolute());
         printf("%f\n", diff.sum_absolute());
         printf("%f\n", max_resource_usage_this_tick);
-        printf("%f\n", resources_available.v[air::FABRIC]);
+        printf("%f\n", resources_available.v[air::FABRIC]);*/
 
         res_require.add(new_diff);
         play->player_resource_network.take(new_diff);
@@ -1392,13 +1392,20 @@ vec<resource::RES_COUNT, float> resource_converter::take(const std::vector<std::
     return old - local_storage;
 }
 
-/*void resource_converter::add(const vecrf& v)
+
+vecrf resource_converter::add(const vecrf& res)
 {
-    local_storage = local_storage + v;
+    auto prev = local_storage;
+
+    local_storage = local_storage + res;
 
     local_storage = max(local_storage, 0.f);
     local_storage = min(local_storage, max_storage);
-}*/
+
+    //auto diff = local_storage - prev;
+
+    return prev + res - local_storage;
+}
 
 ///we want to deplete from local resources first, then escalate to global resources
 ///this is so that we can absorb a unit of gas from the environment, process it, then re-emit it afterwards
@@ -1566,7 +1573,7 @@ vecrf resource_network::take(const vecrf& res)
 ///we also need to be able to extract from the network
 ///proportional is easiest
 ///I'm going to have to scrap this and do it properly, aren't I
-void resource_network::tick(state& s, float dt)
+void resource_network::tick(state& s, float dt, bool lump)
 {
     if(converters.size() == 0)
         return;
@@ -1593,28 +1600,49 @@ void resource_network::tick(state& s, float dt)
     ///distribute resources proportionally
     ///if something is destroyed, we'll lose the
     ///proportional resources from the network
-    for(auto& c : converters)
+    if(!lump)
     {
-        auto storage = c->max_storage;
-
-        vecrf frac_to_store;
-
-        for(int i=0; i<resource::RES_COUNT; i++)
+        for(auto& c : converters)
         {
-            if(storage.v[i] == 0)
-                frac_to_store.v[i] = 0;
-            else
+            auto storage = c->max_storage;
+
+            vecrf frac_to_store;
+
+            for(int i=0; i<resource::RES_COUNT; i++)
             {
-                ///give me storage relative to the overall storage
-                frac_to_store.v[i] = storage.v[i] / max_network_resources.v[i];
+                if(storage.v[i] == 0)
+                    frac_to_store.v[i] = 0;
+                else
+                {
+                    ///give me storage relative to the overall storage
+                    frac_to_store.v[i] = storage.v[i] / max_network_resources.v[i];
+                }
             }
+
+            ///we're doing this for the moment so that later I can affect the lost local storages
+            ///now that the network actually stores the resources, this is broken
+            auto local_frac = network_resources * frac_to_store;
+
+            c->local_storage = local_frac;
         }
+    }
+    else
+    {
+        auto amount_to_allocate = network_resources;
 
-        ///we're doing this for the moment so that later I can affect the lost local storages
-        ///now that the network actually stores the resources, this is broken
-        auto local_frac = network_resources * frac_to_store;
+        for(resource_converter*& c : converters)
+        {
+            auto storage = c->max_storage;
 
-        c->local_storage = local_frac;
+            c->local_storage = 0.f;
+            vecrf leftover = c->add(amount_to_allocate);
+
+            vecrf diff = amount_to_allocate - leftover;
+
+            amount_to_allocate = amount_to_allocate - diff;
+
+            amount_to_allocate = max(amount_to_allocate, 0.f);
+        }
     }
 
 

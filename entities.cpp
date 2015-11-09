@@ -49,12 +49,12 @@ player::player()
 
     breath.lungs.set_parent(&my_suit->this_suit.environment);
 
-    for(int i=0; i<air::RES_COUNT; i++)
+    /*for(int i=0; i<air::RES_COUNT; i++)
     {
         carried_resources.set_max_storage({{(resource_t)i, 1.f}});
     }
 
-    player_resource_network.add(&carried_resources);
+    player_resource_network.add(&carried_resources);*/
 
     inventory_item_selected = 0;
 }
@@ -176,7 +176,7 @@ void player::tick(state& s, float dt)
 
     carried_display.tick(s, (vec2f){700.f, 20.f}, player_resource_network.network_resources, 10, true);
 
-    player_resource_network.tick(s, dt);
+    player_resource_network.tick(s, dt, true);
 }
 
 ///we need to set_active the player when loading
@@ -200,7 +200,7 @@ player::player(byte_fetch& fetch, state& s) : player()
 
     has_suit = fetch.get<int32_t>();
 
-    player_resource_network.add(fetch.get<vecrf>());
+    //player_resource_network.add(fetch.get<vecrf>());
 
     ///temporarily broken as there is no inventory to save :[
     inventory_item_selected = fetch.get<int32_t>();
@@ -230,7 +230,7 @@ save player::make_save()
     vec.push_back<vecrf>(breath.lungs.my_environment.local_environment);
     vec.push_back<int32_t>(has_suit);
 
-    vec.push_back<vecrf>(carried_resources.local_storage);
+    //vec.push_back<vecrf>(carried_resources.local_storage);
 
     vec.push_back<int32_t>(inventory_item_selected);
 
@@ -274,6 +274,13 @@ suit_entity* player::drop_suit()
 
 void player::pickup(entity* en)
 {
+    resource_packet* pack = dynamic_cast<resource_packet*>(en);
+
+    if(pack != nullptr)
+    {
+        player_resource_network.add(&pack->conv);
+    }
+
     carried.push_back(en);
 }
 
@@ -284,6 +291,13 @@ entity* player::drop(int num)
 
     entity* en = carried[num];
     en->set_position(position);
+
+    resource_packet* pack = dynamic_cast<resource_packet*>(en);
+
+    if(pack != nullptr)
+    {
+        player_resource_network.rem(&pack->conv);
+    }
 
     carried.erase(carried.begin() + num);
 
@@ -539,7 +553,7 @@ resource_packet::resource_packet(byte_fetch& fetch)
     position = fetch.get<vec2f>();
     conv.local_storage = fetch.get<vecrf>();
 
-    printf("%f\n", conv.local_storage.v[type]);
+    //printf("%f\n", conv.local_storage.v[type]);
 }
 
 void resource_packet::tick(state& s, float dt)
@@ -565,12 +579,12 @@ void resource_packet::on_use(state& s, float dt, entity* parent)
     if(play == nullptr)
         return;
 
-    printf("pre %f\n", conv.local_storage.v[type]);
+    //printf("pre %f\n", conv.local_storage.v[type]);
 
-    vecrf extra = play->player_resource_network.add(conv.local_storage);
-    conv.local_storage = extra;
+    /**vecrf extra = play->player_resource_network.add(conv.local_storage);
+    conv.local_storage = extra;**/
 
-    printf("post %f\n", extra.v[type]);
+    //printf("post %f\n", extra.v[type]);
 }
 
 save resource_packet::make_save()
@@ -580,7 +594,7 @@ save resource_packet::make_save()
     vec.push_back<vec2f>(position);
     vec.push_back<vecrf>(conv.local_storage);
 
-    printf("%f\n", conv.local_storage.v[type]);
+    //printf("%f\n", conv.local_storage.v[type]);
 
     return {entity_type::RESOURCE_PACKET, vec};
 }
