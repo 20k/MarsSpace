@@ -187,7 +187,7 @@ void constructable::apply_work(float amount)
 
 bool constructable::is_constructed()
 {
-    return achieved_work >= max_work;
+    return achieved_work >= max_work - 0.00001f;
 }
 
 float constructable::get_completed_frac()
@@ -233,7 +233,7 @@ float resource_requirer::get_completed_frac()
 
 bool resource_requirer::is_completed()
 {
-    return get_completed_frac() >= 0.9999999f;
+    return get_completed_frac() >= 0.999999f;
 }
 
 float resource_requirer::get_resource_amount_required_to_complete_fraction(float frac)
@@ -464,7 +464,6 @@ void wall_segment_segment::tick(state& s, float dt)
         resource_requirer test_resources = res_require;
         vecrf extra = test_resources.add(resources_available);
 
-
         vecrf diff = resources_available - extra;
 
         vecrf new_diff = diff;
@@ -476,6 +475,9 @@ void wall_segment_segment::tick(state& s, float dt)
         }
 
         printf("Used %f\n", new_diff.sum_absolute());
+        printf("%f\n", diff.sum_absolute());
+        printf("%f\n", max_resource_usage_this_tick);
+        printf("%f\n", resources_available.v[air::FABRIC]);
 
         res_require.add(new_diff);
         play->player_resource_network.take(new_diff);
