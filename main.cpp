@@ -173,7 +173,7 @@ int main()
                 float minimum_distance = FLT_MAX;
                 int minimum_id = -1;
 
-                for(int i=0; i<build->walls.size(); i++)
+                for(int i=0; i<(int)build->walls.size(); i++)
                 {
                     vec2f start, fn;
 
@@ -224,8 +224,6 @@ int main()
 
         if(wall_ids.size() == 2)
         {
-            wall_splitter split;
-
             int i1 = wall_ids.get(1);
 
             vec2f lp1 = line_points.get(1);
@@ -235,7 +233,6 @@ int main()
 
             ///badcode alert
             vec2f modified_start = (wall.start - wall.finish).norm() * 20.f + wall.start;
-            vec2f modified_finish = (wall.finish - wall.start).norm() * 20.f + wall.finish;
 
             float d1 = (lp1 - modified_start).length();
 

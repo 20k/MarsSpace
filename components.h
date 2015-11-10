@@ -233,10 +233,13 @@ struct squasher
     vec2f get_squashed_end(vec2f start, vec2f finish, float squash_fraction);
 };
 
+struct byte_fetch;
+
 struct saver
 {
     void save_to_file(const std::string& fname, const std::vector<entity*> stuff);
     std::vector<entity*> load_from_file(const std::string& fname, state& s);
+    entity* fetch_next_entity(byte_fetch&, state& s);
 };
 
 namespace text_options

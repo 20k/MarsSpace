@@ -39,9 +39,6 @@ void renderable_file::load(const std::string& name)
 ///we could super downscale them then upscale them?
 void renderable_file::tick(state& s, vec2f pos, float scale, float rotation, bool shadow, bool absolute)
 {
-    int width = tex.getSize().x;
-    int height = tex.getSize().y;
-
     float xp = pos.v[0];
     float yp = pos.v[1];
 
@@ -534,7 +531,7 @@ void wall_segment::tick(state& s, float dt)
 {
     bool all_complete = true;
 
-    for(int i=0; i<sub_segments.size(); i++)
+    for(int i=0; i<(int)sub_segments.size(); i++)
     {
         sub_segments[i].tick(s, dt);
 
@@ -821,58 +818,65 @@ std::vector<entity*> saver::load_from_file(const std::string& fname, state& s)
 
     while(fetch.valid())
     {
-        entity_t type = fetch.get<entity_t>();
+        entity* ent = fetch_next_entity(fetch, s);
 
-        entity* ent;
-
-        if(type == entity_type::PLAYER)
-        {
-            ent = new player(fetch, s);
-        }
-        else if(type == entity_type::PLANET)
-        {
-            ent = new planet(fetch, s);
-        }
-        else if(type == entity_type::BUILDING)
-        {
-            ent = new building(fetch, s);
-        }
-        else if(type == entity_type::DOOR)
-        {
-            ent = new door(fetch);
-        }
-        else if(type == entity_type::RESOURCE_ENTITY)
-            ent = new resource_entity(fetch);
-
-        else if(type == entity_type::SOLAR_PANEL)
-            ent = new solar_panel(fetch);
-
-        else if(type == entity_type::HYDROGEN_BATTERY)
-            ent = new hydrogen_battery(fetch);
-
-        else if(type == entity_type::GAS_STORAGE)
-            ent = new gas_storage(fetch);
-
-        else if(type == entity_type::OXYGEN_RECLAIMER)
-            ent = new oxygen_reclaimer(fetch);
-
-        else if(type == entity_type::REPAIR_ENTITY)
-            ent = new repair_entity(fetch);
-
-        else if(type == entity_type::ENVIRONMENT_BALANCER)
-            ent = new environment_balancer(fetch);
-
-        else if(type == entity_type::SUIT_ENTITY)
-            ent = new suit_entity(fetch);
-
-        else if(type == entity_type::RESOURCE_PACKET)
-            ent = new resource_packet(fetch);
-
-
-        entities.push_back(ent);
+        if(ent)
+            entities.push_back(ent);
     }
 
     return entities;
+}
+
+entity* saver::fetch_next_entity(byte_fetch& fetch, state& s)
+{
+    entity_t type = fetch.get<entity_t>();
+
+    entity* ent = nullptr;
+
+    if(type == entity_type::PLAYER)
+    {
+        ent = new player(fetch, s);
+    }
+    else if(type == entity_type::PLANET)
+    {
+        ent = new planet(fetch, s);
+    }
+    else if(type == entity_type::BUILDING)
+    {
+        ent = new building(fetch, s);
+    }
+    else if(type == entity_type::DOOR)
+    {
+        ent = new door(fetch);
+    }
+    else if(type == entity_type::RESOURCE_ENTITY)
+        ent = new resource_entity(fetch);
+
+    else if(type == entity_type::SOLAR_PANEL)
+        ent = new solar_panel(fetch);
+
+    else if(type == entity_type::HYDROGEN_BATTERY)
+        ent = new hydrogen_battery(fetch);
+
+    else if(type == entity_type::GAS_STORAGE)
+        ent = new gas_storage(fetch);
+
+    else if(type == entity_type::OXYGEN_RECLAIMER)
+        ent = new oxygen_reclaimer(fetch);
+
+    else if(type == entity_type::REPAIR_ENTITY)
+        ent = new repair_entity(fetch);
+
+    else if(type == entity_type::ENVIRONMENT_BALANCER)
+        ent = new environment_balancer(fetch);
+
+    else if(type == entity_type::SUIT_ENTITY)
+        ent = new suit_entity(fetch);
+
+    else if(type == entity_type::RESOURCE_PACKET)
+        ent = new resource_packet(fetch);
+
+    return ent;
 }
 
 void text::render(state& s, const std::string& _str, vec2f _tl, int size, text_options::text_options opt)
@@ -1683,8 +1687,6 @@ void resource_network::tick(state& s, float dt, bool lump)
 
         for(resource_converter*& c : converters)
         {
-            auto storage = c->max_storage;
-
             c->local_storage = 0.f;
             vecrf leftover = c->add(amount_to_allocate);
 

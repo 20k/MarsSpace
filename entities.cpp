@@ -215,6 +215,16 @@ player::player(byte_fetch& fetch, state& s) : player()
     if(!has_suit)
         file.load("./res/nosuit.png");
 
+    int carry_num = fetch.get<int32_t>();
+
+    for(int i=0; i<carry_num; i++)
+    {
+        saver sav;
+        entity* en = sav.fetch_next_entity(fetch, s);
+
+        pickup(en);
+    }
+
     speed.set_speed(sp);
 
     ///????
@@ -233,12 +243,20 @@ save player::make_save()
     vec.push_back<vecrf>(breath.lungs.my_environment.local_environment);
     vec.push_back<int32_t>(has_suit);
 
-    //vec.push_back<vecrf>(carried_resources.local_storage);
-
     vec.push_back<int32_t>(inventory_item_selected);
 
     if(has_suit)
         vec.push_back(my_suit->make_save().vec);
+
+    vec.push_back<int32_t>(carried.size());
+
+    for(int i=0; i<(int)carried.size(); i++)
+    {
+        save ms = carried[i]->make_save();
+
+        vec.push_back<entity_t>(ms.type);
+        vec.push_back(ms.vec);
+    }
 
     return {entity_type::PLAYER, vec};
 }
