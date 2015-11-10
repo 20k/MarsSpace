@@ -289,7 +289,7 @@ int main()
 
         if(once<sf::Keyboard::Insert>())
         {
-            entity* en = new resource_packet(air::FABRIC);
+            entity* en = new resource_packet(air::IRON);
             en->set_position(mouse_pos);
             stuff.push_back(en);
         }

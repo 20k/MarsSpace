@@ -71,6 +71,8 @@
 		<Unit filename="main.cpp" />
 		<Unit filename="misc.h" />
 		<Unit filename="noise.h" />
+		<Unit filename="particles.cpp" />
+		<Unit filename="particles.h" />
 		<Unit filename="planet_gen.h" />
 		<Unit filename="sound.cpp" />
 		<Unit filename="sound.h" />

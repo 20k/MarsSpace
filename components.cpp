@@ -405,6 +405,7 @@ void movement_blocker::modify_bounds(vec2f _start, vec2f _finish)
     }
 }
 
+///???
 wall_segment_segment::wall_segment_segment(vec2f _start, vec2f _finish)
 {
     start = _start;
@@ -418,7 +419,7 @@ wall_segment_segment::wall_segment_segment(vec2f _start, vec2f _finish)
 
     construct.set_work_to_complete(1.f);
 
-    res_require.set_resource_requried(air::FABRIC, 0.25f);
+    res_require.set_resource_requried(air::IRON, 0.25f);
 }
 
 void wall_segment_segment::tick(state& s, float dt)
