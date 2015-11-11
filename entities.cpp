@@ -839,6 +839,11 @@ save environment_balancer::make_save()
     return {entity_type::ENVIRONMENT_BALANCER, vec};
 }
 
+void environment_balancer::set_parent(conditional_environment_modifier* parent)
+{
+    environment.set_parent(parent);
+}
+
 void environment_balancer::process_environment(state& s, float dt)
 {
     static vecrf ideal_environment = air_to_resource(get_controlled_environment_atmosphere());

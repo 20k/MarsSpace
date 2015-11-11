@@ -302,6 +302,7 @@ struct environment_balancer : resource_entity
     environment_balancer(resource_network& _net);
     environment_balancer(byte_fetch& fetch);
 
+    void set_parent(conditional_environment_modifier* parent);
     void process_environment(state& s, float dt);
     virtual void tick(state& s, float dt) override;
 

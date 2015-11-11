@@ -117,6 +117,31 @@ float noisemult_2d(int x, int y)
 }
 
 
+float noisemult_2d_iron(int x, int y)
+{
+    float mx, my;
+
+    float mwx = noisemod_2d(x, y, 0.1, 20);
+    float mwy = noisemod_2d(x + 1000, y + 1000, 0.1, 20); ///
+
+    mx = x + mwx*2;
+    my = y + mwy*2;
+
+    float accum = 0;
+    float power = 0.f;
+
+
+    //accum += sum(mx, my, 6, 7, power);
+    accum += sum(mx, my, -5, 3, power);
+
+    return accum / power;
+
+    //return noisemod_2d(mx, my, 8, 6) + noisemod_2d(mx, my, 2, 6) + noisemod_2d(mx, my, 0.8, 6) + noisemod_2d(mx, my, 0.4, 6) + noisemod_2d(mx, my, 0.1, 6.01) + noisemod_2d(mx, my, 0.174, 4.01) + noisemod_2d(mx, my, 0.067, 2.23) + noisemod_2d(mx, my, 0.0243, 1.00);
+    //return noisemod(mx, my, mz, 0, 0.067, 8.23) + noisemod(mx, my, mz, 0, 0.0383, 14.00);
+    //return noisemod(mx, my, mz, 0, 0.0383, 14.00);
+}
+
+
 
 ///scrap this macro, its causing issues
 #define IX(x, y, z) ((z)*width*height + (y)*width + (x))
@@ -273,12 +298,50 @@ float* noise_buf(int width, int height)
     return ret;
 }
 
+float* normalise(float* ret, int width, int height)
+{
+    float min_val = FLT_MAX;
+    float max_val = -FLT_MAX;
+
+    for(int y=0; y<height; y++)
+    {
+        for(int x=0; x<width; x++)
+        {
+            float val = ret[IX(x, y, 0)];
+
+            if(val < min_val)
+                min_val = val;
+
+            if(val > max_val)
+                max_val = val;
+        }
+
+    }
+
+    for(int y=0; y<height; y++)
+        for(int x=0; x<width; x++)
+    {
+        float val = ret[IX(x, y, 0)];
+
+        val = (val - min_val) / (max_val - min_val);
+
+        float scale = 0.3f;
+
+        val += scale;
+        val /= (1 + scale);
+
+        ret[IX(x, y, 0)] = val;
+    }
+
+    return ret;
+}
+
 float* pnoise_buf(int width, int height)
 {
     float* ret = new float[width*height];
 
-    float min_val = 1000;
-    float max_val = -1000;
+    float min_val = FLT_MAX;
+    float max_val = -FLT_MAX;
 
     for(int y=0; y<height; y++)
     {
@@ -310,6 +373,23 @@ float* pnoise_buf(int width, int height)
 
         ret[IX(x, y, 0)] = val;
     }
+
+    return ret;
+}
+
+float* pnoise_iron(int width, int height)
+{
+    float* ret = new float[width*height];
+
+    for(int y=0; y<height; y++)
+    {
+        for(int x=0; x<width; x++)
+        {
+            ret[y*width + x] = noisemult_2d_iron(x, y);
+        }
+    }
+
+    ret = normalise(ret, width, height);
 
     return ret;
 }

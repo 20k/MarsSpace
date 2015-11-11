@@ -8,7 +8,7 @@ struct planet_gen
 {
     sf::Texture get_tex(int width, int height)
     {
-        float* noise = pnoise_buf(width, height);
+        float* noise = pnoise_iron(width, height);
 
         sf::Image img;
         img.create(width, height);
