@@ -186,10 +186,12 @@ int main()
 
                     float rad = (start - fn).length() / 2.f;
 
+                    float extra = std::max((mouse_pos - avg).length() - rad, 0.f);
+
                     ///also need to restrict to bounds
-                    if(dist.length() < minimum_distance && (mouse_pos - avg).length() < rad + 10.f)
+                    if(dist.length() + extra < minimum_distance && (mouse_pos - avg).length() < rad + 10.f)
                     {
-                        minimum_distance = dist.length();
+                        minimum_distance = dist.length() + extra;
                         minimum_id = i;
                         line_point = mouse_pos + dist;
                     }
@@ -308,7 +310,7 @@ int main()
             net.clear();
             stuff = save.load_from_file("save.txt", st);
             build->walls.clear();
-            stuff.push_back(build);
+            //stuff.push_back(build);
 
             for(auto& i : stuff)
             {
@@ -321,6 +323,11 @@ int main()
 
                     res->load(net);
                 }
+
+                auto buil = dynamic_cast<building*>(i);
+
+                if(buil != nullptr)
+                    build = buil;
             }
 
             st.air_process->load_from_file("atmo.txt");

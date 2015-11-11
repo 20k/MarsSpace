@@ -206,7 +206,7 @@ void resource_requirer::set_resource_requried(resource_t type, float max_resourc
     res_required.v[type] = max_resource;
 }
 
-vecrf resource_requirer::add(vecrf res)
+vecrf resource_requirer::add(const vecrf& res)
 {
     auto res_prev = res_added;
 

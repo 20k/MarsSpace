@@ -130,9 +130,11 @@ float noisemult_2d_iron(int x, int y)
     float accum = 0;
     float power = 0.f;
 
+    int po = 5;
 
     //accum += sum(mx, my, 6, 7, power);
-    accum += sum(mx, my, -5, 3, power);
+    accum += sum(mx, my, po, po+1, power);
+    accum += sum(mx, my, -5, 1, power);
 
     return accum / power;
 

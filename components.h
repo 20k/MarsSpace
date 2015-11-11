@@ -89,7 +89,7 @@ struct resource_requirer
 
     void set_resource_requried(resource_t type, float max_resource);
 
-    vecrf add(vecrf res);
+    vecrf add(const vecrf& res);
 
     float get_resource_amount_required_to_complete_fraction(float frac);
 
