@@ -929,7 +929,7 @@ void resource_filler::load(resource_network& _net)
 void resource_filler::tick(state& s, float dt)
 {
     if(net == nullptr)
-        throw "What";
+        throw std::runtime_error("Something has gone terribly wrong in resource filler, net == nullptr");
 
     interact.set_position(position);
     interact.tick(s);
@@ -971,8 +971,6 @@ void resource_filler::tick(state& s, float dt)
 
     const float air_transferred_per_second = 0.1f;
 
-    //to_ideal = to_ideal * air_transferred_per_second * dt;
-
     if(to_ideal.length() < 0.00001f)
         return;
 
@@ -990,16 +988,7 @@ void resource_filler::tick(state& s, float dt)
     ///everything < 0
     vecrf stuff_too_much_of = max(-to_ideal, 0.f);
 
-    ///need to define rate per tick
-    ///but later
-
-    //printf("Requestion %f nitro\n", stuff_we_need.v[air::NITROGEN]);
-
     vecrf amount_can_add = net->take(stuff_we_need);
-
-    //printf("Net res %f\n", net->network_resources.v[air::NITROGEN]);
-
-    //printf("took %f nitro\n", amount_can_add.v[air::NITROGEN]);
 
     auto extra = target_suit->this_suit.suit_resource_network.add(amount_can_add);
 
