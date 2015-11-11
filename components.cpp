@@ -649,6 +649,29 @@ void area_interacter::tick(state& s, bool gradient_centre)
         circle.tick(s, pos, radius/2.f - outline, (vec4f){240, 240, 240, 100}, outline);
 }
 
+///this is wildly inefficient
+std::vector<entity*> area_interacter::get_entities_within(state& s)
+{
+    std::vector<entity*> ret;
+
+    for(auto& i : *s.entities)
+    {
+        vec2f position = i->position;
+
+        vec2f rel = position - pos;
+
+        float dist = rel.length();
+
+        if(dist < radius)
+        {
+            ret.push_back(i);
+        }
+    }
+
+    return ret;
+}
+
+
 bool area_interacter::player_inside(state& s)
 {
     if(s.current_player == nullptr)
@@ -876,6 +899,9 @@ entity* saver::fetch_next_entity(byte_fetch& fetch, state& s)
 
     else if(type == entity_type::RESOURCE_PACKET)
         ent = new resource_packet(fetch);
+
+    else if(type == entity_type::RESOURCE_FILLER)
+        ent = new resource_filler(fetch);
 
     return ent;
 }
@@ -1425,13 +1451,13 @@ void resource_converter::add(const std::vector<std::pair<resource_t, float>>& lv
         local_storage.v[i.first] += i.second;
     }
 
-    vec<resource::RES_COUNT, float> minimum;
+    vecrf minimum;
     minimum = 0.f;
 
     local_storage = clamp(local_storage, minimum, max_storage);
 }
 
-vec<resource::RES_COUNT, float> resource_converter::take(const std::vector<std::pair<resource_t, float>>& lv)
+vecrf resource_converter::take(const std::vector<std::pair<resource_t, float>>& lv)
 {
     auto old = local_storage;
 
@@ -1440,7 +1466,7 @@ vec<resource::RES_COUNT, float> resource_converter::take(const std::vector<std::
         local_storage.v[i.first] -= i.second;
     }
 
-    vec<resource::RES_COUNT, float> minimum;
+    vecrf minimum;
     minimum = 0.f;
 
     local_storage = clamp(local_storage, minimum, max_storage);
@@ -1461,6 +1487,20 @@ vecrf resource_converter::add(const vecrf& res)
     //auto diff = local_storage - prev;
 
     return prev + res - local_storage;
+}
+
+vecrf resource_converter::take(const vecrf& res)
+{
+    auto prev = local_storage;
+
+    local_storage = local_storage - res;
+
+    local_storage = max(local_storage, 0.f);
+    local_storage = min(local_storage, max_storage);
+
+    auto diff = prev - local_storage;
+
+    return diff;
 }
 
 ///we want to deplete from local resources first, then escalate to global resources

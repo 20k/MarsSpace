@@ -68,7 +68,7 @@ namespace air
 typedef air::resource air_t;
 typedef air::resource resource_t;
 
-typedef vec<air::RES_COUNT, float> vecrf;
+typedef vec<air::RES_COUNT, double> vecrf;
 typedef vec<air::COUNT, float> vecair;
 
 inline

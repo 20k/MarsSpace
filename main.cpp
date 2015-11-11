@@ -58,6 +58,8 @@ int main()
     stuff.push_back(play);
     stuff.push_back(glue);
 
+    st.entities = &stuff;
+
     //wall_segment seg = build->walls.back().split_at_fraction(st, 0.5f);
 
     //build->walls.push_back();
@@ -319,15 +321,13 @@ int main()
                 ///this is going to cause me problems later
                 if(res != nullptr && dynamic_cast<resource_packet*>(i) == nullptr)
                 {
-                    //net.add(&res->conv);
-
                     res->load(net);
                 }
 
-                auto buil = dynamic_cast<building*>(i);
+                auto bd = dynamic_cast<building*>(i);
 
-                if(buil != nullptr)
-                    build = buil;
+                if(bd != nullptr)
+                    build = bd;
             }
 
             st.air_process->load_from_file("atmo.txt");
@@ -446,6 +446,13 @@ int main()
             stuff.push_back(en);
         }
 
+        if(once<sf::Keyboard::F8>())
+        {
+            entity* en = new resource_filler(net);
+            en->set_position(round_mouse);
+            stuff.push_back(en);
+        }
+
         if(mouse_clicks.size() == 2)
         {
             vec2f m1 = mouse_clicks.get(0);
@@ -472,6 +479,9 @@ int main()
             stuff.push_back(new door(m2, m1, 2.f));
         }
 
+        ///stuff is always the correct storage
+        ///wait. Do i need to even do this then
+        st.entities = &stuff;
 
         float dt = (clk.getElapsedTime().asMicroseconds() / 1000.f) / 1000.f;
         clk.restart();

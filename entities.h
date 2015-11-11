@@ -21,7 +21,8 @@ namespace entity_type
         SUIT_ENTITY,
         REPAIR_ENTITY,
         ENVIRONMENT_BALANCER,
-        RESOURCE_PACKET
+        RESOURCE_PACKET,
+        RESOURCE_FILLER
     };
 }
 
@@ -119,9 +120,10 @@ struct player : entity
     void inc_inventory();
     void dec_inventory();
 
+    bool has_suit;
+
 private:
     void remove_suit(); ///internal, does not take it off, just stops the player from using it
-    bool has_suit;
 
     int inventory_item_selected;
 };
@@ -280,6 +282,23 @@ struct oxygen_reclaimer : resource_entity
     save make_save();
 };
 
+struct resource_filler : resource_entity
+{
+    renderable_circle circle;
+    area_interacter interact;
+
+    resource_filler();
+    resource_filler(resource_network& _net);
+    resource_filler(byte_fetch& fetch);
+
+    virtual void tick(state& s, float dt) override;
+
+    void load(resource_network& net);
+
+    save make_save();
+
+    resource_network* net;
+};
 
 ///next we need an entity refilling station, as well as an environmental monitor component
 ///and then an entity that reads from that component and updates the world accordingly
@@ -290,9 +309,12 @@ struct oxygen_reclaimer : resource_entity
 ///what we need is somethign to sample the atmosphere, and then emit/absorb any incorrect deviations from standard
 ///including pressure!
 
+///we want to have a class that is almost exactly like this
+///except useful for refilling things
+///maybe we can treat refillable storage as a conditional environment modifier
 struct environment_balancer : resource_entity
 {
-    resource_converter emitter;
+    //resource_converter emitter;
 
     renderable_circle circle;
     conditional_environment_modifier environment;

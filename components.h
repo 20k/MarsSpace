@@ -35,6 +35,9 @@ struct state
     ///from the centre of the map
     vec2f sun_direction;
 
+    ///nullptr not an acceptable state
+    std::vector<entity*>* entities = nullptr;
+
     state(sf::RenderWindow* _win, sf::Texture&, air_processor&);
 };
 
@@ -156,6 +159,7 @@ struct area_interacter
 
     void tick(state& s, bool gradient_centre = true);
 
+    std::vector<entity*> get_entities_within(state& s);
     bool player_inside(state& s);
     bool player_has_interacted(state& s); ///will only fire once per button hold
     bool player_has_interacted_continuous(state& s); ///will fire continuously
@@ -391,13 +395,13 @@ struct resource_converter
 {
     air_environment environment_absorption;
 
-    vec<resource::RES_COUNT, float> local_storage;
-    vec<resource::RES_COUNT, float> max_storage;
+    vecrf local_storage;
+    vecrf max_storage;
 
     ///eg oxygen:1, c02:1
-    vec<resource::RES_COUNT, float> conversion_usage_ratio;
+    vecrf conversion_usage_ratio;
     ///eg oxygen:2
-    vec<resource::RES_COUNT, float> conversion_output_ratio;
+    vecrf conversion_output_ratio;
 
     float amount;
     float efficiency;
@@ -428,6 +432,7 @@ struct resource_converter
     vecrf take(const std::vector<std::pair<resource_t, float>>& vec);
 
     vecrf add(const vecrf& amount); ///returns any left over
+    vecrf take(const vecrf& amount); ///returns amount actually taken
 
     void absorb_all(state& s, float dt);
     void emit_all(state& s, float dt);

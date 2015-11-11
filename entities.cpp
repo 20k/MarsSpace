@@ -893,6 +893,125 @@ void environment_balancer::tick(state& s, float dt)
     circle.tick(s, position, 1.f, (vec4f({255, 100, 255, 255})));
 }
 
+resource_filler::resource_filler()
+{
+    net = nullptr;
+    interact.set_radius(2.0f);
+}
+
+resource_filler::resource_filler(resource_network& _net) : resource_filler()
+{
+    load(_net);
+}
+
+resource_filler::resource_filler(byte_fetch& fetch) : resource_filler()
+{
+    resource_entity::load(fetch);
+}
+
+save resource_filler::make_save()
+{
+    byte_vector vec;
+    vec.push_back<vec2f>(position);
+    vec.push_back<vecrf>(conv.local_storage);
+
+    return {entity_type::RESOURCE_FILLER, vec};
+}
+
+void resource_filler::load(resource_network& _net)
+{
+    net = &_net;
+}
+
+///maybe entities should store their own ideal mix for their local environment
+///but for the moment, just deal with the player's suit
+///and we can integrate rover support etc later
+void resource_filler::tick(state& s, float dt)
+{
+    if(net == nullptr)
+        throw "What";
+
+    interact.set_position(position);
+    interact.tick(s);
+    circle.tick(s, position, 1.f, (vec4f){128, 128, 128, 255}, 0.5f);
+
+    std::vector<entity*> candidate_entities = interact.get_entities_within(s);
+
+    if(candidate_entities.size() == 0)
+        return;
+
+    suit_entity* target_suit = nullptr;
+
+    if(s.current_player->has_suit && interact.player_inside(s))
+    {
+        target_suit = s.current_player->my_suit;
+    }
+
+    ///yes, i do hate myself
+    for(int i=0; i<s.entities->size() && target_suit == nullptr; i++)
+    {
+        target_suit = dynamic_cast<suit_entity*>((*s.entities)[i]);
+    }
+
+    if(target_suit == nullptr)
+        return;
+
+    printf("found a suit inside me\n");
+
+    vecrf ideal_suit_storage = 0.f;
+    ideal_suit_storage.v[air::OXYGEN] = 1.f;
+    ideal_suit_storage.v[air::NITROGEN] = 1.f;
+
+    //vecrf parent_air = environment.get_parent(s, position);
+
+    ///hrrm
+    vecrf suit_storage = target_suit->this_suit.resource_storage.local_storage;
+
+    vecrf to_ideal = ideal_suit_storage - suit_storage;
+
+    const float air_transferred_per_second = 0.1f;
+
+    //to_ideal = to_ideal * air_transferred_per_second * dt;
+
+    if(to_ideal.length() < 0.00001f)
+        return;
+
+    to_ideal = to_ideal * dt;
+
+    if(to_ideal.length() > air_transferred_per_second)
+    {
+        to_ideal = to_ideal / to_ideal.length();
+
+        to_ideal = to_ideal * dt * air_transferred_per_second;
+    }
+
+    ///everything > 0
+    vecrf stuff_we_need = max(to_ideal, 0.f);
+    ///everything < 0
+    vecrf stuff_too_much_of = max(-to_ideal, 0.f);
+
+    ///need to define rate per tick
+    ///but later
+
+    printf("Requestion %f nitro\n", stuff_we_need.v[air::NITROGEN]);
+
+    vecrf amount_can_add = net->take(stuff_we_need);
+
+    printf("Net res %f\n", net->network_resources.v[air::NITROGEN]);
+
+    printf("took %f nitro\n", amount_can_add.v[air::NITROGEN]);
+
+    auto extra = target_suit->this_suit.suit_resource_network.add(amount_can_add);
+
+    target_suit->this_suit.suit_resource_network.take(stuff_too_much_of);
+
+    auto network_cannot_accept = net->add(stuff_too_much_of);
+
+    target_suit->this_suit.suit_resource_network.add(network_cannot_accept);
+
+    net->add(extra);
+}
+
 suit_entity::suit_entity()
 {
     interact.set_radius(2.f);
