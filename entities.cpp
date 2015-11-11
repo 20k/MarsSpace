@@ -956,7 +956,7 @@ void resource_filler::tick(state& s, float dt)
     if(target_suit == nullptr)
         return;
 
-    printf("found a suit inside me\n");
+    //printf("found a suit inside me\n");
 
     vecrf ideal_suit_storage = 0.f;
     ideal_suit_storage.v[air::OXYGEN] = 1.f;
@@ -993,13 +993,13 @@ void resource_filler::tick(state& s, float dt)
     ///need to define rate per tick
     ///but later
 
-    printf("Requestion %f nitro\n", stuff_we_need.v[air::NITROGEN]);
+    //printf("Requestion %f nitro\n", stuff_we_need.v[air::NITROGEN]);
 
     vecrf amount_can_add = net->take(stuff_we_need);
 
-    printf("Net res %f\n", net->network_resources.v[air::NITROGEN]);
+    //printf("Net res %f\n", net->network_resources.v[air::NITROGEN]);
 
-    printf("took %f nitro\n", amount_can_add.v[air::NITROGEN]);
+    //printf("took %f nitro\n", amount_can_add.v[air::NITROGEN]);
 
     auto extra = target_suit->this_suit.suit_resource_network.add(amount_can_add);
 
