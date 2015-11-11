@@ -940,6 +940,10 @@ void resource_filler::tick(state& s, float dt)
     if(candidate_entities.size() == 0)
         return;
 
+    ///maybe change this to inherit from a refillable entity
+    ///and then have refillable contain a ptr to the resource network to fill
+    ///and then basically use inheritance as a component system
+    ///or is that completely mental
     suit_entity* target_suit = nullptr;
 
     if(s.current_player->has_suit && interact.player_inside(s))
@@ -969,19 +973,30 @@ void resource_filler::tick(state& s, float dt)
 
     vecrf to_ideal = ideal_suit_storage - suit_storage;
 
+    ///because we dont transfer the whole of the air per second but a fraction of the remaining
+    ///its inherently non linear
+    ///so dont look at this and think that i designed it well
+    ///because i am still bad at programming
     const float air_transferred_per_second = 0.1f;
 
-    if(to_ideal.length() < 0.00001f)
+    if(to_ideal.sum_absolute() < 0.00001f)
         return;
 
-    to_ideal = to_ideal * dt;
+    /*to_ideal = to_ideal * dt;
 
-    if(to_ideal.length() > air_transferred_per_second)
+    if(to_ideal.sum_absolute() > air_transferred_per_second)
     {
-        to_ideal = to_ideal / to_ideal.length();
+        to_ideal = to_ideal / to_ideal.sum_absolute();
 
         to_ideal = to_ideal * dt * air_transferred_per_second;
-    }
+    }*/
+
+    auto amount = to_ideal.sum_absolute();
+
+    to_ideal = to_ideal / to_ideal.sum_absolute();
+
+    to_ideal = to_ideal * dt * std::min(air_transferred_per_second, amount);
+
 
     ///everything > 0
     vecrf stuff_we_need = max(to_ideal, 0.f);
@@ -1140,8 +1155,6 @@ void repair_entity::on_use(state& s, float dt, entity* en)
     float repair_speed = 0.1f;
 
     float amount = deplete(repair_speed * dt);
-
-    printf("Remaining %f\n", repair_amount.repair_remaining);
 
     float extra = play->repair_suit(amount);
 
