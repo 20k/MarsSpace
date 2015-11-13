@@ -1624,6 +1624,15 @@ void resource_network::add_unique(resource_converter* conv)
     add(conv);
 }
 
+void resource_network::add_net(resource_network* net)
+{
+    for(auto& i : connected_networks)
+        if(i == net)
+            return;
+
+    connected_networks.push_back(net);
+}
+
 void resource_network::add(resource_converter* conv)
 {
     network_resources = network_resources + conv->local_storage;
@@ -1677,6 +1686,18 @@ vecrf resource_network::take(const vecrf& res)
     return diff;
 }
 
+vecrf resource_network::get_local_max()
+{
+    vecrf local_max = 0.f;
+
+    for(auto& i : converters)
+    {
+        local_max = local_max + i->max_storage;
+    }
+
+    return local_max;
+}
+
 ///no processing done here
 ///only resource distribution
 ///distribute equally? or proportionally?
@@ -1684,6 +1705,7 @@ vecrf resource_network::take(const vecrf& res)
 ///we also need to be able to extract from the network
 ///proportional is easiest
 ///I'm going to have to scrap this and do it properly, aren't I
+///gunna have to deal with deleted resource networks later somehow
 void resource_network::tick(state& s, float dt, bool lump)
 {
     if(converters.size() == 0)
@@ -1692,13 +1714,8 @@ void resource_network::tick(state& s, float dt, bool lump)
     //vecrf resource_accum;
     //resource_accum = 0.f;
 
-    max_network_resources = 0.f;
 
-    for(auto& i : converters)
-    {
-        //resource_accum = resource_accum + i->local_storage;
-        max_network_resources = max_network_resources + i->max_storage;
-    }
+    max_network_resources = get_local_max();
 
     for(resource_converter* i : converters)
     {

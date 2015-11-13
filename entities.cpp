@@ -513,8 +513,11 @@ save door::make_save()
 resource_entity::resource_entity(resource_network& net)
 {
     net.add(&conv);
+}
 
-    position = (vec2f){0, 0};
+void resource_entity::add_to_resource_network(resource_network& net)
+{
+    net.add_unique(&conv);
 }
 
 void resource_entity::set_position(vec2f pos)
@@ -782,7 +785,6 @@ oxygen_reclaimer::oxygen_reclaimer(resource_network& _net) : oxygen_reclaimer()
     load(_net);
 }
 
-
 oxygen_reclaimer::oxygen_reclaimer(byte_fetch& fetch) : oxygen_reclaimer()
 {
     load(fetch);
@@ -836,6 +838,11 @@ void environment_balancer::load(resource_network& _net)
     ///which means they need to actually work as well
 }
 
+void environment_balancer::add_to_resource_network(resource_network& _net)
+{
+    load(_net);
+}
+
 save environment_balancer::make_save()
 {
     byte_vector vec;
@@ -852,6 +859,9 @@ void environment_balancer::set_parent(conditional_environment_modifier* parent)
 
 void environment_balancer::process_environment(state& s, float dt)
 {
+    if(net == nullptr)
+        return;
+
     static vecrf ideal_environment = air_to_resource(get_controlled_environment_atmosphere());
 
     vecrf parent_air = environment.get_parent(s, position);
@@ -929,13 +939,18 @@ void resource_filler::load(resource_network& _net)
     net = &_net;
 }
 
+void resource_filler::add_to_resource_network(resource_network& _net)
+{
+    load(_net);
+}
+
 ///maybe entities should store their own ideal mix for their local environment
 ///but for the moment, just deal with the player's suit
 ///and we can integrate rover support etc later
 void resource_filler::tick(state& s, float dt)
 {
     if(net == nullptr)
-        throw std::runtime_error("Something has gone terribly wrong in resource filler, net == nullptr");
+        return;
 
     interact.set_position(position);
     interact.tick(s);
@@ -1183,12 +1198,30 @@ void resource_network_entity::set_radius(float _rad)
 void resource_network_entity::tick(state& s, float dt)
 {
     object.tick(s, position, 1.f, (vec4f){100, 100, 100, 255}, 1.f);
-    aoe.tick(s, position, effect_radius, (vec4f){200, 200, 200, 10}, 5.f, 2.f);
+
+    float border = 5.f;
+
+    aoe.tick(s, position, effect_radius - border, (vec4f){200, 200, 200, 10}, border, 2.f);
 
     area_interacter interact;
+    interact.set_position(position);
+    interact.set_radius(effect_radius);
 
     ///easiest way to do it for the moment
-    std::vector<entity*> entites_within_network = interact.get_entities_within(s);
+    std::vector<entity*> entities_within_network = interact.get_entities_within(s);
+
+    for(auto& i : entities_within_network)
+    {
+        ///this is what i get for having a shitty component system
+        resource_entity* en = dynamic_cast<resource_entity*>(i);
+
+        if(en == nullptr)
+            continue;
+
+        en->add_to_resource_network(net);
+    }
+
+    net.tick(s, dt);
 }
 
 save resource_network_entity::make_save()

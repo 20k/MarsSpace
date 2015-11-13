@@ -126,7 +126,7 @@ int main()
 
     music::swap_to_song_type(music::MAINMENU);
 
-    resource_network net;
+    //resource_network net;
 
     while(win.isOpen())
     {
@@ -312,7 +312,7 @@ int main()
 
         if(once<sf::Keyboard::N>())
         {
-            net.clear();
+            //net.clear();
             stuff = save.load_from_file("save.txt", st);
             build->walls.clear();
             //stuff.push_back(build);
@@ -324,7 +324,7 @@ int main()
                 ///this is going to cause me problems later
                 if(res != nullptr && dynamic_cast<resource_packet*>(i) == nullptr)
                 {
-                    res->load(net);
+                    //res->load(net);
                 }
 
                 auto bd = dynamic_cast<building*>(i);
@@ -380,41 +380,41 @@ int main()
 
         if(once<sf::Keyboard::F1>())
         {
-            solar_panel* en = new solar_panel(net);
+            solar_panel* en = new solar_panel();
             en->set_position(round_mouse);
             stuff.push_back(en);
         }
 
         if(once<sf::Keyboard::F2>())
         {
-            hydrogen_battery* en = new hydrogen_battery(net);
+            hydrogen_battery* en = new hydrogen_battery();
             en->set_position(round_mouse);
             stuff.push_back(en);
         }
 
         if(once<sf::Keyboard::F3>())
         {
-            gas_storage* en = new gas_storage(net, air::OXYGEN);
+            gas_storage* en = new gas_storage(air::OXYGEN);
             en->set_position(round_mouse);
 
             vecrf res = 0.f;
 
             res.v[air::OXYGEN] = en->conv.max_storage.v[air::OXYGEN] / 2.f;
 
-            net.add(res);
+            en->conv.local_storage = res;
 
             stuff.push_back(en);
         }
 
         if(once<sf::Keyboard::F4>())
         {
-            gas_storage* en = new gas_storage(net, air::C02);
+            gas_storage* en = new gas_storage(air::C02);
 
             vecrf res = 0.f;
 
             res.v[air::C02] = 5.f;
 
-            net.add(res);
+            en->conv.local_storage = res;
 
             en->set_position(round_mouse);
             stuff.push_back(en);
@@ -422,36 +422,35 @@ int main()
 
         if(once<sf::Keyboard::F5>())
         {
-            gas_storage* en = new gas_storage(net, air::NITROGEN);
+            gas_storage* en = new gas_storage(air::NITROGEN);
             en->set_position(round_mouse);
 
             vecrf res = 0.f;
 
             res.v[air::NITROGEN] = en->conv.max_storage.v[air::NITROGEN] / 2.f;
 
-            net.add(res);
-
+            en->conv.local_storage = res;
 
             stuff.push_back(en);
         }
 
         if(once<sf::Keyboard::F6>())
         {
-            oxygen_reclaimer* en = new oxygen_reclaimer(net);
+            oxygen_reclaimer* en = new oxygen_reclaimer();
             en->set_position(round_mouse);
             stuff.push_back(en);
         }
 
         if(once<sf::Keyboard::F7>())
         {
-            entity* en = new environment_balancer(net);
+            entity* en = new environment_balancer();
             en->set_position(round_mouse);
             stuff.push_back(en);
         }
 
         if(once<sf::Keyboard::F8>())
         {
-            entity* en = new resource_filler(net);
+            entity* en = new resource_filler();
             en->set_position(round_mouse);
             stuff.push_back(en);
         }
@@ -531,8 +530,6 @@ int main()
                 continue;
             }
         }
-
-        net.tick(st, dt);
 
         //convert.convert(dt / 1000.f);
         //c2.convert(dt / 1000.f);

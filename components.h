@@ -453,14 +453,18 @@ struct resource_converter
 ///this is a redistributing resource network
 ///ie the network resources are proportionally shuttled between the elements
 ///we also need a non redistributing resource network :[
+///these finally have to work together
 struct resource_network
 {
     vecrf network_resources;
     vecrf max_network_resources;
 
     std::vector<resource_converter*> converters;
+    std::vector<resource_network*> connected_networks;
 
     ///add unique only adds something if its not already present
+    void add_net(resource_network* net);
+
     void add_unique(resource_converter* conv);
     void add(resource_converter* conv);
     void rem(resource_converter* rem);
@@ -476,6 +480,8 @@ struct resource_network
     void tick(state& s, float dt, bool lump = false);
 
     resource_network();
+
+    vecrf get_local_max();
 };
 
 struct damageable

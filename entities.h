@@ -201,6 +201,7 @@ struct resource_entity : entity
 
     void load(byte_fetch& fetch);
     virtual void load(resource_network& net);
+    virtual void add_to_resource_network(resource_network& net);
 
     virtual void set_position(vec2f _pos) override;
 
@@ -296,6 +297,7 @@ struct resource_filler : resource_entity
     virtual void tick(state& s, float dt) override;
 
     void load(resource_network& net);
+    void add_to_resource_network(resource_network&);
 
     save make_save();
 
@@ -316,8 +318,6 @@ struct resource_filler : resource_entity
 ///maybe we can treat refillable storage as a conditional environment modifier
 struct environment_balancer : resource_entity
 {
-    //resource_converter emitter;
-
     renderable_circle circle;
     conditional_environment_modifier environment;
     air_displayer air_quality;
@@ -331,6 +331,7 @@ struct environment_balancer : resource_entity
     virtual void tick(state& s, float dt) override;
 
     void load(resource_network& net);
+    void add_to_resource_network(resource_network&);
 
     save make_save();
 
