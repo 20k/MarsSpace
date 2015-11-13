@@ -130,7 +130,7 @@ int main()
 
     while(win.isOpen())
     {
-        if(win.pollEvent(Event))
+        while(win.pollEvent(Event))
         {
             if(Event.type == sf::Event::Closed)
                 win.close();

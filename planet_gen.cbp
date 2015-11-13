@@ -39,6 +39,8 @@
 			<Add option="-Wmaybe-uninitialized" />
 			<Add option="-Wno-aggressive-loop-optimizations" />
 			<Add option="-Wsequence-point" />
+			<Add option="-Wno-sign-compare" />
+			<Add option="-Wno-unused-variable" />
 			<Add option="-DGLEW_STATIC" />
 			<Add option="-DNDEBUG" />
 		</Compiler>

@@ -1199,9 +1199,9 @@ void resource_network_entity::tick(state& s, float dt)
 {
     object.tick(s, position, 1.f, (vec4f){100, 100, 100, 255}, 1.f);
 
-    float border = 5.f;
+    float border = 0.5f;
 
-    aoe.tick(s, position, effect_radius - border, (vec4f){200, 200, 200, 10}, border, 2.f);
+    aoe.tick(s, position, effect_radius - border, (vec4f){200, 200, 200, 7}, border, 2.f);
 
     area_interacter interact;
     interact.set_position(position);
