@@ -824,6 +824,8 @@ mining_drill::mining_drill()
     conv.set_amount(base_iron_kg_per_second * 1.f / power_to_iron_ratio);
 
     display.set_element_to_display(resource::IRON);
+
+    file.load("./res/miner_1.png");
 }
 
 mining_drill::mining_drill(byte_fetch& fetch) : mining_drill()
@@ -836,10 +838,24 @@ void mining_drill::tick(state& s, float dt)
 {
     resource_entity::tick(s, dt);
 
-    circle.tick(s, position, 2.f, (vec4f){220, 150, 150, 255});
+    //circle.tick(s, position, 2.f, (vec4f){220, 150, 150, 255});
+
+    file.tick(s, position, 0.033f, 0.f, false);
+
+    float power_to_iron_ratio = 1.f/4000.f;
+
+    const float base_iron_kg_per_second = 0.1;
+
+    float rate = base_iron_kg_per_second * 1.f / power_to_iron_ratio;
+
+    vec2f clamped_pos = clamp(position, (vec2f){0.f, 0.f}, s.dimensions - 1.f);
+
+    float ground_density = s.iron_map[(int)clamped_pos.v[1] * (int)s.dimensions.v[0] + (int)clamped_pos.v[0]];
+
+    conv.set_amount(rate * ground_density);
 
     text txt;
-    txt.render(s, get_display_info(), position, 14, text_options::CENTERED);
+    txt.render(s, std::string("Mining rate: ") + std::to_string(base_iron_kg_per_second * ground_density), position + (vec2f){20, 0.f}, 16, text_options::CENTERED);
 }
 
 save mining_drill::make_save()

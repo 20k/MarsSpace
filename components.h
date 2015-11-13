@@ -41,6 +41,8 @@ struct state
 
     float* iron_map = nullptr;
 
+    vec2f dimensions;
+
     state(sf::RenderWindow* _win, sf::Texture&, air_processor&);
 };
 

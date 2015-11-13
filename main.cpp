@@ -46,6 +46,8 @@ int main()
 
     st.iron_map = iron_map;
 
+    st.dimensions = (vec2f){gen_width, gen_height};
+
     player* play = new player();
 
     building* build = new building;
