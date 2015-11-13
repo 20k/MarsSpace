@@ -37,7 +37,7 @@ void renderable_file::load(const std::string& name)
 ///actually we can do shadows super easily in 2d top down, we just project and scale the drawing skewed
 ///now, we need to blur the crap out of the shadows
 ///we could super downscale them then upscale them?
-void renderable_file::tick(state& s, vec2f pos, float scale, float rotation, bool shadow, bool absolute)
+void renderable_file::tick(state& s, vec2f pos, float scale, float rotation, bool shadow, bool absolute, sf::RenderStates rs)
 {
     float xp = pos.v[0];
     float yp = pos.v[1];
@@ -105,7 +105,7 @@ void renderable_file::tick(state& s, vec2f pos, float scale, float rotation, boo
         s.win->setView(def);
     }
 
-    s.win->draw(spr);
+    s.win->draw(spr, rs);
 
     if(absolute)
     {
@@ -127,17 +127,18 @@ void renderable_texture::tick(state& s, vec2f pos)
     s.win->draw(spr);
 }
 
-void renderable_circle::tick(state& s, vec2f pos, float rad, vec4f col, float outline_thickness)
+void renderable_circle::tick(state& s, vec2f pos, float rad, vec4f col, float outline_thickness, float outline_factor)
 {
     sf::CircleShape circle;
     circle.setOrigin(rad, rad);
     circle.setRadius(rad);
 
     circle.setPosition(pos.v[0], pos.v[1]);
+    circle.setPointCount(100);
 
     circle.setFillColor(sf::Color(col.v[0], col.v[1], col.v[2], col.v[3]));
     circle.setOutlineThickness(outline_thickness);
-    circle.setOutlineColor(sf::Color(col.v[0], col.v[1], col.v[2], col.v[3]/2.f));
+    circle.setOutlineColor(sf::Color(col.v[0], col.v[1], col.v[2], col.v[3] * outline_factor));
 
     s.win->draw(circle);
 }
@@ -903,6 +904,9 @@ entity* saver::fetch_next_entity(byte_fetch& fetch, state& s)
     else if(type == entity_type::RESOURCE_FILLER)
         ent = new resource_filler(fetch);
 
+    else if(type == entity_type::RESOURCE_NETWORK_ENTITY)
+        ent = new resource_network_entity(fetch);
+
     return ent;
 }
 
@@ -1607,6 +1611,17 @@ resource_network::resource_network()
 {
     network_resources = 0.f;
     max_network_resources = 0.f;
+}
+
+void resource_network::add_unique(resource_converter* conv)
+{
+    for(auto& i : converters)
+    {
+        if(i == conv)
+            return;
+    }
+
+    add(conv);
 }
 
 void resource_network::add(resource_converter* conv)

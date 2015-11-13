@@ -22,7 +22,8 @@ namespace entity_type
         REPAIR_ENTITY,
         ENVIRONMENT_BALANCER,
         RESOURCE_PACKET,
-        RESOURCE_FILLER
+        RESOURCE_FILLER,
+        RESOURCE_NETWORK_ENTITY
     };
 }
 
@@ -81,6 +82,7 @@ struct suit_entity;
 struct player : entity
 {
     renderable_file file;
+    renderable_file foot;
     moveable mover;
     keyboard_controller key;
     speed_handler speed;
@@ -382,6 +384,22 @@ struct repair_entity : entity
 };
 
 ///later make resource_network a physical hub or something perhaps?
+struct resource_network_entity : entity
+{
+    resource_network net;
+    renderable_circle object;
+    renderable_circle aoe;
+    float effect_radius;
+
+    resource_network_entity();
+    resource_network_entity(byte_fetch&);
+
+    void set_radius(float _rad);
+
+    virtual void tick(state& s, float dt) override;
+
+    virtual save make_save() override;
+};
 
 
 /*

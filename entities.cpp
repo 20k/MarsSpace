@@ -37,6 +37,7 @@ void entity::set_position(vec2f _pos)
 player::player()
 {
     file.load("./res/character.png");
+    foot.load("./res/foot.png");
 
     ///should I define units right off the bat
     speed.set_speed(14.f);
@@ -118,6 +119,11 @@ void player::tick(state& s, float dt)
 
     //file.tick(s, position, 0.1f); //old
     file.tick(s, position, 0.025f, rotation, true);
+    /*foot.tick(s, position, 0.008f, rotation, true, false,
+              sf::RenderStates(sf::BlendMode(sf::BlendMode::Factor::Zero,
+                                             sf::BlendMode::Factor::OneMinusSrcAlpha,
+                                             sf::BlendMode::Add)));*/
+
 
     auto air_parts = monitor.get_air_parts(s, position);
 
@@ -982,14 +988,6 @@ void resource_filler::tick(state& s, float dt)
     if(to_ideal.sum_absolute() < 0.00001f)
         return;
 
-    /*to_ideal = to_ideal * dt;
-
-    if(to_ideal.sum_absolute() > air_transferred_per_second)
-    {
-        to_ideal = to_ideal / to_ideal.sum_absolute();
-
-        to_ideal = to_ideal * dt * air_transferred_per_second;
-    }*/
 
     auto amount = to_ideal.sum_absolute();
 
@@ -1166,6 +1164,41 @@ std::string repair_entity::get_display_info()
     return std::string("Repair Material: ") + std::to_string(repair_amount.repair_remaining);
 }
 
+resource_network_entity::resource_network_entity()
+{
+    effect_radius = 50.f;
+}
+
+resource_network_entity::resource_network_entity(byte_fetch& fetch) : resource_network_entity()
+{
+    position = fetch.get<vec2f>();
+    effect_radius = fetch.get<float>();
+}
+
+void resource_network_entity::set_radius(float _rad)
+{
+    effect_radius = _rad;
+}
+
+void resource_network_entity::tick(state& s, float dt)
+{
+    object.tick(s, position, 1.f, (vec4f){100, 100, 100, 255}, 1.f);
+    aoe.tick(s, position, effect_radius, (vec4f){200, 200, 200, 10}, 5.f, 2.f);
+
+    area_interacter interact;
+
+    ///easiest way to do it for the moment
+    std::vector<entity*> entites_within_network = interact.get_entities_within(s);
+}
+
+save resource_network_entity::make_save()
+{
+    byte_vector vec;
+    vec.push_back<vec2f>(position);
+    vec.push_back<float>(effect_radius);
+
+    return {entity_type::RESOURCE_NETWORK_ENTITY, vec};
+}
 ///dunnae do anything!
 /*void repair_entity::tick_held(state& s, float dt)
 {

@@ -48,7 +48,7 @@ struct renderable_file
     sf::RenderTexture* rtex;
 
     void load(const std::string&Y);
-    void tick(state& s, vec2f pos, float scale, float rotation = 0.f, bool shadow = false, bool absolute = false);
+    void tick(state& s, vec2f pos, float scale, float rotation = 0.f, bool shadow = false, bool absolute = false, sf::RenderStates rs = sf::RenderStates());
 };
 
 struct renderable_texture
@@ -61,7 +61,7 @@ struct renderable_texture
 
 struct renderable_circle
 {
-    void tick(state& s, vec2f pos, float rad, vec4f col, float outline_thickness = 0.5f);
+    void tick(state& s, vec2f pos, float rad, vec4f col, float outline_thickness = 0.5f, float outline_factor = 0.5f);
 };
 
 struct renderable_rectangle
@@ -81,6 +81,13 @@ struct constructable
 
     constructable();
 };
+
+/*struct footprint_leaver
+{
+    std::vector<renderable_file> footprints;
+
+
+};*/
 
 ///implicitly coupled with constructable
 struct resource_requirer
@@ -453,6 +460,8 @@ struct resource_network
 
     std::vector<resource_converter*> converters;
 
+    ///add unique only adds something if its not already present
+    void add_unique(resource_converter* conv);
     void add(resource_converter* conv);
     void rem(resource_converter* rem);
     void clear();

@@ -21,7 +21,10 @@ int main()
 
     float view_ratio = (float)height/width;
 
-    sf::RenderWindow win(sf::VideoMode(width, height), "hi");
+    sf::ContextSettings settings;
+    settings.antialiasingLevel = 4;
+
+    sf::RenderWindow win(sf::VideoMode(width, height), "hi", sf::Style::Default, settings);
 
     //win.setFramerateLimit(120);
 
@@ -449,6 +452,13 @@ int main()
         if(once<sf::Keyboard::F8>())
         {
             entity* en = new resource_filler(net);
+            en->set_position(round_mouse);
+            stuff.push_back(en);
+        }
+
+        if(once<sf::Keyboard::F9>())
+        {
+            entity* en = new resource_network_entity();
             en->set_position(round_mouse);
             stuff.push_back(en);
         }
