@@ -23,7 +23,8 @@ namespace entity_type
         ENVIRONMENT_BALANCER,
         RESOURCE_PACKET,
         RESOURCE_FILLER,
-        RESOURCE_NETWORK_ENTITY
+        RESOURCE_NETWORK_ENTITY,
+        MINING_DRILL
     };
 }
 
@@ -283,6 +284,21 @@ struct oxygen_reclaimer : resource_entity
     virtual void tick(state& s, float dt) override;
 
     save make_save();
+};
+
+struct mining_drill : resource_entity
+{
+    ///make me a square
+    renderable_circle circle;
+
+    mining_drill();
+    mining_drill(byte_fetch& fetch);
+
+    virtual void tick(state& s, float dt) override;
+
+    save make_save() override;
+
+    std::string get_display_info() override;
 };
 
 struct resource_filler : resource_entity

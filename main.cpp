@@ -34,6 +34,8 @@ int main()
     planet_gen gen;
     auto tex = gen.get_tex(gen_width, gen_height);
 
+    float* iron_map = gen.get_iron(gen_width, gen_height);
+
     sf::Sprite spr;
     spr.setTexture(tex);
 
@@ -41,6 +43,8 @@ int main()
     air_process.load(gen_width, gen_height);
 
     state st(&win, tex, air_process);
+
+    st.iron_map = iron_map;
 
     player* play = new player();
 
@@ -462,6 +466,13 @@ int main()
             stuff.push_back(en);
         }
 
+        if(once<sf::Keyboard::F10>())
+        {
+            entity* en = new mining_drill();
+            en->set_position(round_mouse);
+            stuff.push_back(en);
+        }
+
         if(mouse_clicks.size() == 2)
         {
             vec2f m1 = mouse_clicks.get(0);
@@ -556,6 +567,13 @@ int main()
 
         if(key.isKeyPressed(sf::Keyboard::V))
             printf("%f\n", dt);
+
+        if(key.isKeyPressed(sf::Keyboard::X))
+        {
+            vec2f clamped_mouse = clamp(mouse_pos, (vec2i){0, 0}, (vec2i){gen_width-1, gen_height-1});
+
+            printf("%f\n", iron_map[(int)clamped_mouse.v[1]*gen_width + (int)clamped_mouse.v[0]]);
+        }
 
         //sf::sleep(sf::microseconds(100000.f));
 

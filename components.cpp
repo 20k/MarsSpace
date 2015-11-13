@@ -907,6 +907,9 @@ entity* saver::fetch_next_entity(byte_fetch& fetch, state& s)
     else if(type == entity_type::RESOURCE_NETWORK_ENTITY)
         ent = new resource_network_entity(fetch);
 
+    else if(type == entity_type::MINING_DRILL)
+        ent = new mining_drill(fetch);
+
     return ent;
 }
 

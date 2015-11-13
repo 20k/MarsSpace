@@ -39,6 +39,8 @@ struct state
     ///nullptr not an acceptable state
     std::vector<entity*>* entities = nullptr;
 
+    float* iron_map = nullptr;
+
     state(sf::RenderWindow* _win, sf::Texture&, air_processor&);
 };
 

@@ -186,7 +186,6 @@ void player::tick(state& s, float dt)
     }
 
     carried_display.tick(s, (vec2f){700.f, 20.f}, player_resource_network.network_resources, 10, true);
-
 }
 
 ///we need to set_active the player when loading
@@ -795,7 +794,7 @@ void oxygen_reclaimer::tick(state& s, float dt)
 {
     resource_entity::tick(s, dt);
 
-    circle.tick(s, position, 1.f, (vec4f({100, 100, 255, 255})));
+    circle.tick(s, position, 1.f, (vec4f){100, 100, 255, 255});
 }
 
 save oxygen_reclaimer::make_save()
@@ -805,6 +804,56 @@ save oxygen_reclaimer::make_save()
     vec.push_back<vecrf>(conv.local_storage);
 
     return {entity_type::OXYGEN_RECLAIMER, vec};
+}
+
+mining_drill::mining_drill()
+{
+    ///iron is in kg
+    conv.set_max_storage({{resource::IRON, 100}});
+
+    float power_to_iron_ratio = 1.f/4000.f;
+
+    ///remember because im an idiot these are normalised
+    ///so eg 2 input to 1 output just gives 1:1
+    conv.set_usage_ratio({{resource::POWER, 1.f}});
+    conv.set_output_ratio({{resource::IRON, 1.f}});
+    conv.set_efficiency(power_to_iron_ratio);
+
+    const float base_iron_kg_per_second = 0.1;
+
+    conv.set_amount(base_iron_kg_per_second * 1.f / power_to_iron_ratio);
+
+    display.set_element_to_display(resource::IRON);
+}
+
+mining_drill::mining_drill(byte_fetch& fetch) : mining_drill()
+{
+    position = fetch.get<vec2f>();
+    conv.local_storage = fetch.get<vecrf>();
+}
+
+void mining_drill::tick(state& s, float dt)
+{
+    resource_entity::tick(s, dt);
+
+    circle.tick(s, position, 2.f, (vec4f){220, 150, 150, 255});
+
+    text txt;
+    txt.render(s, get_display_info(), position, 14, text_options::CENTERED);
+}
+
+save mining_drill::make_save()
+{
+    byte_vector vec;
+    vec.push_back<vec2f>(position);
+    vec.push_back<vecrf>(conv.local_storage);
+
+    return {entity_type::MINING_DRILL, vec};
+}
+
+std::string mining_drill::get_display_info()
+{
+    return "Drill";
 }
 
 environment_balancer::environment_balancer()

@@ -40,6 +40,13 @@ struct planet_gen
         return tex;
     }
 
+    float* get_iron(int width, int height)
+    {
+        float* noise = pnoise_iron(width, height);
+
+        return noise;
+    }
+
     sf::Texture get_iron_tex(int width, int height)
     {
         float* noise = pnoise_iron(width, height);
