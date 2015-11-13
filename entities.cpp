@@ -158,6 +158,10 @@ void player::tick(state& s, float dt)
         }
     }
 
+    ///still unsure about lumpy distribution. Ideally we'd want to take from the currently
+    ///selected resource or the nearest... maybe? Or perhaps lumpy *is* best?
+    player_resource_network.tick(s, dt, true);
+
     std::string display_total = "   Inventory:\n\n";
 
     for(int i=0; i<carried.size(); i++)
@@ -183,9 +187,6 @@ void player::tick(state& s, float dt)
 
     carried_display.tick(s, (vec2f){700.f, 20.f}, player_resource_network.network_resources, 10, true);
 
-    ///still unsure about lumpy distribution. Ideally we'd want to take from the currently
-    ///selected resource or the nearest... maybe? Or perhaps lumpy *is* best?
-    player_resource_network.tick(s, dt, true);
 }
 
 ///we need to set_active the player when loading
