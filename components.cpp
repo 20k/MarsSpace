@@ -1630,20 +1630,36 @@ void resource_network::add_unique(resource_converter* conv)
 
 void resource_network::add_net(resource_network* net)
 {
-    for(auto& i : connected_networks)
+    /*for(auto& i : connected_networks)
+        if(i == net)
+            return;*/
+
+    auto nets = get_all_connected();
+
+    for(auto& i : nets)
+    {
         if(i == net)
             return;
+    }
 
     if(net == this)
         return;
 
     connected_networks.push_back(net);
+    net->connected_networks.push_back(this);
+
+    network_resources = net->network_resources + network_resources;
+    max_network_resources = net->max_network_resources + max_network_resources;
+
+    distribute_fractionally_globally(network_resources);
 }
 
 void resource_network::add(resource_converter* conv)
 {
     network_resources = network_resources + conv->local_storage;
     max_network_resources = max_network_resources + conv->max_storage;
+
+    distribute_fractionally_globally(network_resources);
 
     converters.push_back(conv);
 }
@@ -1661,6 +1677,8 @@ void resource_network::rem(resource_converter* conv)
             i--;
         }
     }
+
+    distribute_fractionally_globally(network_resources);
 }
 
 void resource_network::clear()
@@ -1677,6 +1695,8 @@ vecrf resource_network::add(const vecrf& res)
 
     auto diff = network_resources - old;
 
+    distribute_fractionally_globally(network_resources);
+
     return res - diff;
 }
 
@@ -1687,6 +1707,8 @@ vecrf resource_network::take(const vecrf& res)
     network_resources = max(network_resources - res, 0.f);
 
     auto diff = old - network_resources;
+
+    distribute_fractionally_globally(network_resources);
 
     return diff;
 }
@@ -1860,6 +1882,14 @@ void resource_network::distribute_fractionally_globally(const vecrf& amount)
         c->local_storage = frac_to_store * amount;
     }
 
+    auto nets = get_all_connected();
+
+    for(auto& i : nets)
+    {
+        i->network_resources = amount;
+        i->max_network_resources = global_max;
+    }
+
     /*auto net = get_all_connected();
 
     vecrf global_storage = get_global_max();
@@ -1931,6 +1961,13 @@ void resource_network::distribute_lump_locally(const vecrf& amount)
 ///proportional is easiest
 ///I'm going to have to scrap this and do it properly, aren't I
 ///gunna have to deal with deleted resource networks later somehow
+
+///so at the moment, the network_resources is broken
+///so when we add to the network, it needs to get stapeled onto ones network resources (fine), which will auto distribute
+///when we take from the network, we need to lump that shit between the network any way we care too
+///or maybe we dont, we can just distribute globally because it dont matter?
+///or maybe it does
+
 void resource_network::tick(state& s, float dt, bool lump)
 {
     if(processed)
