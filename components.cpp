@@ -1611,6 +1611,10 @@ resource_network::resource_network()
 {
     network_resources = 0.f;
     max_network_resources = 0.f;
+    ///so that other networks can do my stuff for me
+    ///and we won't double/ntuple tick
+    processed = false;
+    touched = false;
 }
 
 void resource_network::add_unique(resource_converter* conv)
@@ -1630,6 +1634,9 @@ void resource_network::add_net(resource_network* net)
         if(i == net)
             return;
 
+    if(net == this)
+        return;
+
     connected_networks.push_back(net);
 }
 
@@ -1637,8 +1644,6 @@ void resource_network::add(resource_converter* conv)
 {
     network_resources = network_resources + conv->local_storage;
     max_network_resources = max_network_resources + conv->max_storage;
-
-    conv->local_storage = 0.f;
 
     converters.push_back(conv);
 }
@@ -1698,6 +1703,226 @@ vecrf resource_network::get_local_max()
     return local_max;
 }
 
+vecrf resource_network::get_local_available()
+{
+    vecrf local_av = 0.f;
+
+    for(auto& i : converters)
+    {
+        local_av = local_av + i->local_storage;
+    }
+
+    return local_av;
+}
+
+std::vector<resource_network*> resource_network::get_all_connected()
+{
+    std::vector<resource_network*> encountered = {this};
+    std::vector<resource_network*> to_process = connected_networks;
+
+    this->touched = true;
+
+    while(to_process.size() != 0)
+    {
+        auto net = to_process.back();
+        encountered.push_back(net);
+        to_process.pop_back();
+
+        for(auto& i : net->connected_networks)
+        {
+            if(!i->touched)
+            {
+                to_process.push_back(i);
+                i->touched = true;
+            }
+        }
+    }
+
+    for(auto& i : encountered)
+    {
+        i->touched = false;
+    }
+
+    return encountered;
+}
+
+std::set<resource_converter*> resource_network::get_unique_converters()
+{
+    auto net = get_all_connected();
+
+    std::set<resource_converter*> res;
+
+    for(auto& i : net)
+    {
+        for(auto& j : i->converters)
+        {
+            res.insert(j);
+        }
+    }
+
+    return res;
+}
+
+vecrf resource_network::get_global_max()
+{
+    /*auto nets = get_all_connected();
+
+    vecrf global = 0.f;
+
+    for(auto& i : nets)
+    {
+        global = global + i->get_local_max();
+    }
+
+    return global;*/
+
+    auto convs = get_unique_converters();
+
+    vecrf global = 0.f;
+
+    for(resource_converter* i : convs)
+    {
+        global = global + i->max_storage;
+    }
+
+    return global;
+}
+
+vecrf resource_network::get_global_available()
+{
+    /*auto nets = get_all_connected();
+
+    vecrf global = 0.f;
+
+    for(auto& i : nets)
+    {
+        global = global + i->get_local_available();
+    }
+
+    return global;*/
+
+    auto convs = get_unique_converters();
+
+    vecrf global = 0.f;
+
+    for(resource_converter* i : convs)
+    {
+        global = global + i->local_storage;
+    }
+
+    return global;
+}
+
+void resource_network::zero_local_containers()
+{
+    for(auto& i : converters)
+    {
+        i->local_storage = 0.f;
+    }
+}
+
+void resource_network::zero_global_containers()
+{
+    auto net = get_all_connected();
+
+    for(auto& i : net)
+        i->zero_local_containers();
+}
+
+void resource_network::distribute_fractionally_globally(const vecrf& amount)
+{
+    auto convs = get_unique_converters();
+
+    vecrf global_max = get_global_max();
+
+    float total_storage = global_max.sum_absolute();
+
+    if(total_storage < 0.00001f)
+        return;
+
+    for(auto& c : convs)
+    {
+        vecrf storage = c->max_storage;
+
+        vecrf frac_to_store;
+
+        for(int i=0; i<resource::RES_COUNT; i++)
+        {
+            if(global_max.v[i] < 0.00001f)
+                frac_to_store.v[i] = 0;
+            else
+            {
+                ///give me storage relative to the overall storage
+                frac_to_store.v[i] = storage.v[i] / global_max.v[i];
+            }
+        }
+
+        c->local_storage = frac_to_store * amount;
+    }
+
+    /*auto net = get_all_connected();
+
+    vecrf global_storage = get_global_max();
+
+    float total_storage = global_storage.sum_absolute();
+
+    if(total_storage < 0.00001f)
+        return;
+
+    for(resource_network*& i : net)
+    {
+        vecrf storage = i->get_local_max();
+
+        float frac = storage.sum_absolute() / total_storage;
+
+        i->distribute_fractionally_locally(frac * amount);
+
+        //i->add
+    }*/
+}
+
+void resource_network::distribute_fractionally_locally(const vecrf& amount)
+{
+    for(auto& c : converters)
+    {
+        auto storage = c->max_storage;
+
+        vecrf frac_to_store;
+
+        for(int i=0; i<resource::RES_COUNT; i++)
+        {
+            if(max_network_resources.v[i] < 0.00001f)
+                frac_to_store.v[i] = 0;
+            else
+            {
+                ///give me storage relative to the overall storage
+                frac_to_store.v[i] = storage.v[i] / max_network_resources.v[i];
+            }
+        }
+
+        auto local_frac = amount * frac_to_store;
+
+        c->local_storage = local_frac;
+    }
+}
+
+void resource_network::distribute_lump_locally(const vecrf& amount)
+{
+    auto amount_to_allocate = amount;
+
+    for(resource_converter*& c : converters)
+    {
+        c->local_storage = 0.f;
+        vecrf leftover = c->add(amount_to_allocate);
+
+        vecrf diff = amount_to_allocate - leftover;
+
+        amount_to_allocate = amount_to_allocate - diff;
+
+        amount_to_allocate = max(amount_to_allocate, 0.f);
+    }
+}
+
 ///no processing done here
 ///only resource distribution
 ///distribute equally? or proportionally?
@@ -1708,16 +1933,26 @@ vecrf resource_network::get_local_max()
 ///gunna have to deal with deleted resource networks later somehow
 void resource_network::tick(state& s, float dt, bool lump)
 {
-    if(converters.size() == 0)
+    if(processed)
+    {
+        processed = false;
         return;
+    }
 
-    //vecrf resource_accum;
-    //resource_accum = 0.f;
+    max_network_resources = get_global_max();
 
+    ///this is better
+    ///but means if resources are destroyed, we'll only lose them if the network cant store the extra capacity
+    ///which is sort of not really what we want
+    network_resources = min(network_resources, max_network_resources);
 
-    max_network_resources = get_local_max();
+    zero_global_containers();
 
-    for(resource_converter* i : converters)
+    auto conv = get_unique_converters();
+
+    //printf("%i\n", conv.size());
+
+    for(resource_converter* i : conv)
     {
         i->absorb_all(s, dt);
         //printf("%f\n", i->environment_absorption.local_environment.v[air::C02]);
@@ -1725,50 +1960,24 @@ void resource_network::tick(state& s, float dt, bool lump)
         i->emit_all(s, dt);
     }
 
+    auto nets = get_all_connected();
+
+    for(auto& i : nets)
+    {
+        if(i != this)
+            i->processed = true;
+    }
+
     ///distribute resources proportionally
     ///if something is destroyed, we'll lose the
     ///proportional resources from the network
     if(!lump)
     {
-        for(auto& c : converters)
-        {
-            auto storage = c->max_storage;
-
-            vecrf frac_to_store;
-
-            for(int i=0; i<resource::RES_COUNT; i++)
-            {
-                if(storage.v[i] == 0)
-                    frac_to_store.v[i] = 0;
-                else
-                {
-                    ///give me storage relative to the overall storage
-                    frac_to_store.v[i] = storage.v[i] / max_network_resources.v[i];
-                }
-            }
-
-            ///we're doing this for the moment so that later I can affect the lost local storages
-            ///now that the network actually stores the resources, this is broken
-            auto local_frac = network_resources * frac_to_store;
-
-            c->local_storage = local_frac;
-        }
+        distribute_fractionally_globally(network_resources);
     }
     else
     {
-        auto amount_to_allocate = network_resources;
-
-        for(resource_converter*& c : converters)
-        {
-            c->local_storage = 0.f;
-            vecrf leftover = c->add(amount_to_allocate);
-
-            vecrf diff = amount_to_allocate - leftover;
-
-            amount_to_allocate = amount_to_allocate - diff;
-
-            amount_to_allocate = max(amount_to_allocate, 0.f);
-        }
+        distribute_lump_locally(network_resources);
     }
 
 

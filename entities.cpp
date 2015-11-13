@@ -949,12 +949,12 @@ void resource_filler::add_to_resource_network(resource_network& _net)
 ///and we can integrate rover support etc later
 void resource_filler::tick(state& s, float dt)
 {
-    if(net == nullptr)
-        return;
-
     interact.set_position(position);
     interact.tick(s);
     circle.tick(s, position, 1.f, (vec4f){128, 128, 128, 255}, 0.5f);
+
+    if(net == nullptr)
+        return;
 
     std::vector<entity*> candidate_entities = interact.get_entities_within(s);
 
@@ -1212,13 +1212,21 @@ void resource_network_entity::tick(state& s, float dt)
 
     for(auto& i : entities_within_network)
     {
+        if(i == this)
+            continue;
+
         ///this is what i get for having a shitty component system
         resource_entity* en = dynamic_cast<resource_entity*>(i);
 
-        if(en == nullptr)
-            continue;
+        if(en != nullptr)
+            en->add_to_resource_network(net);
 
-        en->add_to_resource_network(net);
+        resource_network_entity* rne = dynamic_cast<resource_network_entity*>(i);
+
+        if(rne != nullptr)
+        {
+            net.add_net(&rne->net);
+        }
     }
 
     net.tick(s, dt);

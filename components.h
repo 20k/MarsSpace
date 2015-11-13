@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <vec/vec.hpp>
 #include <vector>
+#include <set>
 #include <memory>
 #include "air.hpp"
 
@@ -482,6 +483,24 @@ struct resource_network
     resource_network();
 
     vecrf get_local_max();
+    vecrf get_local_available();
+
+    vecrf get_global_max();
+    vecrf get_global_available();
+
+    void zero_local_containers();
+    void zero_global_containers();
+
+    void distribute_fractionally_globally(const vecrf& amount);
+    void distribute_fractionally_locally(const vecrf& amount);
+
+    void distribute_lump_locally(const vecrf& amount);
+
+    std::vector<resource_network*> get_all_connected();
+    std::set<resource_converter*> get_unique_converters();
+
+    bool processed;
+    bool touched; ///for graph operations
 };
 
 struct damageable
