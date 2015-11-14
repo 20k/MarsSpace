@@ -697,7 +697,7 @@ void hydrogen_battery::tick(state& s, float dt)
 {
     resource_entity::tick(s, dt);
     ///orange
-    circle.tick(s, position, 5.f, (vec4f){255, 140, 0, 255});
+    circle.tick(s, position, game::hydrogen_battery_radius, game::hydrogen_battery_colour);
 
     txt.render(s, air::short_names[air::POWER], position, 24, (text_options::text_options)(text_options::CENTERED | text_options::OUTLINED));
 }
@@ -713,11 +713,9 @@ save hydrogen_battery::make_save()
 
 gas_storage::gas_storage(air_t _type)
 {
-    float liquid_litres = 50.f;
-
     ///eh. Precise accuracy, I don't care atm
     ///we can change this to an accurate map later
-    float gas_litres = liquid_litres * air::liquid_to_gas_conversion_ratio_c02;
+    float gas_litres = game::gas_storage_litres;
 
     type = _type;
     conv.set_max_storage({{type, gas_litres}}); ///litres
@@ -729,7 +727,6 @@ gas_storage::gas_storage(resource_network& net, air_t _type) : gas_storage(_type
     load(net);
 }
 
-
 gas_storage::gas_storage(byte_fetch& fetch) : gas_storage(fetch.get<air_t>())
 {
     load(fetch);
@@ -739,11 +736,11 @@ void gas_storage::tick(state& s, float dt)
 {
     resource_entity::tick(s, dt);
 
-    float rad = 5.f;
+    float rad = game::gas_storage_radius;
 
-    circle.tick(s, position, rad, (vec4f){100, 255, 255, 255});
+    circle.tick(s, position, rad, game::gas_storage_colour);
 
-    txt.render(s, air::short_names[type], position, 24, (text_options::text_options)(text_options::CENTERED | text_options::OUTLINED));
+    txt.render(s, air::short_names[type], position, game::gas_storage_text_size, (text_options::text_options)(text_options::CENTERED | text_options::OUTLINED));
 }
 
 save gas_storage::make_save()

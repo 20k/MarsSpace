@@ -1,6 +1,8 @@
 #ifndef GAME_CONSTANTS_H_INCLUDED
 #define GAME_CONSTANTS_H_INCLUDED
 
+#include "air.hpp"
+
 ///this is going to take a while to fill
 namespace game
 {
@@ -19,6 +21,15 @@ namespace game
     float solar_panel_watts_ps = 900;
 
     float hydrogen_battery_watts_storage = 9 * 1000.f * 1000.f;
+    float hydrogen_battery_radius = 5.f;
+    vec4f hydrogen_battery_colour = (vec4f){255, 140, 0, 255};
+
+    float liquid_gas_storage_litres = 50.f;
+    float gas_storage_litres = 50.f * air::liquid_to_gas_conversion_ratio_c02;
+    float gas_storage_radius = 5.f;
+    vec4f gas_storage_colour = (vec4f){100, 255, 255, 255};
+    int  gas_storage_text_size = 24;
+
 };
 
 #endif // GAME_CONSTANTS_H_INCLUDED
