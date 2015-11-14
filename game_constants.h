@@ -30,6 +30,19 @@ namespace game
     vec4f gas_storage_colour = (vec4f){100, 255, 255, 255};
     int  gas_storage_text_size = 24;
 
+    /*float oxygen_reclaimer_litres_ph = 0.5f;
+    float oxygen_reclaimer_litres_pm = litres_ph / 60.f;
+    float oxygen_reclaimer_litres_ps = litres_pm / 60.f;*/
+
+    ///in terms of gas
+    ///this is actually mostly irrelevant, the bottleneck is air transfer
+    ///which can be fixed when we gpu process it
+    float oxygen_reclaimer_litres_ps = 0.1;
+    float oxygen_reclaimer_gas_absorbed_ps = 100;
+    float oxygen_reclaimer_co2_storage = 1.f;
+    float oxygen_reclaimer_power_relative = 1000.f; ///that makes the conversion 10000:1
+    float oxygen_reclaimer_gas_relative = oxygen_reclaimer_litres_ps;
+
 };
 
 #endif // GAME_CONSTANTS_H_INCLUDED

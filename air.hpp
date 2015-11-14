@@ -17,7 +17,7 @@ namespace air
         HYDROGEN = 0,
         NITROGEN,
         OXYGEN,
-        C02,
+        C02, ///How on earth did I manage to misspell this
         WATER,
         TOXIC,
         //TEMPERATURE,

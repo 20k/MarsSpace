@@ -755,26 +755,34 @@ save gas_storage::make_save()
 
 oxygen_reclaimer::oxygen_reclaimer()
 {
-    float litres_per_hour = 0.5f;
+    /*float litres_per_hour = 0.5f;
     float litres_per_minute = litres_per_hour / 60.f;
     float litres_ps = litres_per_minute / 60.f;
 
     float gas_accounted_litres_ps = air::liquid_to_gas_conversion_ratio_c02 * litres_ps;
 
-    float game_speed = 1000.f;
+    float game_speed = 1000.f;*/
 
     ///all resources are per second. So 1 watt produces litresps c02
     ///well, it should be litres_ps, but unfortunately we cant use realistic values
     ///otherwise itll take 1.5 actual years to play the game
     ///and as exciting as that is, its probably not ideal to build a playerbase
-    //conv.set_absorption_rate(gas_accounted_litres_ps * game_speed);
-    conv.set_air_transfer_rate(gas_accounted_litres_ps * game_speed);
+
+    /*conv.set_air_transfer_rate(gas_accounted_litres_ps * game_speed);
     conv.set_max_storage({{resource::C02, 1.f}});
     conv.set_usage_ratio({{resource::POWER, 1000.f}});
     conv.set_usage_ratio({{resource::C02, gas_accounted_litres_ps}});
     conv.set_output_ratio({{resource::OXYGEN, 1.f}});
     conv.set_efficiency(gas_accounted_litres_ps / (1000.f + gas_accounted_litres_ps));
-    conv.set_amount(1000.f + gas_accounted_litres_ps); ///per s
+    conv.set_amount(1000.f + gas_accounted_litres_ps); ///per s*/
+
+    conv.set_air_transfer_rate(game::oxygen_reclaimer_gas_absorbed_ps);
+    conv.set_max_storage({{resource::C02, game::oxygen_reclaimer_co2_storage}});
+    conv.set_usage_ratio({{resource::POWER, game::oxygen_reclaimer_power_relative}});
+    conv.set_usage_ratio({{resource::C02, game::oxygen_reclaimer_gas_relative}});
+    conv.set_output_ratio({{resource::OXYGEN, 1.f}});
+    conv.set_efficiency(game::oxygen_reclaimer_gas_relative / (game::oxygen_reclaimer_power_relative + game::oxygen_reclaimer_gas_relative));
+    conv.set_amount(game::oxygen_reclaimer_power_relative + game::oxygen_reclaimer_litres_ps);
 
     ///none
     display.set_element_to_display((resource_t)resource::C02);
