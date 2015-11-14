@@ -80,6 +80,13 @@ namespace game
 
     static float wall_segment_segment_length = 5.f;
     static float wall_segment_segment_iron_needed = 0.25f; ///this should really be resource required
+
+    static vec4f wall_segment_segment_not_completed_col = (vec4f){255, 140, 140, 255};
+    static vec4f wall_segment_segment_completed_col = (vec4f){140, 255, 140, 255};
+
+    static float wall_segment_thickness = 0.5f;
+    static float wall_segment_outline_thickness = 0.25f;
+    static vec4f wall_segment_colour = (vec4f){190, 190, 190, 255};
 };
 
 vecrf game::get_ideal_suit_storage()

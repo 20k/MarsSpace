@@ -71,7 +71,7 @@ struct renderable_circle
 
 struct renderable_rectangle
 {
-    void tick(state& s, vec2f start, vec2f finish, float thickness, vec4f col = (vec4f){190, 190, 190, 255});
+    void tick(state& s, vec2f start, vec2f finish, float thickness, vec4f col = (vec4f){190, 190, 190, 255}, float outline_thickness = 0.5f);
 };
 
 struct constructable

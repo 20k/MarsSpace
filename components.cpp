@@ -47,7 +47,6 @@ void renderable_file::tick(state& s, vec2f pos, float scale, float rotation, boo
     float xp = pos.v[0];
     float yp = pos.v[1];
 
-
     if(shadow)
     {
         rtex->clear(sf::Color(0, 0, 0, 0));
@@ -148,7 +147,7 @@ void renderable_circle::tick(state& s, vec2f pos, float rad, vec4f col, float ou
     s.win->draw(circle);
 }
 
-void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width, vec4f col)
+void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width, vec4f col, float outline_thickness)
 {
     vec2f diff = finish - start;
 
@@ -166,7 +165,7 @@ void renderable_rectangle::tick(state& s, vec2f start, vec2f finish, float width
     rect.setRotation(angle*360/(2*M_PIf));
     rect.setFillColor(sf::Color(col.v[0], col.v[1], col.v[2], col.v[3]));
 
-    rect.setOutlineThickness(0.5);
+    rect.setOutlineThickness(outline_thickness);
     rect.setOutlineColor(sf::Color(110,110,110, 255));
 
     s.win->draw(rect);
@@ -431,11 +430,11 @@ wall_segment_segment::wall_segment_segment(vec2f _start, vec2f _finish, float re
 
 void wall_segment_segment::tick(state& s, float dt)
 {
-    vec4f not_completed_col = (vec4f){255, 140, 140, 255};
+    vec4f not_completed_col = game::wall_segment_segment_not_completed_col;
 
     not_completed_col = not_completed_col / 2.f + (not_completed_col / 2.f) * construct.get_completed_frac();
 
-    vec4f completed_col = (vec4f){140, 255, 140, 255};
+    vec4f completed_col = game::wall_segment_segment_completed_col;
 
     vec4f display_col;
 
@@ -448,7 +447,7 @@ void wall_segment_segment::tick(state& s, float dt)
         display_col = not_completed_col;
     }
 
-    rect.tick(s, start, finish, 0.5f, display_col);
+    rect.tick(s, start, finish, game::wall_segment_thickness, display_col, game::wall_segment_outline_thickness);
 
     i1.tick(s);
     i2.tick(s);
@@ -554,7 +553,7 @@ void wall_segment::tick(state& s, float dt)
     {
         sub_segments.clear();
 
-        rect.tick(s, start, finish, 0.5f);
+        rect.tick(s, start, finish, game::wall_segment_thickness, game::wall_segment_colour, game::wall_segment_outline_thickness);
 
         block.tick(s);
     }
