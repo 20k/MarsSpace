@@ -4,6 +4,8 @@
 
 #include "sound.h"
 
+#include "game_constants.h"
+
 entity::entity()
 {
     position = (vec2f){0.f, 0.f};
@@ -40,11 +42,11 @@ player::player()
     foot.load("./res/foot.png");
 
     ///should I define units right off the bat
-    speed.set_speed(14.f);
+    speed.set_speed(game::player_speed);
 
     has_suit = true;
 
-    momentum.set_mass(200.f);
+    momentum.set_mass(game::player_mass);
 
     my_suit = new suit_entity(position);
 
@@ -78,10 +80,10 @@ void player::tick(state& s, float dt)
 {
     vec2f key_dir = key.tick();
 
-    float cur_speed = speed.get_speed() * 1.5;
+    float cur_speed = speed.get_speed();
 
     if(has_suit)
-        cur_speed = speed.get_speed();
+        cur_speed = speed.get_speed() * game::player_with_suit_speed_modifier;
 
     float slowdown_frac = 0.9999f;
 
@@ -138,11 +140,11 @@ void player::tick(state& s, float dt)
         my_suit->tick_suit(s, dt);
         my_suit->this_suit.suit_display.tick(s, my_suit->this_suit);
 
-        momentum.set_mass(100.f);
+        momentum.set_mass(game::player_with_suit_mass);
     }
     else
     {
-        momentum.set_mass(10.f);
+        momentum.set_mass(game::player_mass);
     }
 
     ///print currently selected element
@@ -439,8 +441,8 @@ save building::make_save()
 
 door::door(vec2f _start, vec2f _finish, float time_to_open) :
     open(time_to_open),
-    i1((_finish - _start).rot(M_PI/2.f).norm() * 3.f + (_start + _finish)/2.f, 2.f), ///temp
-    i2((_finish - _start).rot(-M_PI/2.f).norm() * 3.f + (_start + _finish)/2.f, 2.f), ///temp
+    i1((_finish - _start).rot(M_PI/2.f).norm() * game::interact_distance_from_door + (_start + _finish)/2.f, game::interact_radius_door), ///temp
+    i2((_finish - _start).rot(-M_PI/2.f).norm() * game::interact_distance_from_door + (_start + _finish)/2.f, game::interact_radius_door), ///temp
     block(_start, _finish)
 {
     fixed_start = _start;
@@ -568,8 +570,8 @@ void resource_packet::load(resource_t _type)
     type = _type;
 
     ///number out of a hat for the moment
-    conv.set_max_storage({{type, 10.f}});
-    conv.local_storage.v[type] = 10.f;
+    conv.set_max_storage({{type, game::resource_packet_max_storage}});
+    conv.local_storage.v[type] = game::resource_packet_default_storage;
 
     display.set_element_to_display(type);
 }
@@ -589,7 +591,7 @@ resource_packet::resource_packet(byte_fetch& fetch)
 void resource_packet::tick(state& s, float dt)
 {
     interact.set_position(position);
-    interact.set_radius(2.f);
+    interact.set_radius(game::resource_packet_interact_radius);
     interact.tick(s);
 
     txt.render(s, air::short_names[type], position, 16, text_options::CENTERED);
@@ -638,7 +640,8 @@ solar_panel::solar_panel()
 {
     conv.set_max_storage({{resource::POWER, 0.1f}});
     conv.set_output_ratio({{resource::POWER, 1.f}});
-    conv.set_amount(900); ///watts
+    conv.set_amount(game::solar_panel_watts_ps); ///watts
+
     file.load("./res/solar_panel.png");
 
     display.set_element_to_display(resource::POWER);
@@ -674,7 +677,7 @@ save solar_panel::make_save()
 
 hydrogen_battery::hydrogen_battery()
 {
-    conv.set_max_storage({{resource::POWER, 9 * 1000 * 1000.f}});
+    conv.set_max_storage({{resource::POWER, game::hydrogen_battery_watts_storage}});
 
     display.set_element_to_display(resource::POWER);
 }

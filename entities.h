@@ -290,7 +290,7 @@ struct mining_drill : resource_entity
 {
     ///make me a square
     renderable_file file;
-    renderable_circle circle;
+    //renderable_circle circle;
 
     mining_drill();
     mining_drill(byte_fetch& fetch);
@@ -304,7 +304,7 @@ struct mining_drill : resource_entity
 
 struct resource_filler : resource_entity
 {
-    //renderable_circle circle;
+    renderable_circle circle;
     area_interacter interact;
 
     resource_filler();
