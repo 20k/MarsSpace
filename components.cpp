@@ -8,6 +8,9 @@
 
 uint32_t movement_blocker::gid = 0;
 
+///gameplay constants initialised in this file need to be externalised
+
+
 state::state(sf::RenderWindow* _win, sf::Texture& tex, air_processor& _air)
 {
     win = _win;

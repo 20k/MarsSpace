@@ -638,7 +638,7 @@ std::string resource_packet::get_display_info()
 
 solar_panel::solar_panel()
 {
-    conv.set_max_storage({{resource::POWER, 0.1f}});
+    conv.set_max_storage({{resource::POWER, game::solar_panel_power_storage}});
     conv.set_output_ratio({{resource::POWER, 1.f}});
     conv.set_amount(game::solar_panel_watts_ps); ///watts
 
@@ -802,7 +802,7 @@ void oxygen_reclaimer::tick(state& s, float dt)
 {
     resource_entity::tick(s, dt);
 
-    circle.tick(s, position, 1.f, (vec4f){100, 100, 255, 255});
+    circle.tick(s, position, game::oxygen_reclaimer_radius, game::oxygen_reclaimer_colour);
 }
 
 save oxygen_reclaimer::make_save()
@@ -817,9 +817,9 @@ save oxygen_reclaimer::make_save()
 mining_drill::mining_drill()
 {
     ///iron is in kg
-    conv.set_max_storage({{resource::IRON, 100}});
+    conv.set_max_storage({{resource::IRON, game::mining_drill_iron_storage}});
 
-    float power_to_iron_ratio = 1.f/4000.f;
+    float power_to_iron_ratio = game::mining_drill_power_to_iron_ratio;
 
     ///remember because im an idiot these are normalised
     ///so eg 2 input to 1 output just gives 1:1
@@ -827,7 +827,7 @@ mining_drill::mining_drill()
     conv.set_output_ratio({{resource::IRON, 1.f}});
     conv.set_efficiency(power_to_iron_ratio);
 
-    const float base_iron_kg_per_second = 0.1;
+    const float base_iron_kg_per_second = game::mining_drill_iron_kg_ps;
 
     conv.set_amount(base_iron_kg_per_second * 1.f / power_to_iron_ratio);
 
@@ -850,9 +850,9 @@ void mining_drill::tick(state& s, float dt)
 
     file.tick(s, position, 0.033f, 0.f, false);
 
-    float power_to_iron_ratio = 1.f/4000.f;
+    float power_to_iron_ratio = game::mining_drill_power_to_iron_ratio;
 
-    const float base_iron_kg_per_second = 0.1;
+    const float base_iron_kg_per_second = game::mining_drill_iron_kg_ps;
 
     float rate = base_iron_kg_per_second * 1.f / power_to_iron_ratio;
 
@@ -882,7 +882,7 @@ std::string mining_drill::get_display_info()
 
 environment_balancer::environment_balancer()
 {
-    conv.set_max_storage({{resource::C02, 0.1f}});
+    conv.set_max_storage({{resource::C02, game::environment_balancer_co2_storage}});
 
     ///bad
     ///really bad
@@ -951,7 +951,7 @@ void environment_balancer::process_environment(state& s, float dt)
     ///also, it turns out I was really wrong in normalising the conversion parameters
     ///Im going to have to change the api because it sucks
 
-    float air_processed_per_second = 1.f;
+    float air_processed_per_second = game::environment_balancer_air_processed_ps;
 
     environment.set_max_air(air_processed_per_second);
     environment.absorb_all(s, position, air_processed_per_second * dt);
@@ -980,7 +980,7 @@ void environment_balancer::tick(state& s, float dt)
 {
     process_environment(s,dt);
 
-    circle.tick(s, position, 1.f, (vec4f({255, 100, 255, 255})));
+    circle.tick(s, position, game::environment_balancer_radius, game::environment_balancer_colour);
 }
 
 resource_filler::resource_filler()
@@ -1025,7 +1025,7 @@ void resource_filler::tick(state& s, float dt)
 {
     interact.set_position(position);
     interact.tick(s);
-    circle.tick(s, position, 1.f, (vec4f){128, 128, 128, 255}, 0.5f);
+    circle.tick(s, position, game::resource_filler_radius, game::resource_filler_colour, 0.5f);
 
     if(net == nullptr)
         return;
@@ -1057,9 +1057,7 @@ void resource_filler::tick(state& s, float dt)
 
     //printf("found a suit inside me\n");
 
-    vecrf ideal_suit_storage = 0.f;
-    ideal_suit_storage.v[air::OXYGEN] = 1.f;
-    ideal_suit_storage.v[air::NITROGEN] = 1.f;
+    vecrf ideal_suit_storage = game::get_ideal_suit_storage();
 
     //vecrf parent_air = environment.get_parent(s, position);
 
@@ -1072,11 +1070,10 @@ void resource_filler::tick(state& s, float dt)
     ///its inherently non linear
     ///so dont look at this and think that i designed it well
     ///because i am still bad at programming
-    const float air_transferred_per_second = 0.1f;
+    const float air_transferred_per_second = game::resource_filler_air_transfer_ps;
 
     if(to_ideal.sum_absolute() < 0.00001f)
         return;
-
 
     auto amount = to_ideal.sum_absolute();
 
@@ -1105,7 +1102,7 @@ void resource_filler::tick(state& s, float dt)
 
 suit_entity::suit_entity()
 {
-    interact.set_radius(2.f);
+    interact.set_radius(game::suit_entity_interact_radius);
     file.load("./res/character.png");
 }
 
@@ -1185,7 +1182,7 @@ std::string suit_entity::get_display_info()
 
 repair_entity::repair_entity()
 {
-    interact.set_radius(1.5f);
+    interact.set_radius(game::repair_entity_interact_radius);
 }
 
 repair_entity::repair_entity(byte_fetch& fetch) : repair_entity()
@@ -1232,6 +1229,7 @@ void repair_entity::tick(state& s, float dt)
     txt.render(s, get_display_info(), position);
 }
 
+///should make it so that itll repair nearby stuff too
 void repair_entity::on_use(state& s, float dt, entity* en)
 {
     player* play = dynamic_cast<player*>(en);
@@ -1239,7 +1237,7 @@ void repair_entity::on_use(state& s, float dt, entity* en)
     if(play == nullptr)
         return;
 
-    float repair_speed = 0.1f;
+    float repair_speed = game::repair_entity_repair_speed;
 
     float amount = deplete(repair_speed * dt);
 
@@ -1255,7 +1253,7 @@ std::string repair_entity::get_display_info()
 
 resource_network_entity::resource_network_entity()
 {
-    effect_radius = 50.f;
+    effect_radius = game::resource_network_effect_radius;
 }
 
 resource_network_entity::resource_network_entity(byte_fetch& fetch) : resource_network_entity()
@@ -1271,9 +1269,9 @@ void resource_network_entity::set_radius(float _rad)
 
 void resource_network_entity::tick(state& s, float dt)
 {
-    object.tick(s, position, 1.f, (vec4f){100, 100, 100, 255}, 1.f);
+    object.tick(s, position, game::resource_network_radius, game::resource_network_colour, game::resource_network_border);
 
-    float border = 0.5f;
+    float border = game::resource_network_effect_border;
 
     aoe.tick(s, position, effect_radius - border, (vec4f){200, 200, 200, 7}, border, 2.f);
 
