@@ -190,7 +190,7 @@ struct wall_segment_segment
 
     area_interacter i1, i2;
 
-    wall_segment_segment(vec2f _start, vec2f _finish);
+    wall_segment_segment(vec2f _start, vec2f _finish, float required_work);
 
     void tick(state& s, float dt);
 };
@@ -204,13 +204,15 @@ struct wall_segment
 
     vec2f start, finish;
 
-    wall_segment(vec2f _start, vec2f _finish);
+    wall_segment(vec2f _start, vec2f _finish, float work_per_segment);
 
     wall_segment split_at_fraction(state& s, float frac);
 
-    void generate_sub_segments();
+    void generate_sub_segments(float work_per_segment);
     void tick(state& s, float dt);
     void destroy(state& s);
+
+    float work;
 };
 
 struct wall_splitter

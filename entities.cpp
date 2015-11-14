@@ -377,9 +377,9 @@ save planet::make_save()
     return {entity_type::PLANET, byte_vector()};
 }
 
-void building::add_wall(state& s, vec2f start, vec2f finish)
+void building::add_wall(state& s, vec2f start, vec2f finish, float work_per_segment)
 {
-    wall_segment w(start, finish);
+    wall_segment w(start, finish, work_per_segment);
 
     walls.push_back(w);
 }
@@ -398,8 +398,9 @@ building::building(byte_fetch& fetch, state& s)
     {
         auto start = fetch.get<vec2f>();
         auto finish = fetch.get<vec2f>();
+        auto work_per_segment = fetch.get<float>();
 
-        add_wall(s, start, finish);
+        add_wall(s, start, finish, work_per_segment);
 
         int sub_num = fetch.get<int32_t>();
 
@@ -424,6 +425,7 @@ save building::make_save()
     {
         vec.push_back<vec2f>(i.start);
         vec.push_back<vec2f>(i.finish);
+        vec.push_back<float>(i.work);
 
         vec.push_back<int32_t>(i.sub_segments.size());
 

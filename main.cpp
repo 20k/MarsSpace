@@ -8,6 +8,7 @@
 #include "air.hpp"
 
 #include "sound.h"
+#include "game_constants.h"
 
 using namespace std;
 
@@ -259,7 +260,7 @@ int main()
 
             ///lp1 closest to start, lp2 further away
 
-            wall_segment s1(wall.start, lp1), s2(lp2, wall.finish);
+            wall_segment s1(wall.start, lp1, game::wall_segment_segment_wall_work), s2(lp2, wall.finish, game::wall_segment_segment_wall_work);
 
             if(wall.sub_segments.size() == 0)
             {
@@ -485,7 +486,7 @@ int main()
 
             mouse_clicks.clear();
 
-            build->add_wall(st, m2, m1);
+            build->add_wall(st, m2, m1, game::wall_segment_segment_wall_work);
         }
 
         if(mouse_rclicks.size() == 2)

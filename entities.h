@@ -149,7 +149,7 @@ struct building : entity
 {
     std::vector<wall_segment> walls;
 
-    void add_wall(state& s, vec2f start, vec2f finish);
+    void add_wall(state& s, vec2f start, vec2f finish, float work_per_segment);
 
     building() = default;
     building(byte_fetch& fetch, state& s);

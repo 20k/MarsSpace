@@ -6,6 +6,8 @@
 #include <gl/glext.h>
 #include <gl/glcorearb.h>
 
+#include "game_constants.h"
+
 uint32_t movement_blocker::gid = 0;
 
 ///gameplay constants initialised in this file need to be externalised
@@ -410,20 +412,21 @@ void movement_blocker::modify_bounds(vec2f _start, vec2f _finish)
 }
 
 ///???
-wall_segment_segment::wall_segment_segment(vec2f _start, vec2f _finish)
+wall_segment_segment::wall_segment_segment(vec2f _start, vec2f _finish, float required_work)
 {
     start = _start;
     finish = _finish;
 
-    i1.set_position((finish - start).rot(M_PI/2.f).norm() * 3.f + (start + finish)/2.f), ///temp
-    i2.set_position((finish - _start).rot(-M_PI/2.f).norm() * 3.f + (start + finish)/2.f), ///temp)
+    i1.set_position((finish - start).rot(M_PI/2.f).norm() * game::wall_segment_segment_interact_distance + (start + finish)/2.f), ///temp
+    i2.set_position((finish - _start).rot(-M_PI/2.f).norm() * game::wall_segment_segment_interact_distance + (start + finish)/2.f), ///temp)
 
-    i1.set_radius(1.5f);
-    i2.set_radius(1.5f);
+    i1.set_radius(game::wall_segment_segment_interact_rad);
+    i2.set_radius(game::wall_segment_segment_interact_rad);
 
-    construct.set_work_to_complete(1.f);
+    construct.set_work_to_complete(required_work);
 
-    res_require.set_resource_requried(air::IRON, 0.25f);
+    ///this also needs to be pulled out
+    res_require.set_resource_requried(air::IRON, game::wall_segment_segment_iron_needed);
 }
 
 void wall_segment_segment::tick(state& s, float dt)
@@ -450,13 +453,15 @@ void wall_segment_segment::tick(state& s, float dt)
     i1.tick(s);
     i2.tick(s);
 
-    const float work_speed = 1.f;
+    const float work_speed = game::wall_segment_segment_work_speed;
 
     if(i1.player_has_interacted_continuous(s) || i2.player_has_interacted_continuous(s))
     {
         player* play = s.current_player;
 
-        float max_resource_usage_this_tick = res_require.get_resource_amount_required_to_complete_fraction(work_speed * dt);
+        float work_to_resource_frac = (work_speed * dt) / construct.max_work;
+
+        float max_resource_usage_this_tick = res_require.get_resource_amount_required_to_complete_fraction(work_to_resource_frac);
 
         vecrf resources_available = play->player_resource_network.network_resources;
 
@@ -490,23 +495,25 @@ void wall_segment_segment::tick(state& s, float dt)
     }
 }
 
-wall_segment::wall_segment(vec2f _start, vec2f _finish) : block(_start, _finish)
+wall_segment::wall_segment(vec2f _start, vec2f _finish, float work_per_segment) : block(_start, _finish)
 {
     start = _start;
     finish = _finish;
 
-    generate_sub_segments();
+    work = work_per_segment;
+
+    generate_sub_segments(work_per_segment);
 }
 
-void wall_segment::generate_sub_segments()
+void wall_segment::generate_sub_segments(float work_per_segment)
 {
     sub_segments.clear();
 
     vec2f dir = (finish - start).norm();
     float length = (finish - start).length();
 
-    int num = length/5;
-    dir = dir * 5.f;
+    int num = length/game::wall_segment_segment_length;
+    dir = dir * game::wall_segment_segment_length;
 
     vec2f last_start = start;
 
@@ -526,7 +533,7 @@ void wall_segment::generate_sub_segments()
         if((pos - last_start).length() < 0.1f)
             continue;
 
-        sub_segments.push_back(wall_segment_segment(last_start, pos));
+        sub_segments.push_back(wall_segment_segment(last_start, pos, work_per_segment));
 
         last_start = pos;
     }
@@ -558,12 +565,9 @@ void wall_segment::destroy(state& s)
     block.destroy_remote(s);
 }
 
-std::vector<wall_segment> wall_splitter::split(state& s, float frac, wall_segment& seg)
+/*std::vector<wall_segment> wall_splitter::split(state& s, float frac, wall_segment& seg)
 {
     vec2f new_middle = mix(seg.start, seg.finish, frac);
-
-    /*seg.destroy(s);
-    seg.block.modify_bounds(start, new_middle);*/
 
     wall_segment s1(seg.start, new_middle);
     wall_segment s2(new_middle, seg.finish);
@@ -575,10 +579,10 @@ std::vector<wall_segment> wall_splitter::split(state& s, float frac, wall_segmen
     }
 
     return {s1, s2};
-}
+}*/
 
 ///we need to deal with subsegments
-wall_segment wall_segment::split_at_fraction(state& s, float frac)
+/*wall_segment wall_segment::split_at_fraction(state& s, float frac)
 {
     vec2f new_middle = mix(start, finish, frac);
 
@@ -595,7 +599,7 @@ wall_segment wall_segment::split_at_fraction(state& s, float frac)
         new_segment.sub_segments.clear();
 
     return new_segment;
-}
+}*/
 
 vec2f mouse_fetcher::get_world(state& s)
 {
