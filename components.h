@@ -430,6 +430,7 @@ struct resource_converter
 
     ///the above two examples combined would convert 1 o2 + 1c02 -> 202 (rubbish but)
 
+    void set_max_storage_vec(const vecrf& vec);
     void set_max_storage(const std::vector<std::pair<resource_t, float>>& vec);
     void set_usage_ratio(const std::vector<std::pair<resource_t, float>>& vec);
     void set_output_ratio(const std::vector<std::pair<resource_t, float>>& vec);
@@ -577,10 +578,6 @@ namespace suit_parts
         "Right Foot",
         "Error"
     };
-
-    const float health_to_leak_conversion = 0.1f;
-    ///this means with a leak rate of 1, we'll equalise pressure with the outside world in 1 second
-    const float leak_to_pressure_normalisation_fraction = 0.01f;
 }
 
 typedef suit_parts::suit_parts suit_t;

@@ -1509,6 +1509,11 @@ void resource_converter::set_max_storage(const std::vector<std::pair<resource_t,
     }
 }
 
+void resource_converter::set_max_storage_vec(const vecrf& vec)
+{
+    max_storage = vec;
+}
+
 void resource_converter::set_usage_ratio(const std::vector<std::pair<resource_t, float>>& lv)
 {
     for(auto& i : lv)
@@ -2205,7 +2210,7 @@ float suit_part::get_leak_rate()
     ///so eg 0.5 - 0.2f / 0.8 = 1.f
     float val = (my_damage - damage_start) / (1.f - damage_start);
 
-    return val * suit_parts::health_to_leak_conversion;
+    return val * game::health_to_leak_conversion;
 }
 
 suit_status_displayer::suit_status_displayer()
@@ -2257,20 +2262,17 @@ suit::suit()
 
     balancer = new environment_balancer(suit_resource_network);
     balancer->environment.set_parent(&environment);
+    balancer->set_environment_target(game::get_suit_ideal_environment());
 
-    resource_storage.set_max_storage({{air::C02, 1.f}});
-    resource_storage.set_max_storage({{air::OXYGEN, 1.f}});
-    resource_storage.set_max_storage({{air::NITROGEN, 1.f}});
+    resource_storage.set_max_storage_vec(game::get_suit_resource_max_storage());
 
-    resource_storage.local_storage.v[air::C02] = 0.f;
-    resource_storage.local_storage.v[air::OXYGEN] = 1.f;
-    resource_storage.local_storage.v[air::NITROGEN] = 1.f;
+    resource_storage.local_storage = game::get_suit_init_storage();
 
     suit_resource_network.add(&resource_storage);
 
     ///absorption rate
     environment.set_max_air(10000.f);
-    environment.my_environment.local_environment.v[air::OXYGEN] = 1.f; ///temp
+    environment.my_environment.local_environment = game::get_suit_init_environment(); ///temp
     //environment.my_environment.local_environment.v[air::TEMPERATURE] = 294;
     ///hmm. This isn't really ideal modelling temperature as a gas
 
@@ -2311,7 +2313,7 @@ void suit::tick(state& s, float dt, vec2f pos)
     //float pressure_difference = avg_pressure - my_pressure;
 
     ///this is how fast EVERYONE is equalising
-    float equalisation_constant = leak_rate * suit_parts::leak_to_pressure_normalisation_fraction;
+    float equalisation_constant = leak_rate * game::leak_to_pressure_normalisation_fraction;
 
     equalisation_constant = clamp(equalisation_constant, 0.f, 1.f);
 

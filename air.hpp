@@ -50,7 +50,7 @@ namespace air
         "H2",
         "N2",
         "O2",
-        "C02",
+        "CO2",
         "H20",
         "BAD",
         //"TEMP",

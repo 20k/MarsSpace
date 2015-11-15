@@ -891,6 +891,8 @@ environment_balancer::environment_balancer()
     net = nullptr;
 
     display.set_element_to_display((resource_t)resource::RES_COUNT);
+
+    environment_target = air_to_resource(get_controlled_environment_atmosphere());
 }
 
 environment_balancer::environment_balancer(resource_network& _net) : environment_balancer()
@@ -928,17 +930,23 @@ save environment_balancer::make_save()
     return {entity_type::ENVIRONMENT_BALANCER, vec};
 }
 
+void environment_balancer::set_environment_target(const vecrf& target)
+{
+    environment_target = target;
+}
+
 void environment_balancer::set_parent(conditional_environment_modifier* parent)
 {
     environment.set_parent(parent);
 }
 
+///need to be able to set this differently for suit and inside
 void environment_balancer::process_environment(state& s, float dt)
 {
     if(net == nullptr)
         return;
 
-    static vecrf ideal_environment = air_to_resource(get_controlled_environment_atmosphere());
+    static vecrf ideal_environment = environment_target;
 
     vecrf parent_air = environment.get_parent(s, position);
 

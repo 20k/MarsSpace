@@ -88,7 +88,17 @@ namespace game
     static float wall_segment_outline_thickness = 0.25f;
     static vec4f wall_segment_colour = (vec4f){190, 190, 190, 255};
 
-    static float breather_lung_air_volume = 0.06;
+    static float breather_lung_air_volume = 0.06f;
+
+
+    static float health_to_leak_conversion = 0.1f;
+    ///this means with a leak rate of 1, we'll equalise pressure with the outside world in 1 second
+    static float leak_to_pressure_normalisation_fraction = 0.01f;
+
+    static vecrf get_suit_resource_max_storage();
+    static vecrf get_suit_init_storage();
+    static vecrf get_suit_init_environment();
+    static vecrf get_suit_ideal_environment();
 };
 
 vecrf game::get_ideal_suit_storage()
@@ -99,5 +109,49 @@ vecrf game::get_ideal_suit_storage()
 
     return ideal_suit_storage;
 }
+
+vecrf game::get_suit_resource_max_storage()
+{
+    vecrf rmax = 0.f;
+
+    rmax.v[air::C02] = 1.f;
+    rmax.v[air::OXYGEN] = 1.f;
+    rmax.v[air::NITROGEN] = 1.f;
+
+    return rmax;
+}
+
+vecrf game::get_suit_init_storage()
+{
+    vecrf rlocal = 0.f;
+
+    rlocal.v[air::C02] = 0.f;
+    rlocal.v[air::OXYGEN] = 1.f;
+    rlocal.v[air::NITROGEN] = 1.f;
+
+    return rlocal;
+}
+
+vecrf game::get_suit_init_environment()
+{
+    vecrf ev = 0.f;
+
+    ev.v[air::C02] = 0.f;
+    ev.v[air::OXYGEN] = 1.f;
+    ev.v[air::NITROGEN] = 0.f;
+
+    return ev;
+}
+
+vecrf game::get_suit_ideal_environment()
+{
+    vecrf ev = 0.f;
+
+    ev.v[air::OXYGEN] = 0.2f;
+    ev.v[air::NITROGEN] = 0.8f;
+
+    return ev;
+}
+
 
 #endif // GAME_CONSTANTS_H_INCLUDED
