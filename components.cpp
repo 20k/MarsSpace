@@ -646,6 +646,7 @@ void area_interacter::set_radius(float _rad)
     radius = _rad;
 }
 
+///ehh ignore in config for the moment
 void area_interacter::tick(state& s, bool gradient_centre)
 {
     float outline = 0.5f;
@@ -1140,7 +1141,7 @@ void air_environment::absorb_all(state& s, vec2f pos, float amount, float max_to
     if(amount < total_available_air)
         amount = total_available_air;*/
 
-    float current_amount = local_environment.sum();
+    float current_amount = local_environment.sum_absolute();
 
     if(current_amount + amount > max_total)
     {
@@ -1162,7 +1163,7 @@ void air_environment::absorb_all(state& s, vec2f pos, float amount, float max_to
 ///above also applies to this obvs
 void air_environment::emit_all(state& s, vec2f pos, float amount)
 {
-    float my_air = local_environment.sum();
+    float my_air = local_environment.sum_absolute();
 
     if(amount >= my_air)
         amount = my_air;
@@ -1349,22 +1350,103 @@ void conditional_environment_modifier::remove_parent()
     parent = nullptr;
 }
 
+breather::breather()
+{
+    ///temp hack
+    current_time = -M_PI/2.f;
+}
+
 ///i think this assumes 1x1 square tiles
 ///need to swap to a proper breathing model
+///FIXMEEE!!!
+///volume of spacesuit without human is about (exactly) 5 foot^3
+///volume of a liquified human being is about 2.344 foot^3
 void breather::tick(state& s, vec2f position, float dt)
 {
     ///lets put this into a breathing manager afterwards
+    ///inhalation -> exhalation cycle
     float breaths_per_minute = 14;
 
     float breaths_per_second = breaths_per_minute / 60.f;
 
-    //float breaths_per_ms = breaths_per_second / 1000.f;
+    ///4.3ish
+    float breath_cycle_length_seconds = 1.f / breaths_per_second;
 
-    float ldt = dt * breaths_per_second;
+    ///litres (?)
+    ///we can't actually do this as 6... this is too much
+    ///maybe it should be m3
+    const float lung_volume = game::breather_lung_air_volume;
+    const float base_lung_air = lung_volume * 0.2f;
+
+    lungs.set_max_air(lung_volume + base_lung_air);
+
+    ///integral of sinx between 0 and PI is 2
+
+    ///we need to integrate between time now, and next time, and inhale that amount of air
+
+    float next_time = current_time + dt;
+
+    if(next_time > breath_cycle_length_seconds)
+        next_time -= breath_cycle_length_seconds;
+
+    float c_frac = current_time / breath_cycle_length_seconds;
+    float n_frac = next_time / breath_cycle_length_seconds;
+
+    float s_c = c_frac * M_PI * 2;
+    float s_n = n_frac * M_PI * 2;
+
+    float current_sin = sin(s_c);
+    float next_sin = sin(s_n);
+
+    float air_change = lung_volume * (next_sin - current_sin)/2.f;
+
+    ///need to make it much harder to inhale if the air is less than a certain amount
+    ///or maybe we simply just need to buff lung volume, and air volume in suit
+    ///eg we could standardise on gas volume
+    if(air_change > 0)
+    {
+        lungs.absorb_all(s, position, air_change);
+    }
+    else
+    {
+        lungs.emit_all(s, position, -air_change);
+    }
+
+    float o2_to_co2_rate = breaths_per_second * dt * 0.2f;
+
+    display.tick(s, (vec2f){20.f, 20.f}, resource_to_air(lungs.my_environment.local_environment), true);
+
+    lungs.my_environment.convert_percentage(o2_to_co2_rate * lung_volume, 0.05f / 0.20f, air::OXYGEN, air::C02);
+
+    //display.tick(s, (vec2f){20.f, 200.f}, resource_to_air(lungs.my_environment.local_environment), true);
+
+
+    if(lungs.get_pressure() < base_lung_air)
+    {
+        float diff = base_lung_air - lungs.get_pressure();
+
+        lungs.absorb_all(s, position, diff);
+    }
+
+
+    /*float volume_to_exchange = -cos(s_n) + -cos(s_c);*/
+
+    /*float current_air_volume = sin(s_c);
+    float next_air_volume = sin(s_n);*/
+
+    ///hmm no. Sinx is how much air is IN the lungs currently, not dvdt
+    ///no thats also a lie, it is dvdt
+
+
+    current_time += dt;
+
+    if(current_time > breath_cycle_length_seconds)
+        current_time -= breath_cycle_length_seconds;
+
+    /*float ldt = dt * breaths_per_second;
 
     ///use this for some sort of hardcore realism mode where it takes 2 real days time.
     ///or maybe we can just accelerate time?
-    //const float volume_per_breath_m3 = 0.0031;
     //const float volume_per_breath_litres = 6; //real
     const float volume_per_breath_litres = 0.01;
 
@@ -1381,7 +1463,7 @@ void breather::tick(state& s, vec2f position, float dt)
 
     display.tick(s, (vec2f){20.f, 200.f}, resource_to_air(lungs.my_environment.local_environment), true);
 
-    lungs.emit_all(s, position, 2.f);
+    lungs.emit_all(s, position, 2.f);*/
 }
 
 resource_converter::resource_converter()

@@ -87,6 +87,8 @@ namespace game
     static float wall_segment_thickness = 0.5f;
     static float wall_segment_outline_thickness = 0.25f;
     static vec4f wall_segment_colour = (vec4f){190, 190, 190, 255};
+
+    static float breather_lung_air_volume = 0.06;
 };
 
 vecrf game::get_ideal_suit_storage()

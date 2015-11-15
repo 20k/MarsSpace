@@ -400,8 +400,12 @@ struct breather
     air_displayer display;
     air_monitor monitor;
 
+    breather();
+
     void tick(state& s, vec2f pos, float dt);
     ///set/remove parent?
+
+    float current_time;
 };
 
 ///for one resource or?
