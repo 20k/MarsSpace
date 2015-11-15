@@ -175,9 +175,12 @@ int main()
             win.close();
 
         vec2f mouse_pos = m_fetch.get_world(st);
+        vec2f local_mouse = m_fetch.get_screen(st);
         vec2f round_mouse = round_to_multiple(mouse_pos, 5);
 
-        if(once<sf::Mouse::Middle>())
+        bool mouse_oob = local_mouse.v[0] < 0 || local_mouse.v[1] < 0 || local_mouse.v[0] >= width-1 || local_mouse.v[1] >= height-1;
+
+        if(once<sf::Mouse::Middle>() && !mouse_oob)
         {
             if(wall_ids.size() == 0)
             {
@@ -289,13 +292,13 @@ int main()
             }
         }
 
-        if(once<sf::Mouse::Left>())
+        if(once<sf::Mouse::Left>() && !mouse_oob)
         {
             mouse_clicks.push_back(mouse_pos);
             mouse_rclicks.clear();
         }
 
-        if(once<sf::Mouse::Right>())
+        if(once<sf::Mouse::Right>() && !mouse_oob)
         {
             mouse_rclicks.push_back(mouse_pos);
             mouse_clicks.clear();

@@ -1214,7 +1214,7 @@ conditional_environment_modifier::conditional_environment_modifier()
 
 float conditional_environment_modifier::get_pressure()
 {
-    return my_environment.local_environment.sum();
+    return my_environment.local_environment.sum_absolute();
 }
 
 float conditional_environment_modifier::get_parent_pressure(state& s, vec2f pos)
@@ -1376,7 +1376,7 @@ void breather::tick(state& s, vec2f position, float dt)
     ///we can't actually do this as 6... this is too much
     ///maybe it should be m3
     const float lung_volume = game::breather_lung_air_volume;
-    const float base_lung_air = lung_volume * 0.2f;
+    const float base_lung_air = lung_volume * game::breather_lung_frac_in_reserve;
 
     lungs.set_max_air(lung_volume + base_lung_air);
 

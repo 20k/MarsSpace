@@ -59,7 +59,7 @@ namespace game
     static float resource_filler_radius = 1.f;
     static vec4f resource_filler_colour = (vec4f){128, 128, 128, 255};
     static float resource_filler_air_transfer_ps = 0.1f;
-    static vecrf get_ideal_suit_storage();
+    static vecrf get_ideal_suit_storage(); ///when filling a suit
 
     static float suit_entity_interact_radius = 2.f;
 
@@ -89,6 +89,7 @@ namespace game
     static vec4f wall_segment_colour = (vec4f){190, 190, 190, 255};
 
     static float breather_lung_air_volume = 0.06f;
+    static float breather_lung_frac_in_reserve = 0.4f;
 
 
     static float health_to_leak_conversion = 0.1f;
