@@ -78,6 +78,11 @@ void player::set_active_player(state& s)
 ///momentum is officially a huge clusterfuck, fixme
 void player::tick(state& s, float dt)
 {
+    ///print currently selected element
+    ///keyboard controls - arrow keys
+    ///space to hold breath
+    sf::Keyboard keyb;
+
     vec2f key_dir = key.tick();
 
     float cur_speed = speed.get_speed();
@@ -146,10 +151,6 @@ void player::tick(state& s, float dt)
     {
         momentum.set_mass(game::player_mass);
     }
-
-    ///print currently selected element
-    ///keyboard controls - arrow keys
-    sf::Keyboard keyb;
 
     ///gradually getting less hitler
     if(keyb.isKeyPressed(sf::Keyboard::G))
@@ -354,6 +355,11 @@ void player::dec_inventory()
 
     if(carried.size() == 0)
         inventory_item_selected = 0;
+}
+
+void player::set_holding_breath(bool state)
+{
+    breath.set_holding_breath_enabled(state);
 }
 
 planet::planet(sf::Texture& tex)

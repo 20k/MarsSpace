@@ -89,11 +89,11 @@ namespace game
     static vec4f wall_segment_colour = (vec4f){190, 190, 190, 255};
 
     static float breather_lung_air_volume = 0.06f;
-    static float breather_lung_frac_in_reserve = 0.4f;
+    static float breather_lung_frac_in_reserve = 0.4f; ///additive to the above
 
 
     static float health_to_leak_conversion = 0.1f;
-    ///this means with a leak rate of 1, we'll equalise pressure with the outside world in 1 second
+    ///this means with eg a leak rate of 1, we'll equalise pressure with the outside world in 1 second
     static float leak_to_pressure_normalisation_fraction = 0.01f;
 
     static vecrf get_suit_resource_max_storage();

@@ -1354,6 +1354,13 @@ breather::breather()
 {
     ///temp hack
     current_time = -M_PI/2.f;
+
+    is_holding_breath = false;
+}
+
+void breather::set_holding_breath_enabled(bool state)
+{
+    is_holding_breath = state;
 }
 
 ///i think this assumes 1x1 square tiles
@@ -1361,6 +1368,9 @@ breather::breather()
 ///FIXMEEE!!!
 ///volume of spacesuit without human is about (exactly) 5 foot^3
 ///volume of a liquified human being is about 2.344 foot^3
+///volume of lungs is 0.2 ft^3
+///tidal volume is 0.5l
+///total volume is 0.6l
 void breather::tick(state& s, vec2f position, float dt)
 {
     ///lets put this into a breathing manager afterwards
@@ -1379,6 +1389,17 @@ void breather::tick(state& s, vec2f position, float dt)
     const float base_lung_air = lung_volume * game::breather_lung_frac_in_reserve;
 
     lungs.set_max_air(lung_volume + base_lung_air);
+
+
+    float o2_to_co2_rate = breaths_per_second * dt * 0.2f;
+
+    display.tick(s, (vec2f){20.f, 20.f}, resource_to_air(lungs.my_environment.local_environment), true);
+
+    lungs.my_environment.convert_percentage(o2_to_co2_rate * lung_volume, 0.05f / 0.20f, air::OXYGEN, air::C02);
+
+    ///no need to do the rest of anything
+    if(is_holding_breath)
+        return;
 
     ///integral of sinx between 0 and PI is 2
 
@@ -1411,15 +1432,6 @@ void breather::tick(state& s, vec2f position, float dt)
     {
         lungs.emit_all(s, position, -air_change);
     }
-
-    float o2_to_co2_rate = breaths_per_second * dt * 0.2f;
-
-    display.tick(s, (vec2f){20.f, 20.f}, resource_to_air(lungs.my_environment.local_environment), true);
-
-    lungs.my_environment.convert_percentage(o2_to_co2_rate * lung_volume, 0.05f / 0.20f, air::OXYGEN, air::C02);
-
-    //display.tick(s, (vec2f){20.f, 200.f}, resource_to_air(lungs.my_environment.local_environment), true);
-
 
     if(lungs.get_pressure() < base_lung_air)
     {
@@ -2351,8 +2363,6 @@ void suit::tick(state& s, float dt, vec2f pos)
     {
         environment.emit_all(s, pos, equalisation_constant);
     }
-
-
 
     ///so now what we actually wanna do is equalise dependent on leak rate and the pressure difference
 }

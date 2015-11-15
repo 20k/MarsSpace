@@ -125,6 +125,8 @@ struct player : entity
 
     bool has_suit;
 
+    void set_holding_breath(bool state);
+
 private:
     void remove_suit(); ///internal, does not take it off, just stops the player from using it
 

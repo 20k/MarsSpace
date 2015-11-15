@@ -402,10 +402,13 @@ struct breather
 
     breather();
 
+    void set_holding_breath_enabled(bool state);
     void tick(state& s, vec2f pos, float dt);
     ///set/remove parent?
 
     float current_time;
+
+    bool is_holding_breath;
 };
 
 ///for one resource or?

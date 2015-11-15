@@ -388,6 +388,8 @@ int main()
             air_process.add(local_pos.v[0], local_pos.v[1], 1.f, air::C02);
         }
 
+        st.current_player->set_holding_breath(key.isKeyPressed(sf::Keyboard::Space));
+
         if(once<sf::Keyboard::F1>())
         {
             solar_panel* en = new solar_panel();
