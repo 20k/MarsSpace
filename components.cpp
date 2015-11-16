@@ -1350,6 +1350,54 @@ void conditional_environment_modifier::remove_parent()
     parent = nullptr;
 }
 
+body_model::body_model()
+{
+    pa_o2 = game::body_model_normal_o2_pa;
+    pa_co2 = game::body_model_normal_co2_pa;
+}
+
+///hot damn, I checked this and its actually fucking correct
+///what the actual christ, thats amazing
+///http://medical-dictionary.thefreedictionary.com/oxygen+consumption
+float body_model::get_o2_blood_volume_used_atmospheric_ps_litres(float outside_atmospheric_pressure)
+{
+    float pressure = pa_o2;
+    float volume = game::body_model_blood_volume_litres * 0.001f; ///to m3
+    float volume_litres = game::body_model_blood_volume_litres;
+    float moles = pressure * volume / (game::gas_R * game::body_T);
+
+    float o2_used_pa = game::body_model_normal_o2_pa - game::body_model_return_o2_pa;
+
+    ///moles per second usedish (moles / 0.001f)
+    ///I think this is oxygen usage per second in molesish?
+    ///blood_flow_litres_ps is total *volume*, but oxygen partial pressure assumes its whole volume
+    ///so i think its valid to sub it in
+    ///either way, ttod = 2 minutes which is good enough for me, i can game adjust that pretty easily
+    ///and it seems logical
+    float bps_moles_s = o2_used_pa * game::body_model_blood_flow_litres_ps / (game::gas_R * game::body_T);
+    float my_moles_s = pressure * game::body_model_blood_flow_litres_ps / (game::gas_R * game::body_T);
+
+    float body_moles_total = pa_o2 * game::body_model_blood_volume_litres / (game::gas_R * game::body_T);
+
+    float time_till_oxygen_depletion = body_moles_total / bps_moles_s;
+
+    printf("%f\n", time_till_oxygen_depletion);
+
+
+    ///what we want is o2 used per second in litres
+
+    ///eh fuck it, just assume the outside is at body temperature, its in the lungs
+    ///and I can't be arsed to deal with gas expansion/contraction between a regulated 21 and 37 degrees
+    ///...or can i?
+    ///quite easy to adjust to a non linear o2_used_pa as well
+    return game::gas_R * game::body_T * bps_moles_s / (outside_atmospheric_pressure);
+
+    //float volume = game::gas_R * game::body_T
+
+    ///so now we want to convert our bps_moles_s to relative atmospheric pressure
+    ///to find the volume
+}
+
 breather::breather()
 {
     ///temp hack

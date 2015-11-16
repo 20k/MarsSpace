@@ -63,6 +63,8 @@ namespace air
     ///this is why all the numbers are funny
     static float liquid_to_gas_conversion_ratio_oxygen = 861;
     static float liquid_to_gas_conversion_ratio_c02 = 845;
+
+    static float atmospheric_pressure_pa = 101325;
 }
 
 typedef air::resource air_t;

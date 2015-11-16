@@ -100,6 +100,25 @@ namespace game
     static vecrf get_suit_init_storage();
     static vecrf get_suit_init_environment();
     static vecrf get_suit_ideal_environment();
+
+    ///we actually could simulate the bends....
+    ///just by defining normal values of things
+    ///and then we can program the response in code
+    ///maybe define a whole vecair struct?
+    static float body_model_normal_co2_pa = 40 * 133; ///return is 50
+    static float body_model_normal_o2_pa = 88 * 133; ///arterial
+    static float body_model_return_o2_pa = 45 * 133;
+    static float body_model_too_high_co2_pa = 75 * 133; ///for the game this means imminent death
+    static float body_model_too_low_o2_pa = 26 * 133;
+    static float body_model_blood_flow_litres_ps = 5.f/60.f;
+    static float body_model_blood_volume_litres = 5.f;
+
+    static float gas_R = 0.082;
+    static float body_T = 310;
+
+    ///pv = nrt
+
+
 };
 
 vecrf game::get_ideal_suit_storage()

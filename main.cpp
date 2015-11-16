@@ -61,6 +61,10 @@ int main()
     //build->add_wall(st, (vec2f){0, 0}, (vec2f){gen_width, gen_height});
     //build->walls.back().sub_segments.clear();
 
+    body_model model;
+    float val = model.get_o2_blood_volume_used_atmospheric_ps_litres(air::atmospheric_pressure_pa);
+
+    printf("%f\n", val);
 
     std::vector<entity*> stuff;
     stuff.push_back(new planet(tex));

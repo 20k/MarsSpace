@@ -364,6 +364,8 @@ struct air_environment
 ///or we draw from and emit to the parent
 ///this is just functionality to allow this to happen
 ///it does not mandate that it must
+///we need a volume for air_environment
+///so that we can functionally get pressure
 struct conditional_environment_modifier
 {
     air_environment my_environment;
@@ -392,6 +394,16 @@ struct conditional_environment_modifier
     float max_air = 0.f;
 };
 
+///define lethal levels, integrate with breather or at least provide easy api integration
+struct body_model
+{
+    float pa_o2;
+    float pa_co2;
+
+    body_model();
+
+    float get_o2_blood_volume_used_atmospheric_ps_litres(float outside_atmospheric_pressure);
+};
 
 struct breather
 {
