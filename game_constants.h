@@ -105,7 +105,8 @@ namespace game
     ///just by defining normal values of things
     ///and then we can program the response in code
     ///maybe define a whole vecair struct?
-    static float body_model_normal_co2_pa = 40 * 133; ///return is 50
+    static float body_model_normal_co2_pa = 40 * 133;
+    static float body_model_return_co2_pa = 50 * 133;
     static float body_model_normal_o2_pa = 88 * 133; ///arterial
     static float body_model_return_o2_pa = 45 * 133;
     static float body_model_too_high_co2_pa = 75 * 133; ///for the game this means imminent death

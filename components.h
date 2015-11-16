@@ -402,7 +402,9 @@ struct body_model
 
     body_model();
 
+    float get_gas_blood_volume_amount_atmospheric_ps_litres(float higher_pa, float lower_pa, float outside_pressure);
     float get_o2_blood_volume_used_atmospheric_ps_litres(float outside_atmospheric_pressure);
+    float get_co2_blood_volume_used_atmospheric_ps_litres(float outside_atmospheric_pressure);
 };
 
 struct breather
