@@ -255,7 +255,7 @@ float resource_requirer::get_resource_amount_required_to_complete_fraction(float
 ///however it has the capacity to be upgraded to handle that, so no major concern
 vec2f moveable::tick(state& s, vec2f position, vec2f dir, float dist)
 {
-    if(dist < 0.001f)
+    if(dist < 0.00001f)
         return position;
 
     vec2f new_pos = position + dir.norm() * dist;
@@ -1354,6 +1354,16 @@ body_model::body_model()
 {
     pa_o2 = game::body_model_normal_o2_pa;
     pa_co2 = game::body_model_normal_co2_pa;
+}
+
+float body_model::get_o2_fraction_total()
+{
+    return pa_o2 / game::body_model_normal_o2_pa;
+}
+
+float body_model::get_o2_fraction_normal()
+{
+    return (pa_o2 - game::body_model_too_low_o2_pa) / (game::body_model_normal_o2_pa - game::body_model_too_low_o2_pa);
 }
 
 ///hot damn, I checked this and its actually fucking correct
@@ -2630,6 +2640,8 @@ vec2f momentum_handler::do_movement(state& s, vec2f position, vec2f dir, float d
     {
         velocity = velocity.norm() * dist;
     }
+
+    printf("%f %f\n", velocity.v[0], velocity.v[1]);
 
     //printf("%f\n", velocity.length());
 

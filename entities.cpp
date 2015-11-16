@@ -90,6 +90,10 @@ void player::tick(state& s, float dt)
     if(has_suit)
         cur_speed = speed.get_speed() * game::player_with_suit_speed_modifier;
 
+    cur_speed *= clamp(breath.body.get_o2_fraction_normal(), 0.f, 1.f);
+
+    printf("%f\n", cur_speed);
+
     float slowdown_frac = 0.9999f;
 
     ///needs to be fixed to be frametime independent
@@ -210,6 +214,8 @@ player::player(byte_fetch& fetch, state& s) : player()
 
     breath.lungs.my_environment.local_environment = breather_environment;
 
+    breath.body.pa_o2 = fetch.get<float>();
+
     has_suit = fetch.get<int32_t>();
 
     //player_resource_network.add(fetch.get<vecrf>());
@@ -250,6 +256,7 @@ save player::make_save()
     ///??? figure out a better way to do this
     ///Or is this ok?
     vec.push_back<vecrf>(breath.lungs.my_environment.local_environment);
+    vec.push_back<float>(breath.body.pa_o2);
     vec.push_back<int32_t>(has_suit);
 
     vec.push_back<int32_t>(inventory_item_selected);

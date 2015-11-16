@@ -403,6 +403,10 @@ struct body_model
 
     body_model();
 
+    ///of normal
+    float get_o2_fraction_total(); ///between normal and 0
+    float get_o2_fraction_normal(); ///between normal and low o2
+
     float get_gas_blood_volume_amount_atmospheric_ps_litres(float higher_pa, float lower_pa, float outside_pressure);
     float get_o2_blood_volume_used_atmospheric_ps_litres(float outside_atmospheric_pressure);
     float get_co2_blood_volume_used_atmospheric_ps_litres(float outside_atmospheric_pressure);
