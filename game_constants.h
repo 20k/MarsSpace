@@ -88,7 +88,7 @@ namespace game
     static float wall_segment_outline_thickness = 0.25f;
     static vec4f wall_segment_colour = (vec4f){190, 190, 190, 255};
 
-    static float breather_lung_air_volume = 0.06f;
+    static float breather_lung_air_volume = 0.1f;
     static float breather_lung_frac_in_reserve = 0.4f; ///additive to the above
 
 
@@ -113,7 +113,7 @@ namespace game
     static float body_model_too_low_o2_pa = 26 * 133;
     static float body_model_blood_flow_litres_ps = 5.f/60.f;
     static float body_model_blood_volume_litres = 5.f;
-    static float body_model_o2_boil_time_s = 15;
+    static float body_model_o2_boil_time_s = 20; ///90 irl to die, 15 to pass out
 
     static float pa_to_mmhg = 1.f/133.f;
     ///the ratio between blood and environment oxygen before we consider this
