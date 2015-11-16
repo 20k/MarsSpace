@@ -114,6 +114,10 @@ namespace game
     static float body_model_blood_flow_litres_ps = 5.f/60.f;
     static float body_model_blood_volume_litres = 5.f;
 
+    static float pa_to_mmhg = 1.f/133.f;
+
+    ///co2 really bad at 8%/7%
+
     static float gas_R = 0.082;
     static float body_T = 310;
 

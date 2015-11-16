@@ -1220,9 +1220,9 @@ float conditional_environment_modifier::get_pressure()
 float conditional_environment_modifier::get_parent_pressure(state& s, vec2f pos)
 {
     if(parent != nullptr)
-        return parent->my_environment.local_environment.sum();
+        return parent->my_environment.local_environment.sum_absolute();
 
-    return s.air_process->get(pos.v[0], pos.v[1]).sum();
+    return s.air_process->get(pos.v[0], pos.v[1]).sum_absolute();
 }
 
 ///my goodness, this actually works *and* its not horrible!!
@@ -1235,7 +1235,7 @@ void conditional_environment_modifier::absorb_all(state& s, vec2f pos, float amo
         vecrf& parent_storage = parent->my_environment.local_environment;
 
         ///parent environment is empty, cannot absorb
-        if(parent_storage.sum() < 0.00001f)
+        if(parent_storage.sum_absolute() < 0.00001f)
             return;
 
         vecrf taken = parent->take(amount);
@@ -1405,6 +1405,86 @@ float body_model::get_co2_blood_volume_used_atmospheric_ps_litres(float outside_
     return get_gas_blood_volume_amount_atmospheric_ps_litres(game::body_model_return_co2_pa, game::body_model_normal_co2_pa, outside_pressure);
 }
 
+void body_model::tick(float dt, float lung_pa_o2, float lung_pa_co2, float lung_volume, float lung_pa)
+{
+    ///In reality, the diffusion rate is a function of lung_pa_o2 - blood_pa_o2
+    ///however, we know that the body uses get_gas_blood_volume_amount_atmospheric litres per second
+    ///so we can simply remove that from lung volume
+    ///however.... really need to incorporate the above pressure problems
+    ///so that
+
+    ///we could literally just do lung_pa_o2 - blood_pa_o2 as the pressure available
+    ///but because this is not accurate... it might end up fucked
+
+    ///for the moment, we won't model o2 forcing itself into the bloodstream
+    ///or boiling out of the blood into the lungs
+    ///but its a very real possibility
+
+    //dt = 1.f;
+
+    float o2_pa_available = lung_pa_o2 - pa_o2;
+
+    if(o2_pa_available < 0)
+        o2_pa_available = 0;
+
+    //printf("available pao2 %f\n", o2_pa_available);
+    //printf("lung pao2 %f\n", lung_pa_o2);
+    //printf("blood pao2 %f\n", pa_o2);
+    //printf("Lung pa %f\n", lung_pa);
+
+    ///?
+    float o2_volume_available = 0.f;
+
+    if(lung_pa > 0.001f)
+        o2_volume_available = (o2_pa_available / lung_pa) * lung_volume;
+
+    float o2_volume_wanting_to_use = 0.f;
+
+    if(lung_pa > 0.001f)
+        o2_volume_wanting_to_use = get_o2_blood_volume_used_atmospheric_ps_litres(lung_pa);// * dt;
+
+    //printf("wanting volume %f\n", o2_volume_wanting_to_use);
+    //printf("available volume %f\n", o2_volume_available);
+
+
+    ///volume
+    float remaining = o2_volume_available - o2_volume_wanting_to_use;
+
+    float amount_missing = 0.f;
+
+    if(remaining < 0)
+    {
+        amount_missing = fabs(remaining);
+        remaining = 0.f;
+    }
+
+    ///amount of pa we want to use this tick
+    float o2_pa_diff = (game::body_model_normal_o2_pa - game::body_model_return_o2_pa);
+
+    float frac_missing = 0.f;
+
+    if(o2_volume_wanting_to_use > 0.00001f)
+        frac_missing = amount_missing / o2_volume_wanting_to_use;
+    else
+        frac_missing = 1.f;
+
+    float pa_missing = frac_missing * o2_pa_diff;
+
+    pa_missing = clamp(pa_missing, 0.f, o2_pa_diff);
+
+    //printf("Missing %f\n", pa_missing);
+
+    ///we wanna like, smooth this i think just by doing a moving averaage or something
+
+    ///in seconds
+    float blood_gas_inertia_factor = game::body_model_blood_volume_litres / game::body_model_blood_flow_litres_ps;
+
+    pa_o2 = ((game::body_model_normal_o2_pa - pa_missing)*dt + pa_o2 * blood_gas_inertia_factor) / (blood_gas_inertia_factor+dt);
+
+    if(pa_o2 < 0)
+        pa_o2 = 0;
+}
+
 breather::breather()
 {
     ///temp hack
@@ -1451,6 +1531,20 @@ void breather::tick(state& s, vec2f position, float dt)
     display.tick(s, (vec2f){20.f, 20.f}, resource_to_air(lungs.my_environment.local_environment), true);
 
     lungs.my_environment.convert_percentage(o2_to_co2_rate * lung_volume, 0.05f / 0.20f, air::OXYGEN, air::C02);
+
+    float pressure = lungs.get_parent_pressure(s, position);
+    float lvolume = lungs.get_pressure();
+
+    float o2_frac = air::atmospheric_pressure_pa * lungs.my_environment.local_environment.v[air::OXYGEN] * pressure / lvolume;
+    float co2_frac = air::atmospheric_pressure_pa * lungs.my_environment.local_environment.v[air::C02] * pressure / lvolume;
+
+    ///6 is real lung volume in litres
+    ///oh dear. Lungs.get_pressure() isn't pressure, its volume
+    ///pressure is... environmental pressure?
+    body.tick(dt, o2_frac, co2_frac, 6, air::atmospheric_pressure_pa * pressure);
+
+    text txt;
+    txt.render(s, "pa_o2 " + std::to_string(body.pa_o2 * game::pa_to_mmhg), (vec2f){20, 200}, 16, text_options::ABS);
 
     ///no need to do the rest of anything
     if(is_holding_breath)

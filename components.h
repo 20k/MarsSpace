@@ -395,6 +395,7 @@ struct conditional_environment_modifier
 };
 
 ///define lethal levels, integrate with breather or at least provide easy api integration
+///would quite like to model nitrogen too
 struct body_model
 {
     float pa_o2;
@@ -405,6 +406,8 @@ struct body_model
     float get_gas_blood_volume_amount_atmospheric_ps_litres(float higher_pa, float lower_pa, float outside_pressure);
     float get_o2_blood_volume_used_atmospheric_ps_litres(float outside_atmospheric_pressure);
     float get_co2_blood_volume_used_atmospheric_ps_litres(float outside_atmospheric_pressure);
+
+    void tick(float dt, float lung_pa_o2, float lung_pa_co2, float lung_volume, float lung_pa);
 };
 
 struct breather
@@ -413,6 +416,7 @@ struct breather
     conditional_environment_modifier lungs;
     air_displayer display;
     air_monitor monitor;
+    body_model body;
 
     breather();
 
