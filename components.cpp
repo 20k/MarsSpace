@@ -1424,8 +1424,13 @@ void body_model::tick(float dt, float lung_pa_o2, float lung_pa_co2, float lung_
 
     float o2_pa_available = lung_pa_o2 - pa_o2;
 
-    if(o2_pa_available < 0)
-        o2_pa_available = 0;
+    //if(o2_pa_available < 0)
+    //    o2_pa_available = 0;
+
+    if(o2_pa_available < -game::body_model_normal_o2_pa)
+        o2_pa_available = -game::body_model_normal_o2_pa;
+
+    float neg_o2_amount = o2_pa_available < 0.f ? fabs(o2_pa_available) : 0.f;
 
     //printf("available pao2 %f\n", o2_pa_available);
     //printf("lung pao2 %f\n", lung_pa_o2);
@@ -1435,12 +1440,12 @@ void body_model::tick(float dt, float lung_pa_o2, float lung_pa_co2, float lung_
     ///?
     float o2_volume_available = 0.f;
 
-    if(lung_pa > 0.001f)
+    if(lung_pa > 0.0001f)
         o2_volume_available = (o2_pa_available / lung_pa) * lung_volume;
 
     float o2_volume_wanting_to_use = 0.f;
 
-    if(lung_pa > 0.001f)
+    if(lung_pa > 0.0001f)
         o2_volume_wanting_to_use = get_o2_blood_volume_used_atmospheric_ps_litres(lung_pa);// * dt;
 
     //printf("wanting volume %f\n", o2_volume_wanting_to_use);
@@ -1458,7 +1463,7 @@ void body_model::tick(float dt, float lung_pa_o2, float lung_pa_co2, float lung_
         remaining = 0.f;
     }
 
-    ///amount of pa we want to use this tick
+    ///amount of pa we want to use
     float o2_pa_diff = (game::body_model_normal_o2_pa - game::body_model_return_o2_pa);
 
     float frac_missing = 0.f;
@@ -1470,9 +1475,10 @@ void body_model::tick(float dt, float lung_pa_o2, float lung_pa_co2, float lung_
 
     float pa_missing = frac_missing * o2_pa_diff;
 
-    pa_missing = clamp(pa_missing, 0.f, o2_pa_diff);
+    //pa_missing = clamp(pa_missing, 0.f, o2_pa_diff);
 
-    //printf("Missing %f\n", pa_missing);
+    if(pa_missing > game::body_model_normal_o2_pa)
+        pa_missing = game::body_model_normal_o2_pa;
 
     ///we wanna like, smooth this i think just by doing a moving averaage or something
 
@@ -1480,6 +1486,12 @@ void body_model::tick(float dt, float lung_pa_o2, float lung_pa_co2, float lung_
     float blood_gas_inertia_factor = game::body_model_blood_volume_litres / game::body_model_blood_flow_litres_ps;
 
     pa_o2 = ((game::body_model_normal_o2_pa - pa_missing)*dt + pa_o2 * blood_gas_inertia_factor) / (blood_gas_inertia_factor+dt);
+
+    ///extreme decompression
+    if(lung_pa_o2 < pa_o2/game::body_model_environment_o2_less_than_frac_blood_o2)
+    {
+        pa_o2 = (lung_pa_o2*dt/game::body_model_o2_boil_time_s + pa_o2) / (1 + dt/game::body_model_o2_boil_time_s);
+    }
 
     if(pa_o2 < 0)
         pa_o2 = 0;
@@ -1534,6 +1546,10 @@ void breather::tick(state& s, vec2f position, float dt)
 
     float pressure = lungs.get_parent_pressure(s, position);
     float lvolume = lungs.get_pressure();
+
+    ///am am bad at this
+    if(lvolume <= 0.0001f)
+        lvolume = 100000;
 
     float o2_frac = air::atmospheric_pressure_pa * lungs.my_environment.local_environment.v[air::OXYGEN] * pressure / lvolume;
     float co2_frac = air::atmospheric_pressure_pa * lungs.my_environment.local_environment.v[air::C02] * pressure / lvolume;

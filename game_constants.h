@@ -113,8 +113,14 @@ namespace game
     static float body_model_too_low_o2_pa = 26 * 133;
     static float body_model_blood_flow_litres_ps = 5.f/60.f;
     static float body_model_blood_volume_litres = 5.f;
+    static float body_model_o2_boil_time_s = 15;
 
     static float pa_to_mmhg = 1.f/133.f;
+    ///the ratio between blood and environment oxygen before we consider this
+    ///extreme decompression and start boiling off o2 from your lungs into the environment
+    ///ideally this would be auto done, but i cant be arsed to do the diffusioin equations 100% accurately
+    ///??? naming???
+    static float body_model_environment_o2_less_than_frac_blood_o2 = 10.f;
 
     ///co2 really bad at 8%/7%
 
