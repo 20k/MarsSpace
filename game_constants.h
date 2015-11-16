@@ -165,13 +165,15 @@ vecrf game::get_suit_init_storage()
 
 vecrf game::get_suit_init_environment()
 {
-    vecrf ev = 0.f;
+    /*vecrf ev = 0.f;
 
     ev.v[air::C02] = 0.f;
-    ev.v[air::OXYGEN] = 1.f;
-    ev.v[air::NITROGEN] = 0.f;
+    ev.v[air::OXYGEN] = 0.2f;
+    ev.v[air::NITROGEN] = 0.8f;
 
-    return ev;
+    return ev;*/
+
+    return game::get_suit_ideal_environment();
 }
 
 vecrf game::get_suit_ideal_environment()
@@ -180,6 +182,8 @@ vecrf game::get_suit_ideal_environment()
 
     ev.v[air::OXYGEN] = 0.2f;
     ev.v[air::NITROGEN] = 0.8f;
+
+    //ev.v[air::OXYGEN] = 1.f;
 
     return ev;
 }

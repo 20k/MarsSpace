@@ -92,8 +92,6 @@ void player::tick(state& s, float dt)
 
     cur_speed *= clamp(breath.body.get_o2_fraction_normal(), 0.f, 1.f);
 
-    printf("%f\n", cur_speed);
-
     float slowdown_frac = 0.9999f;
 
     ///needs to be fixed to be frametime independent

@@ -1415,6 +1415,19 @@ float body_model::get_co2_blood_volume_used_atmospheric_ps_litres(float outside_
     return get_gas_blood_volume_amount_atmospheric_ps_litres(game::body_model_return_co2_pa, game::body_model_normal_co2_pa, outside_pressure);
 }
 
+/*void body_model::tick(float dt, float lung_pa_o2, float lung_pa_co2, float lung_volume, float lung_pa)
+{
+    float normal_ratio_mod = game::body_model_normal_o2_pa / (0.16f * air::atmospheric_pressure_pa);
+
+    ///if > 0
+    float pressure_differential = lung_pa_o2 * normal_ratio_mod - pa_o2;
+
+    float change_this_tick = pressure_differential * dt;
+
+    pa_o2 += change_this_tick;
+}*/
+
+#if 1
 void body_model::tick(float dt, float lung_pa_o2, float lung_pa_co2, float lung_volume, float lung_pa)
 {
     ///In reality, the diffusion rate is a function of lung_pa_o2 - blood_pa_o2
@@ -1465,12 +1478,25 @@ void body_model::tick(float dt, float lung_pa_o2, float lung_pa_co2, float lung_
     ///volume
     float remaining = o2_volume_available - o2_volume_wanting_to_use;
 
+    printf("lpo %f\n", lung_pa_o2);
+    printf("pao2 %f\n", pa_o2);
+
+
     float amount_missing = 0.f;
 
     if(remaining < 0)
     {
         amount_missing = fabs(remaining);
         remaining = 0.f;
+    }
+    else
+    {
+        float upper = pa_o2;
+
+        if(lung_pa_o2 > upper * 3.f)
+        {
+            amount_missing = -dt * 2.f;//- ((lung_pa_o2 - upper)) * dt / 12.f;
+        }
     }
 
     ///amount of pa we want to use
@@ -1506,6 +1532,7 @@ void body_model::tick(float dt, float lung_pa_o2, float lung_pa_co2, float lung_
     if(pa_o2 < 0)
         pa_o2 = 0;
 }
+#endif
 
 breather::breather()
 {
@@ -2640,8 +2667,6 @@ vec2f momentum_handler::do_movement(state& s, vec2f position, vec2f dir, float d
     {
         velocity = velocity.norm() * dist;
     }
-
-    printf("%f %f\n", velocity.v[0], velocity.v[1]);
 
     //printf("%f\n", velocity.length());
 
